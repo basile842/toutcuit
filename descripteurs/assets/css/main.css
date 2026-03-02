@@ -3,6 +3,8 @@
    main.css (cleaned + unified reliability colors)
 ========================= */
 
+@import url("https://rsms.me/inter/inter.css");
+
 :root{
   /* Light background / surfaces */
   --bg: #f6f7fb;
@@ -53,7 +55,8 @@ html, body{
     radial-gradient(1200px 700px at 50% 0%, rgba(111,92,247,.10), transparent 58%),
     var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+  font-weight: 500;
   line-height: 1.5;
 }
 
