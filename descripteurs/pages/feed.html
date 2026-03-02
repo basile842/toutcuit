@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Feed — Certify</title>
+
+  <link rel="stylesheet" href="../assets/css/main.css" />
+
+  <style>
+    /* Élargir le layout sur desktop uniquement pour cette page */
+    @media (min-width: 601px){
+      main{ max-width: 1400px !important; }
+    }
+
+    .feed-lead{
+      margin: 8px 0 14px 0;
+      color: var(--muted);
+      max-width: 900px;
+    }
+
+    .feed-controls{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 12px 0 6px 0;
+    }
+
+    .feed-controls .chip{
+      font-size: 15px;
+      padding: 9px 14px;
+    }
+
+    .feed-controls .control{
+      flex: 1 1 240px;
+      min-width: 0;
+    }
+
+    .chip-group{
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip{
+      appearance: none;
+      border: 1px solid rgba(111,92,247,.25);
+      background: rgba(111,92,247,.10);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 850;
+      font-size: 13px;
+      line-height: 1;
+      transition: background .15s ease, border-color .15s ease, transform .05s ease, box-shadow .15s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .chip:hover{
+      background: rgba(111,92,247,.14);
+      border-color: rgba(111,92,247,.35);
+    }
+    .chip:active{ transform: translateY(1px); }
+    .chip[aria-pressed="true"]{
+      box-shadow: var(--ring);
+      border-color: rgba(111,92,247,.45);
+      background: rgba(111,92,247,.18);
+    }
+
+    /* ✅ Chips fiabilité colorées (comme la machine) */
+    .chip[data-rel="good"]{
+      border-color: var(--rel-good-border);
+      background: var(--rel-good-bg);
+    }
+    .chip[data-rel="mid"]{
+      border-color: var(--rel-mid-border);
+      background: var(--rel-mid-bg);
+    }
+    .chip[data-rel="bad"]{
+      border-color: var(--rel-bad-border);
+      background: var(--rel-bad-bg);
+    }
+    .chip[data-rel="good"]:hover{ background: rgba(34,197,94,.18); }
+    .chip[data-rel="mid"]:hover{ background: rgba(249,115,22,.18); }
+    .chip[data-rel="bad"]:hover{ background: rgba(239,68,68,.18); }
+
+    .feed-list{
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    /* =========================
+       Link sections
+    ========================= */
+
+    .link-group{
+      background: rgba(241,243,249,.70);
+      border: 1px solid rgba(215,219,230,.95);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    /* Vignette (typography cover) */
+    .link-media{
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(215,219,230,.9);
+      background: rgba(255,255,255,.85);
+      box-shadow: 0 10px 25px rgba(16,24,40,.06);
+      margin-bottom: 12px;
+    }
+
+    .link-media a{
+      display: block;
+      position: relative;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .link-media a:hover .typography-image{
+      opacity: 0.95;
+      transform: scale(1.01);
+      transition: all 0.2s ease;
+    }
+
+    .image-cover{
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: block;
+      object-fit: cover;
+    }
+
+
+    .typography-image{
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+      padding: 14px;
+    }
+    .typography-image__text{
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      word-break: keep-all;
+      hyphens: none;
+      letter-spacing: -0.02em;
+      max-width: 100%;
+      text-transform: uppercase;
+      text-wrap: balance;
+    }
+    
+    /* ✅ Numéro dans le coin supérieur gauche de l'image */
+    .typography-image__number{
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.95);
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 950;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+      z-index: 2;
+    }
+
+    @media (max-width: 600px) {
+      .typography-image__number{
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+        top: 10px;
+        left: 10px;
+      }
+    }
+
+    /* ✅ Section déroulante infos CERTs */
+    .certs-toggle{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      margin: 8px 0;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s ease;
+      border-radius: 8px;
+    }
+    .certs-toggle:hover{
+      background: rgba(111,92,247,.06);
+    }
+    .certs-toggle-icon{
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: transform .2s ease;
+      color: var(--text);
+      opacity: .6;
+    }
+    .certs-toggle.is-open .certs-toggle-icon{
+      transform: rotate(180deg);
+    }
+
+    .certs-content{
+      display: none;
+      padding: 0;
+      margin-bottom: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .certs-content.is-open{
+      display: flex;
+    }
+
+    .certs-block{
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .certs-block--purple{
+      background: rgba(111,92,247,.10);
+      border: 1px solid rgba(111,92,247,.20);
+    }
+
+    .certs-section-content{
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .certs-bullets{
+      margin: 0;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .certs-bullets li{
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+
+    .certs-ref-label{
+      font-weight: 850;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: .6;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    .certs-ref-list{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .certs-ref-list li{
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .certs-ref-num{
+      font-weight: 850;
+      opacity: .7;
+      margin-right: 2px;
+    }
+
+    .certs-section{
+      margin-bottom: 12px;
+    }
+    .certs-section:last-child{
+      margin-bottom: 0;
+    }
+
+    .certs-section-title{
+      font-weight: 850;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      opacity: .75;
+    }
+
+    .certs-descriptors{
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .certs-descriptor-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(111,92,247,.25);
+      background: rgba(255,255,255,.65);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 850;
+      font-size: 13px;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .certs-descriptor-pill img{
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      display: block;
+      filter: brightness(0);
+      opacity: .92;
+    }
+
+    /* Teinte selon fiabilité pour les pills CERTs */
+    .certs-descriptor-pill.rel-good{
+      border-color: var(--rel-good-border);
+      background: var(--rel-good-bg);
+    }
+    .certs-descriptor-pill.rel-mid{
+      border-color: var(--rel-mid-border);
+      background: var(--rel-mid-bg);
+    }
+    .certs-descriptor-pill.rel-bad{
+      border-color: var(--rel-bad-border);
+      background: var(--rel-bad-bg);
+    }
+
+    /* ❌ SUPPRIMÉ: Header avec numéro et titre sous l'image */
+    .link-head-link{
+      display: none;
+    }
+
+    .link-group-head{
+      display: none;
+    }
+
+    .link-left{
+      display: none;
+    }
+
+    .link-num{
+      display: none;
+    }
+
+    .link-title{
+      display: none;
+    }
+
+    /* =========================
+       Descriptor cards grid
+    ========================= */
+
+    .desc-grid{
+      margin-top: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    @media (max-width: 600px){
+      .desc-grid{ grid-template-columns: 1fr; }
+    }
+
+    .desc-card{
+      border-radius: 12px;
+      border: 1px solid rgba(215,219,230,.95);
+      background: rgba(255,255,255,.70);
+      overflow: hidden;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 4px 10px rgba(16,24,40,.03);
+    }
+
+    /* Teinte selon fiabilité : couleurs opaques pour éviter tout cumul de transparence */
+    .desc-card.rel-good{ background: rgb(220,252,231); border-color: rgb(134,239,172); }
+    .desc-card.rel-mid { background: rgb(255,237,213); border-color: rgb(253,186,116); }
+    .desc-card.rel-bad { background: rgb(254,226,226); border-color: rgb(252,165,165); }
+
+    /* Bandeau descripteurs horizontal en haut de la carte — pas de fond propre */
+    .desc-card-header{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      padding: 8px 10px;
+      background: transparent !important;
+      border-bottom: 1px solid rgba(0,0,0,.07);
+    }
+
+    /* Neutraliser le fond coloré des pills injecté par main.css (.rel-* .preview-pill) */
+    .desc-card .desc-card-header .preview-pill,
+    .rel-good .desc-card-header .preview-pill,
+    .rel-mid  .desc-card-header .preview-pill,
+    .rel-bad  .desc-card-header .preview-pill{
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0;
+    }
+
+    .desc-sep{
+      font-size: 13px;
+      opacity: .35;
+      flex-shrink: 0;
+    }
+
+    .preview-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 850;
+      font-size: 15px;
+      line-height: 1.2;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .preview-pill img{
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      display: block;
+      filter: brightness(0);
+      opacity: .85;
+    }
+
+    /* =========================
+       Users inside a descriptor card
+    ========================= */
+
+    .who-list{
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .who-item{
+      padding: 7px 10px;
+      min-width: 0;
+      border-top: 1px solid rgba(0,0,0,.06);
+      background: transparent;
+    }
+    .who-item:first-child{
+      border-top: none;
+    }
+
+    .who-top{
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nick{
+      font-weight: 950;
+      letter-spacing: -0.01em;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    /* Commentaire tronqué avec toggle */
+    .comment-wrap{
+      margin-top: 3px;
+    }
+
+    .comment{
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .comment.is-expanded{
+      display: block;
+      -webkit-line-clamp: unset;
+    }
+
+    .comment-toggle{
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-top: 2px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 850;
+      opacity: .65;
+      letter-spacing: 0.02em;
+    }
+    .comment-toggle:hover{ opacity: 1; }
+    .comment-toggle-icon{
+      font-size: 10px;
+      transition: transform .2s ease;
+      display: inline-block;
+    }
+    .comment-toggle.is-open .comment-toggle-icon{
+      transform: rotate(180deg);
+    }
+
+    .muted-note{
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 10px;
+    }
+
+    .error-box{
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.10);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav></nav>
+  </header>
+
+  <main>
+    <h1>Résultats</h1>
+
+    <section class="card">
+      <div class="feed-controls">
+        <div class="chip-group" role="group" aria-label="Filtre fiabilité">
+          <button class="chip" data-rel="" aria-pressed="true" type="button">Tous</button>
+          <button class="chip" data-rel="good" aria-pressed="false" type="button">Fiable</button>
+          <button class="chip" data-rel="mid" aria-pressed="false" type="button">Indéterminé</button>
+          <button class="chip" data-rel="bad" aria-pressed="false" type="button">Pas fiable</button>
+        </div>
+        <button class="btn" id="hardReloadBtn" type="button" style="margin-left: auto;">↺ Recharger</button>
+      </div>
+
+      <div id="loading" class="muted-note" style="margin-top: 14px;">Chargement en cours…</div>
+      <div id="feedList" class="feed-list"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderNav } from "../assets/js/nav.js";
+    renderNav(location.pathname);
+
+    /* ============================
+       ICONS (fallback depuis labels)
+    ============================ */
+    const ICON_BASE = "/descripteurs/assets/icons/";
+    const ICONS = {
+      Journalisme: `${ICON_BASE}journalisme.svg`,
+      Science: `${ICON_BASE}science.svg`,
+      Gouvernement: `${ICON_BASE}gouvernement.svg`,
+      Divertissement: `${ICON_BASE}divertissement.svg`,
+      Organisation: `${ICON_BASE}organisation.svg`,
+      Individu: `${ICON_BASE}individu.svg`,
+      Inconnu: `${ICON_BASE}inconnu.svg`,
+
+      Vulgarisation: `${ICON_BASE}vulgarisation.svg`,
+      Analyse: `${ICON_BASE}analyse.svg`,
+      Reportage: `${ICON_BASE}reportage.svg`,
+      Opinion: `${ICON_BASE}opinion.svg`,
+      Rumeur: `${ICON_BASE}rumeur.svg`,
+      Accrocheur: `${ICON_BASE}accrocheur.svg`,
+      Trompeur: `${ICON_BASE}trompeur.svg`,
+      Escroquerie: `${ICON_BASE}escroquerie.svg`,
+      Partisan: `${ICON_BASE}partisan.svg`,
+      Promotion: `${ICON_BASE}promotion.svg`,
+      Annonce: `${ICON_BASE}annonce.svg`,
+      Service: `${ICON_BASE}service.svg`,
+      "Achat/Vente": `${ICON_BASE}achat-vente.svg`,
+      Activisme: `${ICON_BASE}activisme.svg`,
+      "Première main": `${ICON_BASE}premiere-main.svg`,
+      Tutoriel: `${ICON_BASE}tutoriel.svg`,
+      Loisir: `${ICON_BASE}loisir.svg`,
+      Humour: `${ICON_BASE}humour.svg`,
+      Performance: `${ICON_BASE}performance.svg`,
+    };
+
+    function iconForLabel(label){
+      return ICONS[String(label || "").trim()] || "";
+    }
+
+    /* ============================
+       FEED source (Apps Script doGet)
+    ============================ */
+    const FEED_ENDPOINT = "https://script.google.com/macros/s/AKfycbw85ZgY-ayPxzfZyCTv7Rh1HSmjXSHaYPkj-GIFXkrneTNBRNVKEezb8q8p1RM7og/exec";
+    const FEED_TOKEN = "60b66cdf-3982-4e5c-9f51-z456f0da873b";
+
+    /* ============================
+       CERTs data source (Google Sheet CSV)
+    ============================ */
+    const CERTS_SHEET_ID = "1B9hSsJXSDRVh8vyo81pvc9G000JrN6WeQdDPq4Xb-cQ";
+    const CERTS_CSV_URL = `https://docs.google.com/spreadsheets/d/${CERTS_SHEET_ID}/export?format=csv`;
+
+    const MAX_LIMIT = 200;
+    const DEFAULT_LINKS_LIMIT = MAX_LIMIT;
+
+    const feedEl = document.getElementById("feedList");
+    const loadingEl = document.getElementById("loading");
+
+    let allRows = [];
+    let certsData = new Map(); // link_id -> certs info
+    let shownLinks = 0;
+    let activeRel = "";
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function normalizeNick(userId){
+      const raw = String(userId || "").trim();
+      if (!raw) return "Anonyme";
+      const parts = raw.split("-").filter(Boolean);
+      if (parts.length >= 2) return `${parts[1]} ${parts[0]}`;
+      return raw.replaceAll("-", " ");
+    }
+
+    function rowMatchesRel(r, rel){
+      if (!rel) return true;
+      return String(r.reliability || "") === rel;
+    }
+
+    function pickFirstIcon(r){
+      return String(r.first_icon || r.firstIcon || "").trim() || "";
+    }
+    function pickLastIcon(r){
+      return String(r.last_icon || r.lastIcon || "").trim() || "";
+    }
+
+    function toRelClass(rel){
+      return rel === "good" ? "rel-good" : rel === "mid" ? "rel-mid" : rel === "bad" ? "rel-bad" : "";
+    }
+
+    function linkSortKey(linkId){
+      // Chercher d'abord dans certsData
+      for (const [url, cert] of certsData.entries()) {
+        if (cert.linkId === linkId) {
+          return cert.linkNumber || Number.POSITIVE_INFINITY;
+        }
+      }
+      // Fallback: essayer d'extraire un nombre du link_id
+      const m = String(linkId || "").match(/(\d+)\s*$/);
+      return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
+    }
+
+    function linkNumber(linkId){
+      // Chercher d'abord dans certsData
+      for (const [url, cert] of certsData.entries()) {
+        if (cert.linkId === linkId) {
+          return String(cert.linkNumber || "?");
+        }
+      }
+      // Fallback: essayer d'extraire un nombre du link_id
+      const m = String(linkId || "").match(/(\d+)\s*$/);
+      return m ? String(Number(m[1])) : "?";
+    }
+
+    // FNV-1a 32-bit => hex
+    function fnv1aHex(str){
+      let h = 0x811c9dc5;
+      for (let i = 0; i < str.length; i++){
+        h ^= str.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+      }
+      return ("0000000" + h.toString(16)).slice(-8);
+    }
+
+    // ✅ NEW: Fonction pour créer link_id depuis URL (identique à liens.html)
+    function urlToLinkId(url){
+      const hash = fnv1aHex(url);
+      return `link_${hash}`;
+    }
+
+    function mostRecentTimestamp(rows){
+      let best = 0;
+      for (const r of rows){
+        const raw = r.timestamp || r.timestamp_client || r.timestamp_server;
+        const t = raw ? new Date(raw).getTime() : 0;
+        if (!isNaN(t) && t > best) best = t;
+      }
+      return best ? new Date(best).toISOString() : "";
+    }
+
+    function normalizeLinkId(r){
+      return String(r.link_id || r.linkId || "").trim();
+    }
+
+    /* ============================
+       CSV parser simple (réutilisé de liens.html)
+    ============================ */
+    function parseCSV(text){
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++){
+        const ch = text[i];
+        const next = text[i + 1];
+
+        if (ch === '"'){
+          if (inQuotes && next === '"'){ cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+          continue;
+        }
+
+        if (!inQuotes && ch === ","){ row.push(cur); cur = ""; continue; }
+
+        if (!inQuotes && (ch === "\n" || ch === "\r")){
+          if (ch === "\r" && next === "\n") i++;
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+          continue;
+        }
+
+        cur += ch;
+      }
+
+      if (cur.length || row.length){ row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    function normalizeUrl(raw){
+      let u = String(raw || "").trim();
+      if (!u) return null;
+      if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      try{
+        const url = new URL(u);
+        if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+        return url.toString();
+      }catch{
+        return null;
+      }
+    }
+
+    /* ============================
+       Load CERTs data from Google Sheet
+    ============================ */
+    async function loadCertsData(){
+      try{
+        const res = await fetch(CERTS_CSV_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load CERTs CSV");
+
+        const csv = await res.text();
+        const rows = parseCSV(csv);
+
+        const cleaned = rows
+          .map(r => (r || []).map(x => String(x ?? "").trim()))
+          .filter(r => r.some(v => v.length));
+
+        const firstRow = cleaned[0] || [];
+        const looksHeader =
+          /titre|title/i.test(firstRow[0] || "") ||
+          /url|lien|link/i.test(firstRow[1] || "");
+
+        const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+
+        certsData.clear();
+        let idx = 0;
+        let certsCount = 0;
+
+        for (const r of dataRows){
+          const title = r[0] || "";
+          const rawUrl = r[1] || "";
+          const url = normalizeUrl(rawUrl);
+          if (!url) continue;
+
+          idx++;
+          // ✅ MODIFIÉ: Utiliser hash de l'URL
+          const linkId = urlToLinkId(url);
+
+          const descriptor1 = r[2] || "";
+          const descriptor2 = r[3] || "";
+          const reliabilityRaw = (r[4] || "").toLowerCase();
+          
+          // ✅ Traduire français → anglais
+          let reliability = "";
+          if (reliabilityRaw.includes("fiable") && !reliabilityRaw.includes("pas")) {
+            reliability = "good";
+          } else if (reliabilityRaw.includes("indéterminé") || reliabilityRaw.includes("indetermine")) {
+            reliability = "mid";
+          } else if (reliabilityRaw.includes("pas fiable") || reliabilityRaw.includes("pas_fiable")) {
+            reliability = "bad";
+          }
+          
+          const threePhrases = r[5] || "";
+          const context = r[6] || "";
+          const content = r[7] || "";
+          const reliabilityText = r[8] || "";
+          const references = r[9] || "";
+
+          const hasCertsContent = descriptor1 || descriptor2 || threePhrases || context || content || reliabilityText || references;
+
+          // ✅ MODIFIÉ: Stocker TOUS les liens, même sans contenu enseignant
+          certsData.set(url, {
+            linkId,
+            linkNumber: idx,
+            title,
+            descriptor1,
+            descriptor2,
+            reliability,
+            threePhrases,
+            context,
+            content,
+            reliabilityText,
+            references,
+            hasCertsContent  // ✅ Flag pour savoir s'il y a du contenu enseignant
+          });
+
+          if (hasCertsContent) {
+            certsCount++;
+            console.log(`📝 CERTs stored: #${idx} "${title}" → ${linkId} → ${url}`);
+          } else {
+            console.log(`📄 Link stored: #${idx} "${title}" → ${linkId} (no teacher content)`);
+          }
+        }
+
+        console.log(`✅ CERTs data loaded: ${certsCount} links with teacher content, ${certsData.size} total links`);
+        console.log("📋 All URLs:", Array.from(certsData.keys()));
+      }catch(err){
+        console.error("❌ Failed to load CERTs data:", err);
+      }
+    }
+
+    /* ============================
+       Typography image component (vignette)
+    ============================ */
+    class TypographyImage {
+      constructor(container, options = {}) {
+        this.container = container;
+        this.text = options.text || container.dataset.text || '';
+        this.number = options.number || container.dataset.number || '';
+        this.maxFontSize = options.maxFontSize || 220;
+        this.minFontSize = options.minFontSize || 16;
+        if (!this.text) return;
+        this.init();
+      }
+      init() {
+        // Ajouter le numéro
+        if (this.number) {
+          this.numberEl = document.createElement("div");
+          this.numberEl.className = "typography-image__number";
+          this.numberEl.textContent = this.number;
+          this.container.appendChild(this.numberEl);
+        }
+        
+        // Ajouter le texte
+        this.textEl = document.createElement("div");
+        this.textEl.className = "typography-image__text";
+        this.textEl.textContent = this.text;
+        this.container.appendChild(this.textEl);
+        
+        this.fitText();
+        this.observeResize();
+      }
+      fitText() {
+        let min = this.minFontSize;
+        let max = this.maxFontSize;
+        const el = this.textEl;
+        const box = this.container;
+
+        while (min <= max) {
+          const mid = (min + max) >> 1;
+          el.style.fontSize = mid + "px";
+          if (el.scrollWidth <= box.clientWidth && el.scrollHeight <= box.clientHeight) {
+            min = mid + 1;
+          } else {
+            max = mid - 1;
+          }
+        }
+        el.style.fontSize = Math.max(this.minFontSize, max) + "px";
+      }
+      observeResize() {
+        this.resizeObserver = new ResizeObserver(() => {
+          requestAnimationFrame(() => this.fitText());
+        });
+        this.resizeObserver.observe(this.container);
+      }
+      static initNew(selector = '.typography-image') {
+        document.querySelectorAll(selector).forEach(container => {
+          if (container.dataset.typoInit === "1") return;
+          container.dataset.typoInit = "1";
+          new TypographyImage(container);
+        });
+      }
+    }
+
+    function gradientForLinkId(linkId){
+      const n = Number(linkNumber(linkId));
+      if (!isFinite(n)) return "linear-gradient(135deg, #667eea, #764ba2)";
+      const palettes = [
+        ["#667eea", "#764ba2"],
+        ["#4facfe", "#00f2fe"],
+        ["#f093fb", "#f5576c"],
+        ["#43e97b", "#38f9d7"],
+        ["#fa709a", "#fee140"],
+        ["#30cfd0", "#330867"],
+        ["#a1c4fd", "#c2e9fb"],
+        ["#fbc2eb", "#a6c1ee"],
+        ["#fddb92", "#d1fdff"],
+      ];
+      const p = palettes[(n - 1) % palettes.length];
+      return `linear-gradient(135deg, ${p[0]}, ${p[1]})`;
+    }
+
+    /* ============================
+       Grouping logic
+       -> 1 lien = 1 section
+       -> 1 couple (rel + first + last) = 1 carte (desc-card)
+    ============================ */
+    function groupRows(rows){
+      const byLink = new Map();
+
+      for (const r of rows){
+        const linkId = normalizeLinkId(r) || "link-?";
+
+        const title = String(r.link_title || "(Sans titre)");
+        const url = String(r.link_url || "");
+        const href = url && /^https?:\/\//i.test(url) ? url : "";
+
+        if (!byLink.has(linkId)){
+          byLink.set(linkId, {
+            link_id: linkId,
+            link_title: title,
+            link_href: href,
+            rows: []
+          });
+        }
+
+        const slot = byLink.get(linkId);
+        if (slot){
+          if ((slot.link_title === "(Sans titre)" || !slot.link_title) && title && title !== "(Sans titre)") slot.link_title = title;
+          if (!slot.link_href && href) slot.link_href = href;
+          slot.rows.push(r);
+        }
+      }
+
+      const linkGroups = [];
+      for (const obj of byLink.values()){
+        const byDesc = new Map();
+
+        // ✅ Filtrer les rows synthétiques (sans descripteurs)
+        const validRows = obj.rows.filter(r => {
+          const hasDescriptors = r.first_label || r.last_label;
+          return hasDescriptors;
+        });
+
+        for (const r of validRows){
+          const rel = String(r.reliability || "");
+          const firstLabel = String(r.first_label || "");
+          const lastLabel  = String(r.last_label  || "");
+          const key = [rel, firstLabel, lastLabel].join("||");
+
+          const firstIcon = pickFirstIcon(r) || iconForLabel(firstLabel);
+          const lastIcon  = pickLastIcon(r)  || iconForLabel(lastLabel);
+
+          if (!byDesc.has(key)){
+            byDesc.set(key, {
+              rel,
+              relClass: toRelClass(rel),
+              firstLabel,
+              lastLabel,
+              firstIcon,
+              lastIcon,
+              users: []
+            });
+          }
+
+          const nick = normalizeNick(r.user_id);
+          const comment = String(r.comment || "").trim();
+
+          byDesc.get(key).users.push({ nick, comment });
+        }
+
+        const descGroups = Array.from(byDesc.values()).sort((a,b) => {
+          const rank = (x) => x === "good" ? 0 : x === "mid" ? 1 : x === "bad" ? 2 : 9;
+          const rr = rank(a.rel) - rank(b.rel);
+          if (rr) return rr;
+          const s1 = (a.firstLabel + " " + a.lastLabel).toLowerCase();
+          const s2 = (b.firstLabel + " " + b.lastLabel).toLowerCase();
+          return s1.localeCompare(s2);
+        });
+
+        linkGroups.push({
+          link_id: obj.link_id,
+          link_title: obj.link_title,
+          link_href: obj.link_href,
+          descGroups
+        });
+      }
+
+      linkGroups.sort((a,b) => {
+        const ka = linkSortKey(a.link_id);
+        const kb = linkSortKey(b.link_id);
+        if (ka !== kb) return ka - kb;
+        return String(a.link_id).localeCompare(String(b.link_id));
+      });
+
+      return linkGroups;
+    }
+
+    function renderLinkGroup(g){
+      const href = g.link_href || "";
+      const title = String(g.link_title || "(Sans titre)");
+      
+      // ✅ MODIFIÉ: Chercher le numéro dans CERTs
+      const normalizedHref = normalizeUrl(href) || href;
+      const certs = certsData.get(normalizedHref);
+      const num = certs?.linkNumber || linkNumber(g.link_id);  // Fallback sur ancien système
+      
+      console.log(`🔍 Looking for CERTs: ${g.link_id} → "${title}"`);
+      console.log(`   URL normalisée: ${normalizedHref}`);
+      console.log(`   CERTs trouvé: ${!!certs}, Numéro: ${num}`);
+
+      // ✅ NOUVEAU: Entourer l'image d'un lien
+      const media = `
+        <div class="link-media">
+          <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">
+            <div
+              class="typography-image image-cover"
+              data-text="${escapeHtml(title)}"
+              data-number="${escapeHtml(num)}"
+              style="background: ${escapeHtml(gradientForLinkId(g.link_id))};"
+            ></div>
+          </a>
+        </div>
+      `;
+
+      // ✅ Chercher les données CERTs par URL normalisée
+      const hasCertsContent = certs?.hasCertsContent || false;  // ✅ Vérifier le flag
+      
+      if (hasCertsContent) {
+        console.log(`✅ Found teacher content for: ${title} (numéro ${num})`);
+      } else {
+        console.log(`ℹ️ No teacher content for: ${title} (numéro ${num})`);
+      }
+
+      let certsHtml = "";
+      if (hasCertsContent) {  // ✅ MODIFIÉ: Afficher la flèche QUE s'il y a du contenu enseignant
+        const firstIcon = certs.descriptor1 ? iconForLabel(certs.descriptor1) : "";
+        const lastIcon = certs.descriptor2 ? iconForLabel(certs.descriptor2) : "";
+        const relClass = toRelClass(certs.reliability);  // ✅ Classe de couleur selon fiabilité
+
+        const descriptorsHtml = (certs.descriptor1 || certs.descriptor2) ? `
+          <div class="certs-block certs-block--purple">
+            <div class="certs-descriptors">
+              ${certs.descriptor1 ? `
+                <div class="certs-descriptor-pill ${relClass}">
+                  ${firstIcon ? `<img src="${escapeHtml(firstIcon)}" alt="" />` : ""}
+                  <span>${escapeHtml(certs.descriptor1)}</span>
+                </div>
+              ` : ""}
+              ${certs.descriptor2 ? `
+                <div class="certs-descriptor-pill ${relClass}">
+                  ${lastIcon ? `<img src="${escapeHtml(lastIcon)}" alt="" />` : ""}
+                  <span>${escapeHtml(certs.descriptor2)}</span>
+                </div>
+              ` : ""}
+            </div>
+          </div>
+        ` : "";
+
+        // Nettoyer le texte : supprimer les puces/bullets en début de ligne
+        function stripBullets(str){
+          return String(str || "").split("\n")
+            .map(line => line.replace(/^\s*[-•\*·–—]\s*/, "").trim())
+            .join("\n")
+            .trim();
+        }
+
+        // Construire les bullet points à partir de threePhrases (séparés par \n ou par numéros)
+        const threePhrasesBullets = (() => {
+          if (!certs.threePhrases) return "";
+          const raw = certs.threePhrases.trim();
+          let items = raw.split(/\n+/)
+            .map(s => stripBullets(s.replace(/^\s*\d+[\.\)]\s*/, "")))
+            .filter(Boolean);
+          if (items.length === 0) return "";
+          return `<ul class="certs-bullets">${items.map(i => `<li>${escapeHtml(i)}</li>`).join("")}</ul>`;
+        })();
+
+        const threePhrasesHtml = threePhrasesBullets ? `
+          <div class="certs-block certs-block--purple">
+            ${threePhrasesBullets}
+          </div>
+        ` : "";
+
+        // Construire les références numérotées automatiquement
+        const referencesHtml = (() => {
+          if (!certs.references) return "";
+          const raw = certs.references.trim();
+          // Découper par saut de ligne, supprimer puces et numérotations existantes
+          const items = raw.split(/\n+/)
+            .map(s => stripBullets(s.replace(/^\s*\d+[\.\)]\s*/, "")))
+            .filter(Boolean);
+          if (items.length === 0) return "";
+          const listHtml = items.map((item, i) =>
+            `<li><span class="certs-ref-num">${i + 1}.</span> ${escapeHtml(item)}</li>`
+          ).join("");
+          return `<div class="certs-ref-label">Références</div><ol class="certs-ref-list">${listHtml}</ol>`;
+        })();
+
+        // Bloc texte : Contexte + Contenu + Fiabilité (texte simple, sans puces)
+        const textParts = [
+          certs.context,
+          certs.content,
+          certs.reliabilityText,
+        ].filter(Boolean).map(t => escapeHtml(stripBullets(t)));
+
+        const textBlockHtml = (textParts.length || referencesHtml) ? `
+          <div class="certs-block certs-block--purple">
+            ${textParts.length ? `<div class="certs-section-content">${textParts.join("<br/><br/>")}</div>` : ""}
+            ${referencesHtml}
+          </div>
+        ` : "";
+
+        certsHtml = `
+          <div class="certs-toggle" data-link-id="${escapeHtml(g.link_id)}">
+            <span style="font-size:12px; font-weight:850; letter-spacing:0.05em; opacity:.6; margin-right:6px;">CERT</span>
+            <span class="certs-toggle-icon">▼</span>
+          </div>
+          <div class="certs-content" data-link-id="${escapeHtml(g.link_id)}">
+            ${descriptorsHtml}
+            ${threePhrasesHtml}
+            ${textBlockHtml}
+          </div>
+        `;
+      }
+
+      const cardsHtml = `
+        <div class="desc-grid">
+          ${g.descGroups.map((dg) => {
+            const firstIcon = dg.firstIcon ? `<img src="${escapeHtml(dg.firstIcon)}" alt="" />` : "";
+            const lastIcon  = dg.lastIcon  ? `<img src="${escapeHtml(dg.lastIcon)}" alt="" />` : "";
+
+            const usersHtml = `
+              <div class="who-list">
+                ${dg.users.map((u) => {
+                  const hasLongComment = u.comment && u.comment.length > 80;
+                  return `
+                  <div class="who-item">
+                    <div class="who-top">
+                      <span class="nick">${escapeHtml(u.nick)}</span>
+                    </div>
+                    ${u.comment ? `
+                      <div class="comment-wrap">
+                        <div class="comment">${escapeHtml(u.comment)}</div>
+                        ${hasLongComment ? `
+                          <button class="comment-toggle" type="button">
+                            <span class="comment-toggle-label">Voir plus</span>
+                            <span class="comment-toggle-icon">▼</span>
+                          </button>
+                        ` : ""}
+                      </div>
+                    ` : ""}
+                  </div>
+                `}).join("")}
+              </div>
+            `;
+
+            return `
+              <div class="desc-card ${dg.relClass}">
+                <div class="desc-card-header">
+                  <div class="preview-pill">
+                    ${firstIcon}
+                    <span>${escapeHtml(dg.firstLabel || "—")}</span>
+                  </div>
+                  <span class="desc-sep">·</span>
+                  <div class="preview-pill">
+                    ${lastIcon}
+                    <span>${escapeHtml(dg.lastLabel || "—")}</span>
+                  </div>
+                </div>
+                ${usersHtml}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      return `
+        <section class="link-group" data-link-id="${escapeHtml(g.link_id)}">
+          ${media}
+          ${certsHtml}
+          ${g.descGroups.length ? cardsHtml : `<div class="muted-note">Aucun résultat d'élève pour ce lien.</div>`}
+        </section>
+      `;
+    }
+
+    function render(reset = false){
+      if (!feedEl) return;
+
+      const filteredRows = allRows
+        .filter(r => rowMatchesRel(r, activeRel));
+
+      const grouped = groupRows(filteredRows);
+
+      if (reset){
+        shownLinks = 0;
+        feedEl.innerHTML = "";
+      }
+
+      const nextGroups = grouped.slice(shownLinks, shownLinks + DEFAULT_LINKS_LIMIT);
+
+      if (!shownLinks && !nextGroups.length){
+        feedEl.innerHTML = `<div class="error-box">Aucun résultat.</div>`;
+        if (loadingEl) loadingEl.style.display = "none";
+        return;
+      }
+
+      feedEl.insertAdjacentHTML("beforeend", nextGroups.map(renderLinkGroup).join(""));
+      shownLinks += nextGroups.length;
+
+      TypographyImage.initNew(".typography-image");
+
+      // Toggle commentaires longs
+      document.querySelectorAll(".comment-toggle").forEach(btn => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = "1";
+        btn.addEventListener("click", () => {
+          const comment = btn.closest(".comment-wrap")?.querySelector(".comment");
+          if (!comment) return;
+          const isOpen = comment.classList.contains("is-expanded");
+          comment.classList.toggle("is-expanded", !isOpen);
+          btn.classList.toggle("is-open", !isOpen);
+          btn.querySelector(".comment-toggle-label").textContent = isOpen ? "Voir plus" : "Voir moins";
+        });
+      });
+
+      // ✅ Ajouter les event listeners pour les toggles CERTs
+      document.querySelectorAll(".certs-toggle").forEach(toggle => {
+        toggle.addEventListener("click", () => {
+          const linkId = toggle.getAttribute("data-link-id");
+          const content = document.querySelector(`.certs-content[data-link-id="${linkId}"]`);
+          
+          if (content) {
+            const isOpen = content.classList.contains("is-open");
+            content.classList.toggle("is-open", !isOpen);
+            toggle.classList.toggle("is-open", !isOpen);
+          }
+        });
+      });
+
+      if (loadingEl) loadingEl.style.display = "none";
+    }
+
+    async function fetchJsonLoose(url){
+      const res = await fetch(url, { cache: "no-store" });
+      const text = await res.text();
+
+      if (!res.ok){
+        const snippet = text.slice(0, 600);
+        throw new Error(`HTTP ${res.status} – ${snippet}`);
+      }
+
+      try{
+        return JSON.parse(text);
+      }catch{
+        const snippet = text.slice(0, 900);
+        throw new Error("Réponse non-JSON.\n\n" + snippet);
+      }
+    }
+
+    function normalizeRows(payload){
+      if (payload && Array.isArray(payload.rows)) return payload.rows;
+      if (Array.isArray(payload)) return payload;
+      return [];
+    }
+
+    async function loadFeed(){
+      if (feedEl) feedEl.innerHTML = "";
+
+      const qs = new URLSearchParams({
+        token: FEED_TOKEN,
+        action: "feed",
+        limit: String(MAX_LIMIT)
+      });
+
+      const url = `${FEED_ENDPOINT}?${qs.toString()}`;
+      const payload = await fetchJsonLoose(url);
+
+      allRows = normalizeRows(payload);
+      render(true);
+    }
+
+    async function loadAll(){
+      if (feedEl) feedEl.innerHTML = "";
+      
+      // Charger CERTs d'abord (qui contient tous les liens avec leurs numéros)
+      await loadCertsData();
+      
+      // Ensuite charger le feed (résultats des élèves)
+      const qs = new URLSearchParams({
+        token: FEED_TOKEN,
+        action: "feed",
+        limit: String(MAX_LIMIT)
+      });
+
+      const url = `${FEED_ENDPOINT}?${qs.toString()}`;
+      const payload = await fetchJsonLoose(url);
+
+      const rawFeedRows = normalizeRows(payload);
+
+      // ✅ Normaliser les link_id de tous les rows élèves via urlToLinkId (hash FNV1a)
+      const feedRows = rawFeedRows.map(r => {
+        const rawUrl = String(r.link_url || "").trim();
+        const normUrl = rawUrl ? (normalizeUrl(rawUrl) || rawUrl) : "";
+        const normalizedLinkId = normUrl ? urlToLinkId(normUrl) : String(r.link_id || r.linkId || "").trim();
+        return { ...r, link_id: normalizedLinkId };
+      });
+
+      // ✅ Ajouter les liens avec contenu CERTs qui n'ont pas de résultats élèves
+      const feedUrls = new Set();
+      for (const row of feedRows) {
+        const url = String(row.link_url || "").trim();
+        if (url) feedUrls.add(normalizeUrl(url) || url);
+      }
+      
+      // Créer des rows synthétiques UNIQUEMENT pour les liens avec contenu CERTs
+      const syntheticRows = [];
+      
+      for (const [url, cert] of certsData.entries()) {
+        // ✅ Ajouter uniquement si a du contenu CERTs ET pas de résultats élèves
+        if (cert.hasCertsContent && !feedUrls.has(url)) {
+          syntheticRows.push({
+            user_id: "",
+            link_id: cert.linkId,
+            link_title: cert.title || "(Sans titre)",
+            link_url: url,
+            first_label: "",
+            last_label: "",
+            reliability: "",
+            comment: "",
+            is_synthetic: true  // ✅ Flag pour identifier les rows synthétiques
+          });
+        }
+      }
+      
+      allRows = [...feedRows, ...syntheticRows];
+      
+      console.log(`📊 Feed: ${feedRows.length} avec résultats élèves + ${syntheticRows.length} avec contenu CERTs uniquement = ${allRows.length} total`);
+      
+      // Render avec les données CERTs déjà chargées
+      render(true);
+    }
+
+    document.querySelectorAll(".chip[data-rel]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeRel = btn.getAttribute("data-rel") || "";
+        document.querySelectorAll(".chip[data-rel]").forEach((b) => {
+          b.setAttribute("aria-pressed", (b === btn) ? "true" : "false");
+        });
+        render(true);
+      });
+    });
+
+
+    document.getElementById("hardReloadBtn")?.addEventListener("click", () => {
+      location.reload(true);
+    });
+
+    try{
+      await loadAll();
+    }catch(err){
+      console.error(err);
+      if (feedEl) {
+        feedEl.innerHTML = `<div class="error-box">Impossible de charger le feed.</div>`;
+      }
+      if (loadingEl) loadingEl.style.display = "none";
+    }
+  </script>
+</body>
+</html>

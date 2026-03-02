@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Liens — Certify</title>
+
+  <link rel="stylesheet" href="../assets/css/main.css" />
+
+  <style>
+    .page-lead{
+      margin: 8px 0 14px 0;
+      color: var(--muted);
+      max-width: 820px;
+    }
+
+    #linksList{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Ligne: lien à gauche, résultat à droite */
+    .page-row{
+      display: flex;
+      gap: 12px;
+      align-items: stretch; /* => colonnes même hauteur */
+    }
+
+    .page-row .link-col{
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .page-row .result-col{
+      flex: 0 0 320px;
+      max-width: 320px;
+      display: flex;
+      align-items: stretch;
+    }
+
+    /* FIX hauteur: le lien remplit la hauteur du "Résultat" */
+    .page-row .link-col .choice-item{
+      width: 100%;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .page-row .link-col a.choice-btn{
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+
+    .page-row .link-col a.choice-btn .label-wrap{ gap: 6px; }
+
+    /* ✅ Light mode: result box must be light */
+    .result-box{
+      height: 100%;
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.92);
+      padding: 12px 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .result-box.is-empty{ opacity: .95; }
+
+    .result-header{
+      margin-bottom: 10px;
+    }
+
+    .result-header .result-title{
+      font-weight: 750;
+      letter-spacing: -0.01em;
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .result-pills{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0 0 10px 0;
+    }
+
+    /* ✅ IMPORTANT: taille des icônes dans Liens.html
+       (dans main.css c'est limité à #resultGraphic, donc ici on force) */
+    .result-box .result-pill .result-icon,
+    .result-box .result-pill .icon{
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      display: block;
+      opacity: .92;
+      filter: grayscale(1) brightness(0) opacity(.70);
+    }
+
+    /* ✅ IMPORTANT: couleurs fiabilité dans Liens.html
+       (on réutilise les variables de main.css) */
+    .result-box.rel-good .result-pill{
+      border-color: var(--rel-good-border);
+      background: var(--rel-good-bg);
+    }
+    .result-box.rel-mid .result-pill{
+      border-color: var(--rel-mid-border);
+      background: var(--rel-mid-bg);
+    }
+    .result-box.rel-bad .result-pill{
+      border-color: var(--rel-bad-border);
+      background: var(--rel-bad-bg);
+    }
+
+    .result-comment{
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      margin-top: 8px;
+    }
+
+    .muted-note{
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 10px;
+    }
+
+    /* ===== Mode admin ===== */
+    .admin-banner{
+      display: none;
+      background: rgba(239,68,68,.10);
+      border: 1px solid rgba(239,68,68,.30);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      font-weight: 850;
+      color: rgba(185,28,28,1);
+      letter-spacing: 0.01em;
+    }
+    body.admin-mode .admin-banner{ display: block; }
+
+    .admin-reset-btn{
+      display: none;
+      margin-top: 10px;
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.08);
+      color: rgba(185,28,28,1);
+      font-size: 0.82rem;
+      font-weight: 850;
+      cursor: pointer;
+      text-align: center;
+      transition: background .15s ease;
+    }
+    .admin-reset-btn:hover{ background: rgba(239,68,68,.16); }
+    body.admin-mode .admin-reset-btn{ display: block; }
+
+    .error-box{
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.10);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--text);
+    }
+
+    @media (max-width: 900px){
+      .page-row{ flex-direction: column; }
+      .page-row .result-col{ max-width: none; flex: 1 1 auto; }
+
+      /* en mobile, on évite des hauteurs "forcées" */
+      .page-row .link-col,
+      .page-row .result-col,
+      .page-row .link-col .choice-item,
+      .page-row .link-col a.choice-btn{
+        display: block;
+        height: auto;
+      }
+      .page-row .link-col a.choice-btn{
+        align-items: flex-start;
+      }
+    }
+
+        /* ===== Liens.html — force reliability tints using main.css variables ===== */
+    .result-box.rel-good .result-pill,
+    .result-box.rel-good .preview-pill{
+      border-color: var(--rel-good-border) !important;
+      background: var(--rel-good-bg) !important;
+    }
+
+    .result-box.rel-mid .result-pill,
+    .result-box.rel-mid .preview-pill{
+      border-color: var(--rel-mid-border) !important;
+      background: var(--rel-mid-bg) !important;
+    }
+
+    .result-box.rel-bad .result-pill,
+    .result-box.rel-bad .preview-pill{
+      border-color: var(--rel-bad-border) !important;
+      background: var(--rel-bad-bg) !important;
+    }
+
+    /* keep icons small inside result pills on Liens.html */
+    .result-box .result-pill .result-icon,
+    .result-box .preview-pill img{
+      width: 22px !important;
+      height: 22px !important;
+      flex: 0 0 22px !important;
+      display: block;
+      opacity: .92;
+      filter: grayscale(1) brightness(0) opacity(.70);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav></nav>
+  </header>
+
+  <main>
+    <h1>Liens à analyser</h1>
+    <p class="page-lead">
+      Sélectionne un lien : il s'ouvre dans une nouvelle fenêtre, et la Machine à descripteurs s'ouvre à droite.
+      Une fois le résultat obtenu, il s'affiche ici, à droite du lien. ⚠️ Il faut autoriser ton navigateur à ouvrir les fenêtres pop-ups.
+    </p>
+
+    <section class="card">
+      <div class="admin-banner">⚠️ Mode admin actif — les boutons de réinitialisation sont visibles.</div>
+      <div id="linksList"></div>
+      <div id="status" class="muted-note"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderNav } from "../assets/js/nav.js";
+    renderNav(location.pathname);
+
+    /* ============================
+       CONFIG Google Sheet (source)
+    ============================ */
+    const SHEET_ID = "1B9hSsJXSDRVh8vyo81pvc9G000JrN6WeQdDPq4Xb-cQ";
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+    const MAX_ITEMS = 15;
+
+    /* ============================
+       ARCHIVE (Apps Script)
+    ============================ */
+    const ARCHIVE_ENDPOINT = "https://script.google.com/macros/s/AKfycbw85ZgY-ayPxzfZyCTv7Rh1HSmjXSHaYPkj-GIFXkrneTNBRNVKEezb8q8p1RM7og/exec";
+    const ARCHIVE_TOKEN = "60b66cdf-3982-4e5c-9f51-z456f0da873b";
+
+    const USER_ID_KEY = "certify_user_id_v1";
+
+    const ARCHIVE_QUEUE_KEY = "certify_archive_queue_v3";
+    const ARCHIVE_SENT_KEY  = "certify_archive_sent_v3";
+    const ARCHIVE_SENT_MAX  = 800;
+
+    function safeJsonParse(raw, fallback){
+      try{ return JSON.parse(raw); }catch{ return fallback; }
+    }
+
+    function normalizeComment(raw){
+      let t = String(raw || "").replace(/\r\n?/g, "\n");
+      t = t.replace(/^\s*\n+/, "").replace(/\n+\s*$/, "");
+      t = t
+        .split("\n")
+        .map((line) => line.replace(/^[ \t]+/g, ""))
+        .join("\n");
+      return t.trimEnd();
+    }
+
+    // FNV-1a 32-bit => hex
+    function fnv1aHex(str){
+      let h = 0x811c9dc5;
+      for (let i = 0; i < str.length; i++){
+        h ^= str.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+      }
+      return ("0000000" + h.toString(16)).slice(-8);
+    }
+
+    // ✅ NEW: Créer un link_id unique à partir de l'URL
+    function urlToLinkId(url){
+      const hash = fnv1aHex(url);
+      return `link_${hash}`;
+    }
+
+    function ensureUserId(){
+      try{
+        const existing = localStorage.getItem(USER_ID_KEY);
+        if (existing) return existing;
+
+        const words = [
+          "amitié","analyse","calme","certitude","choix","clarté","collaboration","comparaison",
+          "compréhension","confiance","connaissance","contenu","contexte","courage","démocratie",
+          "donnée","droits","égalité","ensemble","exploration","fiabilité","latérale","liberté",
+          "lien","paix","patience","pensée","perspective","preuve","recherche","référence",
+          "réflexion","solidarité","science","source","vérité"
+        ];
+        const w = words[Math.floor(Math.random()*words.length)];
+        const n = String(Math.floor(Math.random()*99)+1);
+        const id = `${w}${n}`;
+
+        localStorage.setItem(USER_ID_KEY, id);
+        return id;
+      }catch{
+        return "User-" + String(Math.floor(Math.random()*9000)+1000);
+      }
+    }
+
+    function dedupKeyFor(userId, linkId){
+      return fnv1aHex(`${userId}||${linkId}`);
+    }
+
+    function buildArchiveId(data){
+      const userId = String(data?.user_id || "");
+      const linkId = String(data?.link_id || "");
+      const rel = String(data?.reliability || "");
+      const f = String(data?.first_label || "");
+      const l = String(data?.last_label || "");
+      const c = normalizeComment(data?.comment || "");
+      return fnv1aHex([userId, linkId, f, l, rel, c].join("||"));
+    }
+
+    function readSent(){
+      const obj = safeJsonParse(localStorage.getItem(ARCHIVE_SENT_KEY) || "{}", {});
+      return (obj && typeof obj === "object") ? obj : {};
+    }
+    function writeSent(obj){
+      try{ localStorage.setItem(ARCHIVE_SENT_KEY, JSON.stringify(obj || {})); }catch{}
+    }
+    function markSent(archiveId){
+      const sent = readSent();
+      sent[archiveId] = Date.now();
+      const entries = Object.entries(sent).sort((a,b) => (b[1]||0) - (a[1]||0));
+      const trimmed = entries.slice(0, ARCHIVE_SENT_MAX);
+      const out = {};
+      for (const [k,v] of trimmed) out[k] = v;
+      writeSent(out);
+    }
+    function isSent(archiveId){
+      const sent = readSent();
+      return !!sent[archiveId];
+    }
+
+    function readArchiveQueue(){
+      const arr = safeJsonParse(localStorage.getItem(ARCHIVE_QUEUE_KEY) || "[]", []);
+      return Array.isArray(arr) ? arr : [];
+    }
+    function writeArchiveQueue(arr){
+      try{ localStorage.setItem(ARCHIVE_QUEUE_KEY, JSON.stringify(arr || [])); }catch{}
+    }
+    function queueHasId(queue, archiveId){
+      return queue.some((x) => x && String(x.archive_id || "") === String(archiveId || ""));
+    }
+    function enqueueArchive(payload){
+      const q = readArchiveQueue();
+      if (queueHasId(q, payload.archive_id)) return;
+      q.push(payload);
+      writeArchiveQueue(q);
+    }
+
+    async function postArchiveNoCors(jsonPayload){
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+
+      try{
+        await fetch(ARCHIVE_ENDPOINT, {
+          method: "POST",
+          mode: "no-cors",
+          credentials: "omit",
+          cache: "no-store",
+          body: JSON.stringify(jsonPayload),
+          signal: ctrl.signal
+        });
+        return true;
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    async function flushArchiveQueue(){
+      const q = readArchiveQueue();
+      if (!q.length) return;
+
+      const remaining = [];
+      for (const item of q){
+        const archiveId = String(item?.archive_id || "");
+        if (!archiveId) continue;
+        if (isSent(archiveId)) continue;
+
+        try{
+          const ok = await postArchiveNoCors(item.body);
+          if (ok) markSent(archiveId);
+          else remaining.push(item);
+        }catch{
+          remaining.push(item);
+        }
+      }
+      writeArchiveQueue(remaining);
+    }
+
+    window.addEventListener("online", () => { flushArchiveQueue(); });
+    flushArchiveQueue();
+
+    /* ============================
+       Sidecar + windows
+    ============================ */
+    const SIDECAR_URL = "/descripteurs/sidecar.html";
+    const SIDE_W = 420;
+
+    const ARTICLE_WIN_NAME = "certify_article";
+    const SIDECAR_WIN_NAME = "certify_sidecar";
+
+    /* ============================
+       Storage (résultats visibles)
+       ⚠️ IMPORTANT: on ne stocke que les résultats publiés
+    ============================ */
+    const STORAGE_PREFIX = "certify_page_result_";
+    const storageKeyForId = (id) => STORAGE_PREFIX + id;
+
+    function saveResult(id, payload){
+      try{ localStorage.setItem(storageKeyForId(id), JSON.stringify(payload)); }catch{}
+    }
+    function loadResult(id){
+      try{
+        const raw = localStorage.getItem(storageKeyForId(id));
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
+    }
+    function clearResult(id){
+      try{ localStorage.removeItem(storageKeyForId(id)); }catch{}
+    }
+
+    /* ============================
+       Helpers
+    ============================ */
+    function isMobile(){
+      return window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    }
+
+    function normalizeUrl(raw){
+      let u = String(raw || "").trim();
+      if (!u) return null;
+      if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      try{
+        const url = new URL(u);
+        if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+        return url.toString();
+      }catch{
+        return null;
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getScreenBox(){
+      const W = Math.max(800, window.screen?.availWidth || window.innerWidth || 1200);
+      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+      const X = window.screen?.availLeft ?? 0;
+      const Y = window.screen?.availTop ?? 0;
+      return { W, H, X, Y };
+    }
+
+    function openArticleLeft(url, sideW){
+      const { W, H, X, Y } = getScreenBox();
+      const gap = 10;
+
+      const articleW = Math.max(520, W - sideW - gap);
+      const articleH = H;
+
+      const left = X;
+      const top  = Y;
+
+      const features = [
+        "popup=yes",
+        `width=${articleW}`,
+        `height=${articleH}`,
+        `left=${left}`,
+        `top=${top}`,
+        "resizable=yes",
+        "scrollbars=yes"
+      ].join(",");
+
+      const win = window.open("about:blank", ARTICLE_WIN_NAME, features);
+      if (win){
+        try { win.focus(); } catch {}
+        try { win.location.href = url; } catch {}
+      }
+      return win;
+    }
+
+    function openSidecarRight(context, sideW){
+      const { W, H, X, Y } = getScreenBox();
+
+      const finalSideW = Math.min(sideW || SIDE_W, Math.floor(W * 0.45));
+      const sideH = H;
+
+      const left = X + (W - finalSideW);
+      const top  = Y;
+
+      // ✅ Utiliser context.number directement
+      const linkNumber = context.number || "?";
+
+      const qs = new URLSearchParams({
+        id: context.id,
+        title: context.title,
+        url: context.url,
+        number: linkNumber
+      });
+
+      const features = [
+        "popup=yes",
+        `width=${finalSideW}`,
+        `height=${sideH}`,
+        `left=${left}`,
+        `top=${top}`,
+        "resizable=yes",
+        "scrollbars=yes"
+      ].join(",");
+
+      const win = window.open(`${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME, features);
+      if (win) { try { win.focus(); } catch {} }
+      return win;
+    }
+
+    function openUrlAndSidecar(context){
+      if (isMobile()){
+        alert("Désolé! Cette fonction n'est accessible que depuis un ordinateur desktop.");
+        return;
+      }
+
+      const sideW = SIDE_W;
+
+      const art = openArticleLeft(context.url, sideW);
+      if (!art){
+        alert("La fenêtre de l'article a été bloquée. Autorise les popups pour ce site.");
+        return;
+      }
+
+      const side = openSidecarRight(context, sideW);
+      if (!side){
+        alert("La fenêtre Certify a été bloquée. Autorise les popups pour ce site.");
+      }
+    }
+
+    /* ============================
+       CSV parser simple
+    ============================ */
+    function parseCSV(text){
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++){
+        const ch = text[i];
+        const next = text[i + 1];
+
+        if (ch === '"'){
+          if (inQuotes && next === '"'){ cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+          continue;
+        }
+
+        if (!inQuotes && ch === ","){ row.push(cur); cur = ""; continue; }
+
+        if (!inQuotes && (ch === "\n" || ch === "\r")){
+          if (ch === "\r" && next === "\n") i++;
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+          continue;
+        }
+
+        cur += ch;
+      }
+
+      if (cur.length || row.length){ row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    /* ============================
+       Render
+    ============================ */
+    const listEl = document.getElementById("linksList");
+    const statusEl = document.getElementById("status");
+    const linkMeta = new Map(); // id -> { url, title }
+
+    function setStatus(msg){
+      if (statusEl) statusEl.textContent = msg || "";
+    }
+
+    function renderResultBox(id, initial){
+      const existing = loadResult(id);
+      const payload = existing || initial || null;
+
+      const relClass =
+        payload?.reliability === "good" ? "rel-good" :
+        payload?.reliability === "mid"  ? "rel-mid"  :
+        payload?.reliability === "bad"  ? "rel-bad"  : "";
+
+      const isEmpty = !payload?.firstLabel || !payload?.lastLabel;
+
+      const firstIcon = payload?.firstIcon || "";
+      const lastIcon  = payload?.lastIcon  || "";
+
+      const comment = (payload?.comment || "").trim();
+
+      return `
+        <div class="result-box ${relClass} ${isEmpty ? "is-empty" : ""}" data-result-for="${escapeHtml(id)}">
+          <div class="result-header">
+            <p class="result-title">Résultat</p>
+          </div>
+
+          ${
+            isEmpty ? `
+              <div class="result-comment" style="border-top:none; padding-top:0; margin-top:0;">
+                Pas encore de résultat.
+              </div>
+            ` : `
+              <div class="result-pills">
+                <div class="result-pill">
+                  ${firstIcon ? `<img class="result-icon" src="${escapeHtml(firstIcon)}" alt="" />` : ""}
+                  <span>${escapeHtml(payload.firstLabel)}</span>
+                </div>
+                <div class="result-pill">
+                  ${lastIcon ? `<img class="result-icon" src="${escapeHtml(lastIcon)}" alt="" />` : ""}
+                  <span>${escapeHtml(payload.lastLabel)}</span>
+                </div>
+              </div>
+
+              ${comment ? `<div class="result-comment">${escapeHtml(comment)}</div>` : ``}
+            `
+          }
+          <button class="admin-reset-btn" data-reset-id="${escapeHtml(id)}" type="button">↺ Réinitialiser ce résultat</button>
+        </div>
+      `;
+    }
+
+    function renderItems(items){
+      if (!listEl) return;
+
+      if (!items.length){
+        listEl.innerHTML = `<div class="error-box">Aucun lien valide trouvé dans le Google Sheet.</div>`;
+        return;
+      }
+
+      linkMeta.clear();
+      for (const it of items){
+        linkMeta.set(it.id, { url: it.url, title: it.title || "", number: it.n });
+      }
+
+      listEl.innerHTML = items.map((it) => {
+        const id = escapeHtml(it.id);
+        const titleEsc = escapeHtml(it.title || "(Sans titre)");
+        const urlEsc = escapeHtml(it.url);
+        const titleAttr = escapeHtml(it.title || "");
+
+        return `
+          <div class="page-row" data-row-id="${id}">
+            <div class="link-col">
+              <div class="choice-item">
+                <a
+                  class="btn choice-btn is-key"
+                  href="${urlEsc}"
+                  data-url="${urlEsc}"
+                  data-id="${id}"
+                  data-title="${titleAttr}"
+                >
+                  <span class="choice-left">
+                    <span class="label-wrap">
+                      <span class="label">${escapeHtml(it.n)}. ${titleEsc}</span>
+                      <span class="choice-def-inline">${urlEsc}</span>
+                    </span>
+                  </span>
+                  <span class="choice-right"></span>
+                </a>
+              </div>
+            </div>
+
+            <div class="result-col" id="result_${id}">
+              ${renderResultBox(it.id, null)}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      listEl.addEventListener("click", (e) => {
+        const a = e.target.closest("a[data-url][data-id]");
+        if (!a) return;
+        e.preventDefault();
+
+        const url = a.getAttribute("data-url");
+        const id = a.getAttribute("data-id");
+        const title = a.getAttribute("data-title") || "";
+
+        if (!url || !id) return;
+        
+        // ✅ Vérifier si un résultat existe déjà pour ce lien
+        const existingResult = loadResult(id);
+        if (existingResult && existingResult.firstLabel && existingResult.lastLabel) {
+          alert("Vous avez déjà choisi les descripteurs pour ce lien!");
+          return;
+        }
+        
+        // ✅ Récupérer le numéro depuis linkMeta
+        const meta = linkMeta.get(id) || {};
+        const linkNumber = meta.number || "?";
+        
+        openUrlAndSidecar({ id, title, url, number: linkNumber });
+      }, { passive: false });
+    }
+
+    async function loadFromSheet(){
+      setStatus("Chargement des liens…");
+
+      const res = await fetch(CSV_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("Impossible de télécharger le CSV du Google Sheet");
+
+      const csv = await res.text();
+      const rows = parseCSV(csv);
+
+      const cleaned = rows
+        .map(r => (r || []).map(x => String(x ?? "").trim()))
+        .filter(r => r.some(v => v.length));
+
+      const firstRow = cleaned[0] || [];
+      const looksHeader =
+        /titre|title/i.test(firstRow[0] || "") ||
+        /url|lien|link/i.test(firstRow[1] || "");
+
+      const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+
+      const items = [];
+      let idx = 0;
+
+      for (const r of dataRows){
+        if (items.length >= MAX_ITEMS) break;
+
+        const title = r[0] || "";
+        const rawUrl = r[1] || "";
+        const url = normalizeUrl(rawUrl);
+        if (!url) continue;
+
+        idx++;
+        // ✅ MODIFIÉ: Utiliser hash de l'URL au lieu de numéro séquentiel
+        const linkId = urlToLinkId(url);
+        items.push({ id: linkId, n: idx, title, url });
+      }
+
+      renderItems(items);
+      setStatus(`${items.length} lien(s) chargé(s).`);
+    }
+
+    /* ============================
+       Receive results (postMessage + fallback storage)
+       ✅ IMPORTANT: on IGNORE les previews (published=false)
+    ============================ */
+    const BROADCAST_PREFIX = "certify_broadcast_";
+
+    function isFinalPublish(data){
+      return data && data.type === "CERTIFY_RESULT" && data.published === true;
+    }
+
+    async function archivePublishedResult(data){
+      if (!isFinalPublish(data)) return;
+
+      const userId = ensureUserId();
+      const linkId = String(data.id || "");
+
+      const meta = linkMeta.get(linkId) || {};
+      const linkTitle =
+        String(data.title || data.link_title || "").trim() ||
+        String(meta.title || "").trim();
+
+      const linkUrl =
+        String(data.url || data.link_url || data.linkUrl || "").trim() ||
+        String(meta.url || "").trim();
+
+      const body = {
+        token: ARCHIVE_TOKEN,
+
+        user_id: userId,
+        link_id: linkId,
+        link_title: linkTitle,
+        link_url: linkUrl,
+
+        first_label: String(data.firstLabel || ""),
+        last_label: String(data.lastLabel || ""),
+        reliability: String(data.reliability || ""),
+        comment: normalizeComment(data.comment || ""),
+
+        dedup_key: dedupKeyFor(userId, linkId),
+
+        timestamp_client: new Date().toISOString(),
+        page_url: String(location.href || ""),
+        user_agent: String(navigator.userAgent || "")
+      };
+
+      const archiveId = buildArchiveId({
+        user_id: body.user_id,
+        link_id: body.link_id,
+        reliability: body.reliability,
+        first_label: body.first_label,
+        last_label: body.last_label,
+        comment: body.comment
+      });
+
+      if (isSent(archiveId)) return;
+
+      try{
+        const ok = await postArchiveNoCors(body);
+        if (ok) markSent(archiveId);
+      }catch{
+        enqueueArchive({ archive_id: archiveId, body });
+      }
+
+      flushArchiveQueue();
+    }
+
+    function handleIncomingResult(data){
+      if (!isFinalPublish(data)) return;
+
+      const id = data?.id;
+      if (!id) return;
+
+      saveResult(id, data);
+
+      const slot = document.getElementById(`result_${id}`);
+      if (slot) slot.innerHTML = renderResultBox(id, data);
+
+      archivePublishedResult(data);
+    }
+
+    window.addEventListener("message", (evt) => {
+      if (evt.origin !== window.location.origin) return;
+      const data = evt.data;
+      if (!data || data.type !== "CERTIFY_RESULT") return;
+      handleIncomingResult(data);
+    });
+
+    window.addEventListener("storage", (evt) => {
+      try{
+        const k = String(evt.key || "");
+        if (!k.startsWith(BROADCAST_PREFIX)) return;
+        if (!evt.newValue) return;
+
+        const data = JSON.parse(evt.newValue);
+        if (!data || data.type !== "CERTIFY_RESULT") return;
+
+        handleIncomingResult(data);
+      }catch{
+        // no-op
+      }
+    });
+
+    /* ============================
+       Mode admin
+    ============================ */
+    const isAdmin = new URLSearchParams(location.search).get("admin") === "1";
+    if (isAdmin) document.body.classList.add("admin-mode");
+
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".admin-reset-btn");
+      if (!btn) return;
+      const id = btn.getAttribute("data-reset-id");
+      if (!id) return;
+      if (!confirm("Réinitialiser le résultat pour ce lien ?")) return;
+      clearResult(id);
+      const slot = document.getElementById(`result_${id}`);
+      if (slot) slot.innerHTML = renderResultBox(id, null);
+    });
+
+    /* ============================
+       Init
+    ============================ */
+    try{
+      ensureUserId();
+      await loadFromSheet();
+    }catch(err){
+      console.error(err);
+      if (listEl) {
+        listEl.innerHTML = `
+          <div class="error-box">
+            Impossible de charger la liste depuis Google Sheet.<br/>
+            Vérifie que la feuille est bien en accès public (lecture) et que l'ID est correct.
+          </div>
+        `;
+      }
+      setStatus("");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>CERTs — Gestion des liens</title>
+
+  <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+
+  <style>
+    .page-lead{
+      margin: 8px 0 14px 0;
+      color: var(--muted);
+      max-width: 900px;
+    }
+
+    .form-section{
+      margin-bottom: 24px;
+    }
+
+    .form-section h3{
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .form-row{
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-row.two-cols > label{
+      flex: 1 1 0;
+    }
+
+    label{
+      display: block;
+    }
+
+    label small{
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .btn-row{
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .success-msg{
+      padding: 12px;
+      background: rgba(34,197,94,.15);
+      border: 1px solid rgba(34,197,94,.35);
+      border-radius: 12px;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .error-msg{
+      padding: 12px;
+      background: rgba(239,68,68,.15);
+      border: 1px solid rgba(239,68,68,.35);
+      border-radius: 12px;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    #loginSection{
+      max-width: 400px;
+      margin: 40px auto;
+    }
+
+    #certsContent{
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav></nav>
+  </header>
+
+  <main>
+    <!-- Section de connexion -->
+    <section id="loginSection">
+      <div class="card">
+        <h1>CERTs — Connexion</h1>
+        <p class="page-lead">Entrez le mot de passe pour accéder à la gestion des liens.</p>
+
+        <div id="loginError" class="error-msg"></div>
+
+        <form id="loginForm">
+          <label>
+            <small>Mot de passe</small>
+            <input id="passwordInput" type="password" placeholder="Mot de passe" required />
+          </label>
+
+          <div class="btn-row">
+            <button class="btn" type="submit">Se connecter</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Section principale (cachée par défaut) -->
+    <section id="certsContent">
+      <h1>CERTs — Gestion des liens</h1>
+      <p class="page-lead">
+        Ajoutez des liens et leurs descripteurs pour les élèves. Les données seront enregistrées dans la Google Sheet.
+      </p>
+
+      <div class="card">
+        <div id="successMsg" class="success-msg"></div>
+        <div id="errorMsg" class="error-msg"></div>
+
+        <form id="linkForm">
+          <!-- Informations de base -->
+          <div class="form-section">
+            <h3>Informations de base</h3>
+            
+            <label>
+              <small>Titre du lien</small>
+              <input id="titleInput" type="text" placeholder="Ex: L'eau bouillante gèle-t-elle instantanément au Canada ?" required />
+            </label>
+
+            <label style="margin-top: 12px;">
+              <small>URL</small>
+              <input id="urlInput" type="url" placeholder="https://..." required />
+            </label>
+          </div>
+
+          <!-- Descripteurs -->
+          <div class="form-section">
+            <h3>Descripteurs (bon résultat)</h3>
+            
+            <div class="form-row two-cols">
+              <label>
+                <small>Premier descripteur</small>
+                <select id="descriptor1Input" required>
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Journalisme">Journalisme</option>
+                  <option value="Science">Science</option>
+                  <option value="Gouvernement">Gouvernement</option>
+                  <option value="Divertissement">Divertissement</option>
+                  <option value="Organisation">Organisation</option>
+                  <option value="Individu">Individu</option>
+                  <option value="Inconnu">Inconnu</option>
+                </select>
+              </label>
+
+              <label>
+                <small>Deuxième descripteur</small>
+                <select id="descriptor2Input" required>
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Vulgarisation">Vulgarisation</option>
+                  <option value="Analyse">Analyse</option>
+                  <option value="Reportage">Reportage</option>
+                  <option value="Opinion">Opinion</option>
+                  <option value="Rumeur">Rumeur</option>
+                  <option value="Accrocheur">Accrocheur</option>
+                  <option value="Trompeur">Trompeur</option>
+                  <option value="Escroquerie">Escroquerie</option>
+                  <option value="Partisan">Partisan</option>
+                  <option value="Promotion">Promotion</option>
+                  <option value="Annonce">Annonce</option>
+                  <option value="Service">Service</option>
+                  <option value="Achat/Vente">Achat/Vente</option>
+                  <option value="Activisme">Activisme</option>
+                  <option value="Première main">Première main</option>
+                  <option value="Tutoriel">Tutoriel</option>
+                  <option value="Loisir">Loisir</option>
+                  <option value="Humour">Humour</option>
+                  <option value="Performance">Performance</option>
+                </select>
+              </label>
+            </div>
+
+            <label style="margin-top: 12px;">
+              <small>Fiabilité</small>
+              <select id="reliabilityInput" required>
+                <option value="">-- Sélectionner --</option>
+                <option value="Fiable">Fiable</option>
+                <option value="Indéterminé">Indéterminé</option>
+                <option value="Pas fiable">Pas fiable</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Contenus textuels -->
+          <div class="form-section">
+            <h3>Contenus pédagogiques</h3>
+
+            <label>
+              <small>3 Phrases</small>
+              <textarea id="threePhrasesInput" rows="3" placeholder="Sujet et source. Si utile, date de publication et auteur.&#10;Affirmations principales. Si utile, structure et style.&#10;Motivation de l'évaluation."></textarea>
+            </label>
+
+            <label style="margin-top: 12px;">
+              <small>Contexte</small>
+              <textarea id="contextInput" rows="4" placeholder="Présenter le sujet avec le contexte général. Décrire la source et ses caractéristiques. Indiquer la date de publication et l'auteur."></textarea>
+            </label>
+
+            <label style="margin-top: 12px;">
+              <small>Contenu</small>
+              <textarea id="contentInput" rows="4" placeholder="Discuter le contenu et les affirmations principales. Analyser la façon dont le contenu est structuré et présenté."></textarea>
+            </label>
+
+            <label style="margin-top: 12px;">
+              <small>Fiabilité (explication)</small>
+              <textarea id="reliabilityTextInput" rows="4" placeholder="Expliquer pourquoi vous pensez qu'elle est fiable, pas fiable ou indéterminée."></textarea>
+            </label>
+
+            <label style="margin-top: 12px;">
+              <small>Références</small>
+              <textarea id="referencesInput" rows="4" placeholder="Fournir les moyens de vérifier vos arguments. Utilisez des hyperliens."></textarea>
+            </label>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" type="submit">Ajouter le lien</button>
+            <button class="btn" type="button" id="resetBtn">Réinitialiser</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderNav } from "/descripteurs/assets/js/nav.js";
+    renderNav(location.pathname);
+
+    /* ============================
+       Configuration
+    ============================ */
+    const PASSWORD = "cert2026";  // ⚠️ Change ce mot de passe !
+    const SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycby9TTZWVk2cbzrYR8iuie9WBkslzHCvLQ5Q5RQlRHTT3OpIHZ52D6RoaScLaAHNTn2WZw/exec";
+    const SECRET_TOKEN = "09a761d6-a4fd-4z3a-94c4-29aed7fzefa2";  // Doit correspondre au token dans le script
+
+    const loginSection = document.getElementById("loginSection");
+    const certsContent = document.getElementById("certsContent");
+    const loginForm = document.getElementById("loginForm");
+    const loginError = document.getElementById("loginError");
+    const passwordInput = document.getElementById("passwordInput");
+
+    const linkForm = document.getElementById("linkForm");
+    const successMsg = document.getElementById("successMsg");
+    const errorMsg = document.getElementById("errorMsg");
+    const resetBtn = document.getElementById("resetBtn");
+
+    /* ============================
+       Authentification
+    ============================ */
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      if (passwordInput.value === PASSWORD) {
+        loginSection.style.display = "none";
+        certsContent.style.display = "block";
+        sessionStorage.setItem("certs_authenticated", "true");
+      } else {
+        loginError.textContent = "Mot de passe incorrect";
+        loginError.style.display = "block";
+      }
+    });
+
+    // Vérifier si déjà authentifié
+    if (sessionStorage.getItem("certs_authenticated") === "true") {
+      loginSection.style.display = "none";
+      certsContent.style.display = "block";
+    }
+
+    /* ============================
+       Gestion du formulaire
+    ============================ */
+    function showSuccess(message) {
+      successMsg.textContent = message;
+      successMsg.style.display = "block";
+      errorMsg.style.display = "none";
+      setTimeout(() => {
+        successMsg.style.display = "none";
+      }, 5000);
+    }
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = "block";
+      successMsg.style.display = "none";
+    }
+
+    async function submitLink(data) {
+      try {
+        console.log("📤 Envoi des données vers le script...");
+        console.log("URL:", SCRIPT_ENDPOINT);
+        console.log("Données:", data);
+
+        const payload = {
+          token: SECRET_TOKEN,
+          action: "add",
+          ...data
+        };
+
+        console.log("Payload complet:", payload);
+
+        const response = await fetch(SCRIPT_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        console.log("✅ Requête envoyée");
+        console.log("Status:", response.status);
+        
+        const result = await response.text();
+        console.log("Réponse brute:", result);
+        
+        try {
+          const jsonResult = JSON.parse(result);
+          console.log("Réponse JSON:", jsonResult);
+          
+          if (jsonResult.success) {
+            showSuccess(jsonResult.message || "Lien ajouté avec succès dans la Google Sheet !");
+            linkForm.reset();
+          } else {
+            showError(jsonResult.error || "Erreur inconnue");
+          }
+        } catch (parseError) {
+          // Si ce n'est pas du JSON, considérer que c'est réussi
+          showSuccess("Lien ajouté avec succès dans la Google Sheet !");
+          linkForm.reset();
+        }
+        
+      } catch (error) {
+        console.error("❌ Erreur:", error);
+        showError("Erreur lors de l'ajout : " + error.message);
+      }
+    }
+
+    linkForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const data = {
+        title: document.getElementById("titleInput").value.trim(),
+        url: document.getElementById("urlInput").value.trim(),
+        descriptor1: document.getElementById("descriptor1Input").value,
+        descriptor2: document.getElementById("descriptor2Input").value,
+        reliability: document.getElementById("reliabilityInput").value,
+        threePhrases: document.getElementById("threePhrasesInput").value.trim(),
+        context: document.getElementById("contextInput").value.trim(),
+        content: document.getElementById("contentInput").value.trim(),
+        reliabilityText: document.getElementById("reliabilityTextInput").value.trim(),
+        references: document.getElementById("referencesInput").value.trim()
+      };
+
+      submitLink(data);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      linkForm.reset();
+      successMsg.style.display = "none";
+      errorMsg.style.display = "none";
+    });
+  </script>
+</body>
+</html>

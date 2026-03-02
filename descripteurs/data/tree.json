@@ -1,0 +1,24 @@
+{
+  "stepTitle": "Choix 1",
+  "choices": [
+    {
+      "label": "Option A",
+      "children": {
+        "stepTitle": "Choix 2 (A)",
+        "choices": [
+          { "label": "A1", "result": { "title": "Résultat A1", "id": "A1" } },
+          { "label": "A2", "result": { "title": "Résultat A2", "id": "A2" } }
+        ]
+      }
+    },
+    {
+      "label": "Option B",
+      "children": {
+        "stepTitle": "Choix 2 (B)",
+        "choices": [
+          { "label": "B1", "result": { "title": "Résultat B1", "id": "B1" } }
+        ]
+      }
+    }
+  ]
+}

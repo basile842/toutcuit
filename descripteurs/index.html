@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <base href="/descripteurs/">
+  <title>La machine à descripteurs</title>
+  <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+</head>
+<body>
+  <header><nav></nav></header>
+
+  <main>
+    <h1>La machine à descripteurs</h1>
+
+    <p id="treeSubtitle" class="subtitle"></p>
+
+    <div class="card">
+      <div id="choices"></div>
+
+      <div id="selectedBox" style="margin-top:12px;">
+        <div id="pathLine"><small></small></div>
+      </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;">
+      <h2>Résultat</h2>
+      <div id="resultGraphic"></div>
+    </div>
+
+    <div id="bottomControls" class="card row">
+      <button id="backBtn" class="btn">Retour</button>
+      <button id="resetBtn" class="btn">Reset</button>
+    </div>
+  </main>
+
+  <!-- 🔹 ICI -->
+<script type="module">
+  import { renderNav } from "./assets/js/nav.js";
+  import { initTreeFromIdMap } from "./assets/js/tree-idmap.js";
+
+  renderNav(location.pathname);
+  initTreeFromIdMap("./lib/data.json");
+</script>
+</body>
+</html>

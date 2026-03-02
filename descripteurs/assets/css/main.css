@@ -1,0 +1,608 @@
+/* =========================
+   Obsidian-ish LIGHT theme
+   main.css (cleaned + unified reliability colors)
+========================= */
+
+:root{
+  /* Light background / surfaces */
+  --bg: #f6f7fb;
+  --panel: #ffffff;
+  --panel-2: #f1f3f9;
+
+  /* Text */
+  --text: #1f2328;
+  --muted: #5e6673;
+
+  /* Borders */
+  --border: #d7dbe6;
+
+  /* Accent (Obsidian-ish purple) */
+  --accent: #6f5cf7;
+  --accent-2: #8b7cff;
+
+  /* Effects */
+  --shadow: 0 10px 30px rgba(16,24,40,.08);
+  --radius: 14px;
+  --ring: 0 0 0 3px rgba(111,92,247,.18);
+
+  /* Icons: soft black (70%) */
+  --icon-soft: rgba(31,35,40,.70);
+
+  /* Reliability base colors */
+  --good: #22c55e;  /* green */
+  --mid:  #f97316;  /* orange */
+  --bad:  #ef4444;  /* red */
+
+  /* Reliability palette — STRONG (viewer + index legacy look) */
+  --rel-good-border: rgba(34,197,94,.75);
+  --rel-good-bg:     rgba(34,197,94,.30);
+
+  --rel-mid-border:  rgba(249,115,22,.75);
+  --rel-mid-bg:      rgba(249,115,22,.30);
+
+  --rel-bad-border:  rgba(239,68,68,.80);
+  --rel-bad-bg:      rgba(239,68,68,.32);
+}
+
+*{ box-sizing: border-box; }
+
+html, body{
+  margin: 0;
+  padding: 0;
+  background:
+    radial-gradient(1200px 700px at 50% 0%, rgba(111,92,247,.10), transparent 58%),
+    var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+/* =========================
+   Header / layout
+========================= */
+
+header{
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+main{
+  padding: 18px 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+h1, h2, h3{
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+p{ color: var(--muted); }
+small{ color: var(--muted); }
+
+code{
+  background: rgba(111,92,247,.10);
+  color: #3b2fb0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(111,92,247,.22);
+}
+
+/* =========================
+   Nav
+========================= */
+
+nav a{
+  color: var(--muted);
+  text-decoration: none;
+  margin-right: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: inline-block;
+}
+nav a:hover{
+  color: var(--text);
+  background: rgba(111,92,247,.08);
+}
+nav a[aria-current="page"]{
+  color: var(--text);
+  background: rgba(111,92,247,.12);
+  border: 1px solid rgba(111,92,247,.22);
+}
+
+/* =========================
+   Layout helpers
+========================= */
+
+.row{ display: flex; gap: 12px; flex-wrap: wrap; }
+.col{ flex: 1 1 320px; }
+
+/* =========================
+   Cards
+========================= */
+
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 12px 0;
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   Buttons (base)
+========================= */
+
+.btn{
+  appearance: none;
+  border: 1px solid rgba(111,92,247,.25);
+  background: rgba(111,92,247,.10);
+  color: var(--text);
+
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+
+  transition: transform .05s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover{
+  background: rgba(111,92,247,.14);
+  border-color: rgba(111,92,247,.35);
+}
+.btn:active{ transform: translateY(1px); }
+.btn:disabled{ opacity: .55; cursor: not-allowed; }
+
+.btn:focus-visible{
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* =========================
+   Inputs
+========================= */
+
+input, textarea{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.95);
+  color: var(--text);
+  outline: none;
+}
+input::placeholder, textarea::placeholder{ color: rgba(94,102,115,.65); }
+input:focus, textarea:focus{
+  border-color: rgba(111,92,247,.45);
+  box-shadow: var(--ring);
+}
+
+/* =========================
+   Links / Pre / Iframe
+========================= */
+
+a{ color: var(--accent); }
+a:hover{ color: var(--accent-2); }
+
+pre{
+  margin: 0;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(241,243,249,.95);
+  color: var(--text);
+  overflow: auto;
+}
+
+iframe{
+  background: #fff;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px;
+}
+
+/* =========================
+   Tree – Choices layout
+========================= */
+
+#choices{
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.choice-item{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Structure stable du bouton (fix mobile) */
+#choices .choice-btn{
+  width: 100%;
+  padding: 16px 16px;
+  font-size: 1.05rem;
+  font-weight: 650;
+  text-align: left;
+  letter-spacing: -0.01em;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 14px;
+
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+/* Zone gauche: icône + (titre/def) */
+.choice-left{
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Zone droite: i ou flèche */
+.choice-right{
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+
+/* Icônes (choices) — +50% + soft black */
+#choices .choice-btn .icon{
+  width: 45px;
+  height: 45px;
+  flex: 0 0 45px;
+  display: block;
+  margin-top: 1px;
+  opacity: .92;
+  filter: grayscale(1) brightness(0) opacity(.70);
+}
+
+/* Titre */
+.label{
+  display: block;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+/* Wrapper (titre + def en colonne) */
+.label-wrap{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* définition dans le bouton */
+.choice-def-inline{
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.35;
+  font-weight: 520;
+}
+
+/* 7 grands choix */
+#choices .choice-btn.is-key{
+  background: rgba(111,92,247,.10);
+  border-color: rgba(111,92,247,.30);
+}
+
+/* Feuilles */
+#choices .choice-btn.is-leaf{
+  background: rgba(139,124,255,.10);
+  border-color: rgba(139,124,255,.32);
+}
+
+/* Hover */
+#choices .choice-btn.is-key:hover,
+#choices .choice-btn.is-leaf:hover{
+  background: rgba(111,92,247,.14);
+  border-color: rgba(111,92,247,.42);
+}
+
+/* Sous-titre (phrase d’intro) */
+.subtitle{
+  margin: 6px 0 14px 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 900px;
+}
+
+/* =========================
+   Info button "i" (root screen)
+========================= */
+
+.info-btn{
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(111,92,247,.25);
+  background: rgba(111,92,247,.10);
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.info-btn:hover{
+  background: rgba(111,92,247,.14);
+  border-color: rgba(111,92,247,.35);
+}
+.info-btn.is-active{
+  background: rgba(111,92,247,.18);
+  border-color: rgba(111,92,247,.45);
+}
+
+/* =========================
+   Chevron (branch continue)
+========================= */
+
+.chevron{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .85;
+  font-size: 18px;
+  line-height: 1;
+  transform: translateY(2px);
+  color: var(--muted);
+}
+
+/* =========================
+   Breadcrumb / path line
+========================= */
+
+#pathLine small a{ text-decoration: underline; }
+
+/* =========================
+   Result (viewer + sidecar)
+========================= */
+
+.result-stack{
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.result-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid rgba(111,92,247,.25);
+  background: rgba(111,92,247,.10);
+  border-radius: 999px;
+
+  padding: 10px 12px;
+  font-weight: 850;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+/* Icônes dans les result pills — +50% + soft black */
+#resultGraphic .result-pill .result-icon,
+#resultGraphic .result-pill .icon{
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: block;
+  opacity: .92;
+  filter: grayscale(1) brightness(0) opacity(.70);
+}
+
+/* =========================
+   Fiabilité (single palette)
+========================= */
+
+.reliability-options{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.reliability-btn{
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+/* Picker buttons */
+.reliability-btn.rel-good{ border-color: var(--rel-good-border); background: var(--rel-good-bg); }
+.reliability-btn.rel-mid { border-color: var(--rel-mid-border);  background: var(--rel-mid-bg); }
+.reliability-btn.rel-bad { border-color: var(--rel-bad-border);  background: var(--rel-bad-bg); }
+
+.reliability-btn.is-selected{ box-shadow: var(--ring); }
+
+/* Result state (viewer pills) */
+#resultGraphic.rel-good .result-pill{ border-color: var(--rel-good-border); background: var(--rel-good-bg); }
+#resultGraphic.rel-mid  .result-pill{ border-color: var(--rel-mid-border);  background: var(--rel-mid-bg); }
+#resultGraphic.rel-bad  .result-pill{ border-color: var(--rel-bad-border);  background: var(--rel-bad-bg); }
+
+/* =========================
+   Generic reliability helpers for other pages
+   - Liens (preview-pill) and Feed (feed-item)
+========================= */
+
+.rel-good .preview-pill,
+.rel-good .result-pill{
+  border-color: var(--rel-good-border);
+  background: var(--rel-good-bg);
+}
+
+.rel-mid .preview-pill,
+.rel-mid .result-pill{
+  border-color: var(--rel-mid-border);
+  background: var(--rel-mid-bg);
+}
+
+.rel-bad .preview-pill,
+.rel-bad .result-pill{
+  border-color: var(--rel-bad-border);
+  background: var(--rel-bad-bg);
+}
+
+/* Icons in preview pills (shared) — fixed size to avoid "giant icons" */
+.preview-pill img{
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  display: block;
+  opacity: .92;
+  filter: grayscale(1) brightness(0) opacity(.70);
+}
+
+/* =========================
+   Solo (published) mode
+========================= */
+
+body.solo-result #resultCard{ padding: 18px; }
+
+body.solo-result #resultCard h2{
+  font-size: 42px;
+  margin-bottom: 16px;
+}
+
+body.solo-result .result-stack{
+  flex-direction: column;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 14px;
+}
+
+body.solo-result .result-pill{
+  width: 100%;
+  border-radius: 18px;
+  padding: 18px 18px;
+  font-weight: 900;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+body.solo-result #resultGraphic .icon,
+body.solo-result #resultGraphic .result-icon{
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  opacity: .92;
+  filter: grayscale(1) brightness(0) opacity(.70);
+}
+
+/* =========================
+   Bottom controls
+========================= */
+
+.bottom-controls{
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  margin-top: 24px;
+}
+
+/* =========================
+   Page — liens (style Macades)
+========================= */
+
+#linksList{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+a.btn{ text-decoration: none; }
+
+#linksList .btn{
+  width: 100%;
+  padding: 16px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  letter-spacing: -0.01em;
+}
+
+/* Mobile */
+@media (max-width: 600px){
+  #choices{ max-width: 100%; }
+  #choices .choice-btn{ padding: 16px 14px; }
+  .bottom-controls{ justify-content: center; }
+
+  #linksList .btn{ padding: 16px 14px; }
+}
+
+/* Page — numéro de lien */
+.page-link .link-num{
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(111,92,247,.28);
+  background: rgba(111,92,247,.10);
+  color: var(--text);
+  font-weight: 900;
+  flex: 0 0 32px;
+  margin-top: 1px;
+}
+
+/* Viewer title helper */
+.viewer-panel-title{
+  margin: 0 0 10px 0;
+  font-size: 26px;
+}
+
+/* =========================
+   IMPORTANT: safe overrides
+   (do not break reliability colors)
+========================= */
+
+/* Sidecar: top header must be readable in light mode */
+.sidecar-top{
+  background: rgba(255,255,255,.90);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.sidecar-top .sidecar-sub{
+  color: var(--muted);
+}
+
+/* Result container (Liens page): keep it light, but DO NOT use !important */
+.result-box{
+  background: rgba(255,255,255,.92);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.result-box.is-empty{ opacity: .95; }
+
+/* Comment separator */
+.result-comment{
+  border-top: 1px solid rgba(215,219,230,.9);
+  color: var(--muted);
+}

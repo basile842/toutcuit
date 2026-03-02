@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <!-- iOS safe areas + bon rendu -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <base href="/descripteurs/">
+  <title>Certify Viewer</title>
+
+  <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+
+  <style>
+    /* ✅ iOS: éviter les "text autosize" bizarres */
+    html{ -webkit-text-size-adjust: 100%; }
+
+    /* ============ Site cible ============ */
+    .site-frame{
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      z-index: 1;
+      background: #fff;
+    }
+
+    /* ============ Overlay (grayscale + voile clair) ============ */
+    #certifyOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(31,35,40,.08);
+      backdrop-filter: grayscale(100%);
+      z-index: 9998;
+      opacity: 0;
+      transition: opacity .25s ease;
+      pointer-events: none;
+    }
+
+    /* ============ Handle (bouton C) ============ */
+    #certifyHandle{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 10000;
+
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 999px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      font-weight: 950;
+      font-size: 18px;
+      line-height: 1;
+
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    /* ============ Panel (jour) ============ */
+    #certifyPanel{
+      position: fixed;
+      top: 0;
+      right: 0;
+      transform: translateX(380px);
+      width: 360px;
+      max-width: 92vw;
+      height: 100%;
+      z-index: 9999;
+
+      transition: transform .25s ease;
+
+      background: rgba(255,255,255,.96);
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow);
+
+      padding: 16px;
+      padding-top: 76px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body.panel-open #certifyPanel{ transform: translateX(0); }
+    body.panel-open #certifyOverlay{
+      opacity: 1;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    body.panel-open .site-frame{ filter: none; }
+
+    @media (max-width: 600px){
+      #certifyPanel{ width: 92vw; transform: translateX(95vw); }
+      body.panel-open #certifyPanel{ transform: translateX(0); }
+    }
+
+    /* =========================================================
+       ✅ FIX "Publier" (solo-result) sur mobile
+    ========================================================= */
+    @media (max-width: 430px){
+      body.solo-result #resultCard{ padding: 14px !important; }
+
+      body.solo-result #resultCard h2{
+        font-size: clamp(28px, 8.5vw, 36px) !important;
+        margin-bottom: 12px !important;
+      }
+
+      body.solo-result .result-stack{
+        gap: 12px !important;
+      }
+
+      body.solo-result .result-pill{
+        padding: 14px 14px !important;
+        font-size: clamp(18px, 5.4vw, 24px) !important;
+        border-radius: 16px !important;
+        white-space: normal !important;
+        align-items: flex-start !important;
+      }
+
+      body.solo-result #resultGraphic .icon,
+      body.solo-result #resultGraphic .result-icon{
+        width: 32px !important;
+        height: 32px !important;
+        flex: 0 0 32px !important;
+      }
+    }
+
+    @media (max-width: 360px){
+      body.solo-result .result-pill{
+        font-size: 18px !important;
+        padding: 12px 12px !important;
+      }
+    }
+
+    /* =========================================================
+       ✅ FIX iPhone: empêcher le zoom auto à l'édition
+       (iOS zoome si input/textarea < 16px)
+    ========================================================= */
+    #certifyPanel input,
+    #certifyPanel textarea{
+      font-size: 16px !important;
+      line-height: 1.35;
+    }
+
+    /* Optionnel: quand on focus, garder un peu de marge */
+    #certifyPanel textarea:focus,
+    #certifyPanel input:focus{
+      scroll-margin-top: 90px;
+    }
+  </style>
+</head>
+
+<body>
+  <iframe
+    id="siteFrame"
+    class="site-frame"
+    src="about:blank"
+    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
+  ></iframe>
+
+  <div id="certifyOverlay" aria-hidden="true"></div>
+
+  <button
+    id="certifyHandle"
+    class="btn"
+    type="button"
+    aria-expanded="false"
+    aria-controls="certifyPanel"
+    aria-label="Ouvrir/Fermer Certify"
+  >C</button>
+
+  <aside id="certifyPanel" aria-label="Panneau Certify">
+    <h1 class="viewer-panel-title">La machine à descripteurs</h1>
+    <p id="treeSubtitle" class="subtitle"></p>
+
+    <div id="choices"></div>
+
+    <section class="card" id="resultCard" style="display:none;">
+      <h2>Résultat</h2>
+      <div id="resultGraphic"></div>
+    </section>
+
+    <section class="card" id="selectedBox" style="display:none;">
+      <div id="pathLine"><small></small></div>
+    </section>
+
+    <div class="card bottom-controls" id="bottomControls" style="display:none;">
+      <button class="btn" id="backBtn" type="button">Retour</button>
+      <button class="btn" id="resetBtn" type="button">Reset</button>
+    </div>
+  </aside>
+
+  <script>
+    const overlay = document.getElementById("certifyOverlay");
+    const handle  = document.getElementById("certifyHandle");
+
+    function isOpen(){ return document.body.classList.contains("panel-open"); }
+    function syncHandleA11y(){ handle.setAttribute("aria-expanded", isOpen() ? "true" : "false"); }
+    function closePanel(){ document.body.classList.remove("panel-open"); syncHandleA11y(); }
+    function togglePanel(){ document.body.classList.toggle("panel-open"); syncHandleA11y(); }
+
+    handle.addEventListener("click", (e) => { e.preventDefault(); togglePanel(); });
+    overlay.addEventListener("click", (e) => { e.preventDefault(); closePanel(); });
+
+    window.addEventListener("keydown", (e) => {
+      const el = document.activeElement;
+      const typing =
+        el &&
+        (el.tagName === "INPUT" ||
+         el.tagName === "TEXTAREA" ||
+         el.tagName === "SELECT" ||
+         el.isContentEditable);
+
+      if (e.key === "Escape") closePanel();
+      if (!typing && e.key && e.key.toLowerCase() === "c") togglePanel();
+    });
+
+    syncHandleA11y();
+
+    /* ========= Site switching (silent) ========= */
+    const STORAGE_KEY = "certify_viewer_last_url";
+    const DEFAULT_URL = "https://www.rts.ch";
+    const frame = document.getElementById("siteFrame");
+
+    function normalizeUrl(raw){
+      let u = String(raw || "").trim();
+      if (!u) return null;
+      if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      try{
+        const url = new URL(u);
+        if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+        return url.toString();
+      }catch{ return null; }
+    }
+
+    function setSite(url){
+      frame.src = url;
+      try{ localStorage.setItem(STORAGE_KEY, url); }catch{}
+    }
+
+    const qs = new URLSearchParams(location.search);
+    const paramUrl = normalizeUrl(qs.get("url"));
+
+    let chosen = paramUrl;
+    if (!chosen){
+      try{ chosen = localStorage.getItem(STORAGE_KEY); }catch{}
+    }
+    chosen = normalizeUrl(chosen) || DEFAULT_URL;
+
+    setSite(chosen);
+  </script>
+
+  <script type="module">
+    try{
+      const mod = await import("/descripteurs/assets/js/tree-idmap.js");
+      if (mod?.initTreeFromIdMap) {
+        await mod.initTreeFromIdMap("/descripteurs/lib/data.json");
+        console.log("Certify tree loaded ✅");
+      } else {
+        console.warn("tree-idmap.js chargé mais initTreeFromIdMap introuvable");
+      }
+    }catch(e){
+      console.error("Impossible de charger /descripteurs/assets/js/tree-idmap.js", e);
+    }
+  </script>
+</body>
+</html>

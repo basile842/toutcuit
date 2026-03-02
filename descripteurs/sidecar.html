@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Certify — Sidecar</title>
+
+  <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+
+  <style>
+    /* ==================================================
+       Sidecar header — style IDENTIQUE à la page Liens
+       ================================================== */
+
+    .sidecar-top{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      margin: -18px -16px 12px -16px; /* annule le padding de main */
+      padding: 12px 16px 12px 16px;
+
+      background: rgba(241,243,249,.85);
+      border-bottom: 1px solid rgba(215,219,230,.9);
+    }
+
+    .sidecar-top-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .sidecar-top h1{
+      font-size: 20px;
+      margin: 0;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .user-badge{
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(111,92,247,.25);
+      background: rgba(111,92,247,.08);
+      font-weight: 750;
+      font-size: 12px;
+      color: var(--accent);
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    /* Ligne "comme sur Liens" */
+    .sidecar-linkline{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Réutilisation exacte du style Page Liens */
+    .sidecar-linkline .page-link{
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      color: var(--text);
+      user-select: none;
+      pointer-events: none; /* non cliquable dans le sidecar */
+    }
+
+    .sidecar-linkline .label-wrap{
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .bottom-area{
+      margin-top: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav></nav>
+  </header>
+
+  <main>
+    <!-- ✅ Header clair, même style que Liens -->
+    <div class="sidecar-top">
+      <div class="sidecar-top-header">
+        <h1>La machine à descripteurs</h1>
+        <span class="user-badge" id="userBadge"></span>
+      </div>
+
+      <div class="sidecar-linkline">
+        <div class="page-link">
+          <span class="link-num" id="sidecarNum">–</span>
+          <span class="label-wrap">
+            <span class="label" id="sidecarLinkTitle">(Sans titre)</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <p id="treeSubtitle" class="subtitle"></p>
+
+    <div class="card">
+      <div id="choices"></div>
+
+      <div class="bottom-area">
+        <div id="pathLine" style="margin: 10px 0;"><small></small></div>
+
+        <div class="card bottom-controls" id="bottomControls" style="display:none;">
+          <button class="btn" id="backBtn" type="button">Retour</button>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="card" id="resultCard" style="display:none;">
+      <h2>Résultat</h2>
+      <div id="resultGraphic"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderNav } from "/descripteurs/assets/js/nav.js";
+
+    // Sidecar = aucune navigation
+    renderNav(location.pathname, { variant: "sidecar" });
+
+    function normalizeParam(s){
+      return String(s || "").trim();
+    }
+
+    const qs = new URLSearchParams(location.search);
+    const id = normalizeParam(qs.get("id"));
+    const title = normalizeParam(qs.get("title"));
+    const url = normalizeParam(qs.get("url"));
+    const number = normalizeParam(qs.get("number")) || "–";  // ✅ Nouveau paramètre
+
+    window.CERTIFY_CONTEXT = { id, title, url };
+
+    const numEl = document.getElementById("sidecarNum");
+    const titleEl = document.getElementById("sidecarLinkTitle");
+
+    // ✅ MODIFIÉ: Utiliser le paramètre number au lieu d'extraire depuis id
+    if (numEl) numEl.textContent = number;
+    if (titleEl) titleEl.textContent = title || "(Sans titre)";
+
+    // Afficher le pseudonyme de l'élève
+    const badgeEl = document.getElementById("userBadge");
+    if (badgeEl) {
+      const userId = localStorage.getItem("certify_user_id_v1") || "";
+      badgeEl.textContent = userId || "—";
+    }
+
+    try{
+      const mod = await import("/descripteurs/assets/js/tree-idmap.js");
+      if (mod?.initTreeFromIdMap) {
+        await mod.initTreeFromIdMap("/descripteurs/lib/data.json");
+        console.log("Sidecar machine loaded ✅");
+      }
+    }catch(e){
+      console.error("Impossible de charger la machine", e);
+      alert("Impossible de charger la machine. Ouvre la console.");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Redirection…</title>
+
+  <!-- Empêche le cache -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+
+  <!-- Redirection immédiate -->
+  <script>
+    // Redirection propre sans garder /liens dans l’historique
+    window.location.replace("/descripteurs/pages/liens.html");
+  </script>
+
+  <!-- Fallback si JS désactivé -->
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/descripteurs/pages/liens.html">
+  </noscript>
+
+  <style>
+    body{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+      margin:0;
+      background:#f6f7fb;
+      color:#222;
+    }
+  </style>
+</head>
+
+<body>
+  <p>Redirection vers la page des liens…</p>
+</body>
+</html>

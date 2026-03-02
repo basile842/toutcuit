@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Collector — Certify</title>
+
+  <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+
+  <style>
+    .collector-lead{
+      margin: 8px 0 14px 0;
+      color: var(--muted);
+      max-width: 900px;
+    }
+
+    .kv{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: baseline;
+      margin: 10px 0 14px;
+    }
+
+    .kv .pill{
+      display: inline-flex;
+      gap: 8px;
+      align-items: baseline;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(215,219,230,.9);
+      background: rgba(255,255,255,.7);
+      font-weight: 850;
+    }
+
+    .kv .pill small{
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .row-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .hidden{ display: none !important; }
+
+    .ok-box{
+      border: 1px solid rgba(34,197,94,.35);
+      background: rgba(34,197,94,.10);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--text);
+      margin-top: 12px;
+    }
+
+    .error-box{
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.10);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--text);
+      margin-top: 12px;
+    }
+
+    .status{
+      color: var(--muted);
+      margin-top: 10px;
+      font-size: .95rem;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav></nav>
+  </header>
+
+  <main>
+    <h1>Collector</h1>
+
+    <p class="collector-lead">
+      Dépose un lien + un commentaire. <strong>Maximum 2 liens par personne</strong>.
+    </p>
+
+    <section class="card">
+      <div class="kv">
+        <div class="pill"><small>Pseudo</small> <span id="nick">—</span></div>
+        <div class="pill"><small>Restant</small> <span id="remaining">—</span></div>
+        <div class="pill"><small>Aide</small> <span id="hint">—</span></div>
+      </div>
+
+      <div id="closedBox" class="error-box hidden">
+        Collector fermé (le professeur l’a désactivé).
+      </div>
+
+      <form id="collectorForm">
+        <label style="display:block; margin-top: 10px;">
+          <small>Code de séance</small>
+          <input id="sessionCode" type="text" autocomplete="off" placeholder="Ex. ABC123" required />
+        </label>
+
+        <label style="display:block; margin-top: 12px;">
+          <small>URL</small>
+          <input id="url" type="url" placeholder="https://www.rts.ch" required />
+        </label>
+
+        <label style="display:block; margin-top: 12px;">
+          <small>Commentaire</small>
+          <textarea
+            id="comment"
+            rows="4"
+            required
+            placeholder="Pourquoi ce lien ? De quoi s’agit-il ?"
+          ></textarea>
+        </label>
+
+        <div class="row-actions">
+          <button class="btn" id="submitBtn" type="submit">Envoyer</button>
+          <button class="btn" id="refreshBtn" type="button" title="Rafraîchir l'état">Rafraîchir</button>
+          <div id="status" class="status"></div>
+        </div>
+      </form>
+
+      <div id="msg"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderNav } from "/descripteurs/assets/js/nav.js";
+    import { initCollector } from "/descripteurs/assets/js/collector.js";
+    renderNav(location.pathname, { variant: "sidecar" });
+    initCollector();
+  </script>
+</body>
+</html>

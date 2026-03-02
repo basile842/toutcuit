@@ -1,0 +1,439 @@
+{
+  "initial": [
+    "start"
+  ],
+  "choices": {
+    "start": {
+      "choice": "Start",
+      "choiceShort": "Start",
+      "stepTitle": "Vous devez choisir deux descripteurs. Le premier indique le contexte. Le deuxième, le type de contenu.",
+      "children": [
+        "Descriptor_L1A",
+        "Descriptor_L1B",
+        "Descriptor_L1C",
+        "Descriptor_L1D",
+        "Descriptor_L1E",
+        "Descriptor_L1F",
+        "Descriptor_L1G"
+      ]
+    },
+    "Descriptor_L1A": {
+      "choice": "Journalisme",
+      "choiceShort": "Journalisme",
+      "stepTitle": "La personne qui parle fait partie du monde de l’information",
+      "children": [
+        "L1A_Choice_1",
+        "L1A_Choice_2"
+      ]
+    },
+    "L1A_Choice_1": {
+      "choice": "Il s’agit de la description de faits.",
+      "choiceShort": "Factuel",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1A_Choice_11",
+        "L1A_Choice_12",
+        "L1A_Choice_13"
+      ]
+    },
+    "L1A_Choice_11": {
+      "choice": "Il s’agit d'explications.",
+      "choiceShort": "Explicatif",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1A_Choice_111",
+        "L1A_Choice_112"
+      ]
+    },
+    "L1A_Choice_111": {
+      "choice": "Vulgarisation",
+      "choiceShort": "Vulgarisation",
+      "stepTitle": "Communiquer la science au grand public",
+      "children": []
+    },
+    "L1A_Choice_112": {
+      "choice": "Analyse",
+      "choiceShort": "Analyse",
+      "stepTitle": "Examen de quelque chose",
+      "children": []
+    },
+    "L1A_Choice_12": {
+      "choice": "Il s'agit d'un point de vue personnel.",
+      "choiceShort": "Personnel",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1A_Choice_121",
+        "L1A_Choice_122"
+      ]
+    },
+    "L1A_Choice_121": {
+      "choice": "Opinion",
+      "choiceShort": "Opinion",
+      "stepTitle": "Point de vue personnel",
+      "children": []
+    },
+    "L1A_Choice_122": {
+      "choice": "Trompeur",
+      "choiceShort": "Trompeur",
+      "stepTitle": "Induit en erreur",
+      "children": []
+    },
+    "L1A_Choice_13": {
+      "choice": "Reportage",
+      "choiceShort": "Reportage",
+      "stepTitle": "Compte rendu journalistique sur les lieux d'un événement",
+      "children": []
+    },
+    "L1A_Choice_2": {
+      "choice": "Il s’agit d’hypothéses, de prédictions, d'exagérations.",
+      "choiceShort": "Hypothétique",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1A_Choice_21",
+        "L1A_Choice_22",
+        "L1A_Choice_23",
+        "L1A_Choice_24"
+      ]
+    },
+    "L1A_Choice_21": {
+      "choice": "Rumeur",
+      "choiceShort": "Rumeur",
+      "stepTitle": "Nouvelle incertaine qui se diffuse",
+      "children": []
+    },
+    "L1A_Choice_22": {
+      "choice": "Accrocheur",
+      "choiceShort": "Accrocheur",
+      "stepTitle": "Attire l’attention",
+      "children": []
+    },
+    "L1A_Choice_23": {
+      "choice": "Opinion",
+      "choiceShort": "Opinion",
+      "stepTitle": "Point de vue personnel",
+      "children": []
+    },
+    "L1A_Choice_24": {
+      "choice": "Trompeur",
+      "choiceShort": "Trompeur",
+      "stepTitle": "Induit en erreur",
+      "children": []
+    },
+    "Descriptor_L1B": {
+      "choice": "Science",
+      "choiceShort": "Science",
+      "stepTitle": "La personne qui parle travaille dans une organisation scientifique",
+      "children": [
+        "L1B_Choice_1",
+        "L1B_Choice_2"
+      ]
+    },
+    "L1B_Choice_1": {
+      "choice": "Il s'agit d'explications.",
+      "choiceShort": "Explicatif",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1B_Choice_11",
+        "L1B_Choice_12",
+        "L1B_Choice_13"
+      ]
+    },
+    "L1B_Choice_11": {
+      "choice": "Analyse",
+      "choiceShort": "Analyse",
+      "stepTitle": "Examen de quelque chose",
+      "children": []
+    },
+    "L1B_Choice_12": {
+      "choice": "Vulgarisation",
+      "choiceShort": "Vulgarisation",
+      "stepTitle": "Communiquer la science au grand public",
+      "children": []
+    },
+    "L1B_Choice_13": {
+      "choice": "Promotion",
+      "choiceShort": "Promotion",
+      "stepTitle": "Pour vendre ou sensibiliser le public",
+      "children": []
+    },
+    "L1B_Choice_2": {
+      "choice": "Il s'agit d'un point de vue personnel.",
+      "choiceShort": "Personnel",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1B_Choice_21",
+        "L1B_Choice_22"
+      ]
+    },
+    "L1B_Choice_21": {
+      "choice": "Opinion",
+      "choiceShort": "Opinion",
+      "stepTitle": "Point de vue personnel",
+      "children": []
+    },
+    "L1B_Choice_22": {
+      "choice": "Trompeur",
+      "choiceShort": "Trompeur",
+      "stepTitle": "Induit en erreur.",
+      "children": []
+    },
+    "Descriptor_L1C": {
+      "choice": "Gouvernement",
+      "choiceShort": "Gouvernement",
+      "stepTitle": "La personne qui parle fait partie d’une institution officielle",
+      "children": [
+        "L1C_Choice_1",
+        "L1C_Choice_2"
+      ]
+    },
+    "L1C_Choice_1": {
+      "choice": "Il s’agit de la description de faits.",
+      "choiceShort": "Factuel",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1C_Choice_11",
+        "L1C_Choice_12"
+      ]
+    },
+    "L1C_Choice_11": {
+      "choice": "Annonce",
+      "choiceShort": "Annonce",
+      "stepTitle": "Déclaration officielle",
+      "children": []
+    },
+    "L1C_Choice_12": {
+      "choice": "Service",
+      "choiceShort": "Service",
+      "stepTitle": "Ressource ou aide fournie à quelqu’un",
+      "children": []
+    },
+    "L1C_Choice_2": {
+      "choice": "Partisan",
+      "choiceShort": "Partisan",
+      "stepTitle": "Soutient un parti ou un mouvement",
+      "children": []
+    },
+    "Descriptor_L1D": {
+      "choice": "Divertissement",
+      "choiceShort": "Divertissement",
+      "stepTitle": "La personne qui parle veut seulement divertir",
+      "children": [
+        "L1D_Choice_1",
+        "L1D_Choice_2",
+        "L1D_Choice_3",
+        "L1D_Choice_4"
+      ]
+    },
+    "L1D_Choice_1": {
+      "choice": "Il s’agit de valoriser un événement, un spectacle, un produit.",
+      "choiceShort": "Valorisation",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1D_Choice_11",
+        "L1D_Choice_12"
+      ]
+    },
+    "L1D_Choice_11": {
+      "choice": "Promotion",
+      "choiceShort": "Promotion",
+      "stepTitle": "Pour vendre ou sensibiliser le public",
+      "children": []
+    },
+    "L1D_Choice_12": {
+      "choice": "Achat/Vente",
+      "choiceShort": "Achat/Vente",
+      "stepTitle": "Achat ou vente de quelque chose",
+      "children": []
+    },
+    "L1D_Choice_2": {
+      "choice": "Opinion",
+      "choiceShort": "Opinion",
+      "stepTitle": "Point de vue personnel",
+      "children": []
+    },
+    "L1D_Choice_3": {
+      "choice": "Humour",
+      "choiceShort": "Humour",
+      "stepTitle": "Quelque chose d’amusant",
+      "children": []
+    },
+    "L1D_Choice_4": {
+      "choice": "Performance",
+      "choiceShort": "Performance",
+      "stepTitle": "Œuvre d’art, sportive, savoir-faire",
+      "children": []
+
+    },
+    "Descriptor_L1E": {
+      "choice": "Organisation",
+      "choiceShort": "Organisation",
+      "stepTitle": "La personne qui parle fait partie d’une entreprise ou une association",
+      "children": [
+        "L1E_Choice_1",
+        "L1E_Choice_2"
+      ]
+    },
+    "L1E_Choice_1": {
+      "choice": "Il s’agit de valoriser un événement, un spectacle, un produit.",
+      "choiceShort": "Valorisation",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1E_Choice_11",
+        "L1E_Choice_12"
+      ]
+    },
+    "L1E_Choice_11": {
+      "choice": "Le contenu ne propose pas d'achat",
+      "choiceShort": "Pas d'achat",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1E_Choice_111",
+        "L1E_Choice_112",
+        "L1E_Choice_113"
+      ]
+    },
+    "L1E_Choice_111": {
+      "choice": "Promotion",
+      "choiceShort": "Promotion",
+      "stepTitle": "Pour vendre ou sensibiliser le public",
+      "children": []
+    },
+    "L1E_Choice_112": {
+      "choice": "Service",
+      "choiceShort": "Service",
+      "stepTitle": "Ressource ou aide fournie à quelqu’un",
+      "children": []
+    },
+    "L1E_Choice_113": {
+      "choice": "Annonce",
+      "choiceShort": "Annonce",
+      "stepTitle": "Déclaration officielle",
+      "children": []
+    },
+    "L1E_Choice_2": {
+      "choice": "Activisme",
+      "choiceShort": "Activisme",
+      "stepTitle": "Soutient une cause",
+      "children": []
+    },
+    "L1E_Choice_12": {
+      "choice": "Achat/Vente",
+      "choiceShort": "Achat/Vente",
+      "stepTitle": "Achat ou vente de quelque chose",
+      "children": []
+    },
+    "Descriptor_L1F": {
+      "choice": "Individu",
+      "choiceShort": "Individu",
+      "stepTitle": "La personne qui parle est un simple individu",
+      "children": [
+        "L1F_Choice_1",
+        "L1F_Choice_2"
+      ]
+    },
+    "L1F_Choice_1": {
+      "choice": "Il s’agit de la description de faits.",
+      "choiceShort": "Factuel",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1F_Choice_11",
+        "L1F_Choice_12"
+      ]
+    },
+    "L1F_Choice_11": {
+      "choice": "Le contenu ne propose pas d'achat.",
+      "choiceShort": "Pas d'achat",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1F_Choice_111",
+        "L1F_Choice_112",
+        "L1F_Choice_113",
+        "L1F_Choice_114"
+      ]
+    },
+    "L1F_Choice_111": {
+      "choice": "Première main",
+      "choiceShort": "Première main",
+      "stepTitle": "Expérience personnelle",
+      "children": []
+    },
+    "L1F_Choice_112": {
+      "choice": "Analyse",
+      "choiceShort": "Analyse",
+      "stepTitle": "Examen de quelque chose",
+      "children": []
+    },
+    "L1F_Choice_113": {
+      "choice": "Tutoriel",
+      "choiceShort": "Tutoriel",
+      "stepTitle": "Comment faire quelque chose",
+      "children": []
+    },
+    "L1F_Choice_114": {
+      "choice": "Loisir",
+      "choiceShort": "Loisir",
+      "stepTitle": "Activités pendant le temps libre",
+      "children": []
+    },
+    "L1F_Choice_12": {
+      "choice": "Achat/Vente",
+      "choiceShort": "Achat/Vente",
+      "stepTitle": "Achat ou vente de quelque chose",
+      "children": []
+    },
+    "L1F_Choice_2": {
+      "choice": "Opinion",
+      "choiceShort": "Opinion",
+      "stepTitle": "Point de vue personnel",
+      "children": []
+    },
+    "Descriptor_L1G": {
+      "choice": "Inconnu",
+      "choiceShort": "Inconnu",
+      "stepTitle": "La personne qui parle est anonyme, on ne connaît pas son identité",
+      "children": [
+        "L1G_Choice_1",
+        "L1G_Choice_2"
+      ]
+    },
+    "L1G_Choice_1": {
+      "choice": "Le contenu ne propose pas d'achat.",
+      "choiceShort": "Pas d'achat",
+      "stepTitle": "2e descripteur...",
+      "children": [
+        "L1G_Choice_11",
+        "L1G_Choice_12",
+        "L1G_Choice_13"
+      ]
+    },
+    "L1G_Choice_11": {
+      "choice": "Première main",
+      "choiceShort": "Première main",
+      "stepTitle": "Expérience personnelle",
+      "children": []
+    },
+    "L1G_Choice_12": {
+      "choice": "Analyse",
+      "choiceShort": "Analyse",
+      "stepTitle": "Examen de quelque chose",
+      "children": []
+    },
+    "L1G_Choice_13": {
+      "choice": "Opinion",
+      "choiceShort": "Opinion",
+      "stepTitle": "Point de vue personnel",
+      "children": []
+    },
+    "L1G_Choice_2": {
+      "choice": "Escroquerie",
+      "choiceShort": "Escroquerie",
+      "stepTitle": "Arnaque",
+      "children": []
+    },
+    "end": {
+      "choice": "Thank you!",
+      "choiceShort": "Thank you!",
+      "stepTitle": "All done"
+    }
+  }
+}

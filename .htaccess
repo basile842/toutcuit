@@ -1,0 +1,11 @@
+SetEnv PHP_VER 4
+
+# Permet d'accéder aux fichiers HTML sans l'extension .html
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+# Protection anti-indexation
+Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
