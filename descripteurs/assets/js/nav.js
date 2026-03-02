@@ -17,16 +17,26 @@ export function renderNav(activePath = "", options = {}) {
     activePath.endsWith("/pages/liens.html") ||
     activePath.endsWith("liens.html");
 
+  const isCertsPage =
+    activePath.endsWith("/pages/certs.html") ||
+    activePath.endsWith("certs.html");
+
+  const isIndexPage =
+    activePath.endsWith("/descripteurs/index.html") ||
+    activePath.endsWith("/descripteurs/");
+
   // 🌐 Définition des liens
   const links = [];
 
-  // ➜ Macades UNIQUEMENT si on n'est PAS sur la page Liens
-  if (!isLiensPage) {
+  // ➜ Macades si on n'est PAS sur Liens, Certs ni Index
+  if (!isLiensPage && !isCertsPage && !isIndexPage) {
     links.push(["Macades", "/descripteurs/index.html"]);
   }
 
-  // ➜ Liens toujours présent
-  links.push(["Liens", "/descripteurs/pages/liens.html"]);
+  // ➜ Liens si on n'est PAS sur Liens, Certs ni Index
+  if (!isLiensPage && !isCertsPage && !isIndexPage) {
+    links.push(["Liens", "/descripteurs/pages/liens.html"]);
+  }
 
   // 🌐 Rendu HTML
   nav.innerHTML = links
