@@ -170,6 +170,113 @@
     .admin-reset-btn:hover{ background: rgba(239,68,68,.16); }
     body.admin-mode .admin-reset-btn{ display: block; }
 
+    /* ===== Admin inspector ===== */
+    .admin-inspector{
+      display: none;
+      margin-top: 14px;
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 12px;
+      background: rgba(239,68,68,.03);
+      padding: 14px 16px;
+    }
+    body.admin-mode .admin-inspector{ display: block; }
+
+    .admin-inspector-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .admin-inspector-title{
+      font-size: 0.78rem;
+      font-weight: 850;
+      color: rgba(185,28,28,1);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .admin-inspector-refresh{
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(239,68,68,.30);
+      background: rgba(239,68,68,.07);
+      color: rgba(185,28,28,1);
+      cursor: pointer;
+    }
+    .admin-inspector-refresh:hover{ background: rgba(239,68,68,.14); }
+
+    .admin-userid{
+      font-size: 0.80rem;
+      color: rgba(185,28,28,.75);
+      margin-bottom: 12px;
+    }
+
+    .admin-entries{
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .admin-entry{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .admin-entry-title{
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .admin-entry-row{
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .admin-entry-pill{
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.80rem;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .admin-entry-pill img{
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      opacity: .75;
+    }
+    .admin-entry-rel{
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 5px;
+    }
+    .admin-entry-rel.rel-good{ background: var(--rel-good-bg); border: 1px solid var(--rel-good-border); }
+    .admin-entry-rel.rel-mid { background: var(--rel-mid-bg);  border: 1px solid var(--rel-mid-border);  }
+    .admin-entry-rel.rel-bad { background: var(--rel-bad-bg);  border: 1px solid var(--rel-bad-border);  }
+    .admin-entry-comment{
+      font-size: 0.80rem;
+      color: var(--muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      padding-top: 5px;
+      white-space: pre-wrap;
+    }
+    .admin-empty{
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
     .error-box{
       border: 1px solid rgba(239,68,68,.35);
       background: rgba(239,68,68,.10);
@@ -244,6 +351,15 @@
       <div id="linksList"></div>
       <div id="status" class="muted-note"></div>
     </section>
+
+    <div class="admin-inspector" id="adminInspector">
+      <div class="admin-inspector-header">
+        <span class="admin-inspector-title">Mémoire locale — résultats stockés</span>
+        <button class="admin-inspector-refresh" id="adminRefreshBtn" type="button">Rafraîchir</button>
+      </div>
+      <div class="admin-userid" id="adminUserId"></div>
+      <div class="admin-entries" id="adminEntries"></div>
+    </div>
   </main>
 
   <script type="module">
@@ -774,7 +890,7 @@
       }
 
       renderItems(items);
-      setStatus(`${items.length} lien(s) chargé(s).`);
+      setStatus("");
     }
 
     /* ============================
@@ -897,11 +1013,75 @@
     });
 
     /* ============================
+       Admin inspector
+    ============================ */
+    function renderAdminInspector(){
+      const userIdEl  = document.getElementById("adminUserId");
+      const entriesEl = document.getElementById("adminEntries");
+      if (!entriesEl) return;
+
+      const userId = localStorage.getItem(USER_ID_KEY) || "(aucun)";
+      if (userIdEl) userIdEl.textContent = `Identifiant session : ${userId}`;
+
+      const entries = [];
+      for (let i = 0; i < localStorage.length; i++){
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(STORAGE_PREFIX)) continue;
+        try{
+          const payload = JSON.parse(localStorage.getItem(key) || "");
+          if (payload) entries.push({ id: key.replace(STORAGE_PREFIX, ""), payload });
+        }catch{}
+      }
+
+      if (!entries.length){
+        entriesEl.innerHTML = `<div class="admin-empty">Aucun résultat en mémoire locale.</div>`;
+        return;
+      }
+
+      const REL_LABEL = { good: "Fiable", mid: "Mitigé", bad: "Non fiable" };
+
+      entriesEl.innerHTML = entries.map(({ id, payload }) => {
+        const meta    = linkMeta.get(id) || {};
+        const title   = payload.title || meta.title || id;
+        const rel     = payload.reliability || "";
+        const relCls  = rel === "good" ? "rel-good" : rel === "mid" ? "rel-mid" : rel === "bad" ? "rel-bad" : "";
+        const relLbl  = REL_LABEL[rel] || "";
+        const comment = (payload.comment || "").trim();
+
+        return `
+          <div class="admin-entry">
+            <div class="admin-entry-title">${escapeHtml(title)}</div>
+            <div class="admin-entry-row">
+              ${payload.firstLabel ? `
+                <span class="admin-entry-pill">
+                  ${payload.firstIcon ? `<img src="${escapeHtml(payload.firstIcon)}" alt="">` : ""}
+                  ${escapeHtml(payload.firstLabel)}
+                </span>` : ""}
+              ${payload.lastLabel ? `
+                <span class="admin-entry-pill">
+                  ${payload.lastIcon ? `<img src="${escapeHtml(payload.lastIcon)}" alt="">` : ""}
+                  ${escapeHtml(payload.lastLabel)}
+                </span>` : ""}
+              ${relLbl ? `<span class="admin-entry-rel ${relCls}">${escapeHtml(relLbl)}</span>` : ""}
+            </div>
+            ${comment ? `<div class="admin-entry-comment">${escapeHtml(comment)}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    if (isAdmin){
+      document.getElementById("adminRefreshBtn")
+        ?.addEventListener("click", renderAdminInspector);
+    }
+
+    /* ============================
        Init
     ============================ */
     try{
       ensureUserId();
       await loadFromSheet();
+      if (isAdmin) renderAdminInspector();
     }catch(err){
       console.error(err);
       if (listEl) {

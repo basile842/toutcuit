@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Avant de commencer — kizako.ch</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .intro {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .step-icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .step-icon img {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+    }
+
+    .step-screenshot {
+      width: 100%;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      box-shadow: 0 4px 12px rgba(16,24,40,.07);
+      display: block;
+    }
+
+    .step-text {
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text);
+      max-width: 400px;
+    }
+
+    .step-text strong {
+      color: var(--accent);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-row input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      position: relative;
+    }
+
+    .check-row input[type="checkbox"]:checked {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .check-row input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 10px;
+      height: 6px;
+      border-left: 2.5px solid #fff;
+      border-bottom: 2.5px solid #fff;
+      transform: rotate(-45deg);
+    }
+
+    .check-row label {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .15s;
+    }
+
+    .check-row input[type="checkbox"]:checked + label {
+      color: var(--accent);
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-continue {
+      width: 100%;
+      padding: 13px 20px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background .15s, opacity .15s, transform .1s;
+    }
+
+    .btn-continue:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .btn-continue:not(:disabled):hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-continue:not(:disabled):active {
+      transform: scale(.98);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+
+      <div class="logo">kizako</div>
+      <p class="intro">Avant de commencer, lis attentivement ces deux points.</p>
+
+      <div class="card">
+
+        <!-- Step 1 : Firefox -->
+        <div class="step">
+          <p class="step-text">
+            Pour que cette expérience fonctionne, il faut utiliser le navigateur
+            <strong>Firefox</strong>.
+          </p>
+
+          <div class="step-icon">
+            <img src="/assets/firefox-logo.webp" alt="Logo Firefox">
+          </div>
+
+          <div class="check-row">
+            <input type="checkbox" id="check1">
+            <label for="check1">J'ai compris</label>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Step 2 : Autoriser les pop-ups -->
+        <div class="step">
+          <p class="step-text">
+            Tu devras <strong>autoriser les fenêtres pop-ups</strong> lorsque Firefox te le demandera.
+          </p>
+
+          <img src="/assets/popup.png" alt="Notification Firefox pour autoriser les pop-ups" class="step-screenshot">
+
+          <div class="check-row">
+            <input type="checkbox" id="check2">
+            <label for="check2">J'ai compris</label>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <button class="btn-continue" id="btnContinue" disabled>
+          Continuer →
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const check1 = document.getElementById("check1");
+    const check2 = document.getElementById("check2");
+    const btn    = document.getElementById("btnContinue");
+
+    function update() {
+      btn.disabled = !(check1.checked && check2.checked);
+    }
+
+    check1.addEventListener("change", update);
+    check2.addEventListener("change", update);
+
+    btn.addEventListener("click", () => {
+      window.location.href = "/descripteurs/pages/liens.html";
+    });
+  </script>
+</body>
+</html>
