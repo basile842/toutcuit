@@ -1,34 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
   <title>Avant de commencer — kizako.ch</title>
+
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
   <style>
-    :root {
-      --bg: #f6f7fb;
-      --panel: #ffffff;
-      --text: #1f2328;
-      --muted: #5e6673;
+    :root{
+      --bg:     #f6f7fb;
+      --panel:  #ffffff;
+      --text:   #1f2328;
+      --muted:  #5e6673;
       --border: #d7dbe6;
       --accent: #6f5cf7;
-      --accent-hover: #5a48e0;
-      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --accent-2: #5a48e0;
+      --shadow: 0 10px 30px rgba(16,24,40,.08);
       --radius: 14px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after{ box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
+    html, body{
       min-height: 100vh;
       background:
-        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        radial-gradient(1200px 700px at 50% 0%, rgba(111,92,247,.10), transparent 58%),
         var(--bg);
       color: var(--text);
       font-family: 'Inter var', 'Inter', system-ui, sans-serif;
@@ -36,7 +34,7 @@
       line-height: 1.5;
     }
 
-    .page {
+    .page{
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -45,241 +43,136 @@
       padding: 32px 16px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 560px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .logo {
+    .logo{
       text-align: center;
-      font-size: 2rem;
+      font-size: 3.2rem;
       font-weight: 900;
       letter-spacing: -0.02em;
       color: var(--accent);
-      margin-bottom: 4px;
+      margin-bottom: 20px;
     }
 
-    .intro {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-bottom: 8px;
-    }
-
-    .card {
+    .card{
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 24px 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+      padding: 28px 26px 24px;
+      width: 100%;
+      max-width: 440px;
     }
 
-    .step {
+    .welcome-subtitle{
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.45;
+      margin-bottom: 24px;
+    }
+
+    .welcome-steps{
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .welcome-step{
+      display: flex;
       gap: 14px;
-      text-align: center;
+      align-items: flex-start;
     }
 
-    .step-icon {
-      width: 88px;
-      height: 88px;
-      border-radius: 50%;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      display: flex;
+    .step-number{
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .step-icon img {
-      width: 68px;
-      height: 68px;
-      object-fit: contain;
-    }
-
-    .step-screenshot {
-      width: 100%;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
-      box-shadow: 0 4px 12px rgba(16,24,40,.07);
-      display: block;
-    }
-
-    .step-text {
-      font-size: 1rem;
-      font-weight: 500;
-      line-height: 1.5;
-      color: var(--text);
-      max-width: 400px;
-    }
-
-    .step-text strong {
-      color: var(--accent);
-    }
-
-    .check-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .check-row input[type="checkbox"] {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 22px;
-      height: 22px;
-      flex: 0 0 22px;
-      border: 2px solid var(--border);
-      border-radius: 6px;
-      background: var(--bg);
-      cursor: pointer;
-      transition: border-color .15s, background .15s;
-      position: relative;
-    }
-
-    .check-row input[type="checkbox"]:checked {
-      border-color: var(--accent);
-      background: var(--accent);
-    }
-
-    .check-row input[type="checkbox"]:checked::after {
-      content: "";
-      position: absolute;
-      left: 4px;
-      top: 1px;
-      width: 10px;
-      height: 6px;
-      border-left: 2.5px solid #fff;
-      border-bottom: 2.5px solid #fff;
-      transform: rotate(-45deg);
-    }
-
-    .check-row label {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
-      transition: color .15s;
-    }
-
-    .check-row input[type="checkbox"]:checked + label {
-      color: var(--accent);
-    }
-
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-    }
-
-    .btn-continue {
-      width: 100%;
-      padding: 13px 20px;
-      border: none;
-      border-radius: var(--radius);
+      flex: 0 0 36px;
       background: var(--accent);
       color: #fff;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-      cursor: pointer;
-      transition: background .15s, opacity .15s, transform .1s;
+      font-weight: 900;
+      font-size: 16px;
+      line-height: 1;
     }
 
-    .btn-continue:disabled {
-      background: var(--border);
+    .step-text{
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-top: 2px;
+    }
+
+    .step-text strong{
+      font-weight: 750;
+      font-size: 1.05rem;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .step-text span{
       color: var(--muted);
-      cursor: not-allowed;
+      font-size: 0.95rem;
+      line-height: 1.4;
     }
 
-    .btn-continue:not(:disabled):hover {
-      background: var(--accent-hover);
+    .welcome-start-btn{
+      display: block;
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-align: center;
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background .15s ease, transform .05s ease;
     }
-
-    .btn-continue:not(:disabled):active {
-      transform: scale(.98);
+    .welcome-start-btn:hover{
+      background: var(--accent-2);
+      border-color: var(--accent-2);
     }
+    .welcome-start-btn:active{ transform: translateY(1px); }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="container">
+    <div class="logo">kizako</div>
 
-      <div class="logo">kizako</div>
-      <p class="intro">Avant de commencer, lis attentivement ces deux points.</p>
+    <div class="card">
+      <p class="welcome-subtitle">Nous allons analyser des informations ensemble.</p>
 
-      <div class="card">
-
-        <!-- Step 1 : Firefox -->
-        <div class="step">
-          <p class="step-text">
-            Pour que cette expérience fonctionne, il faut utiliser le navigateur
-            <strong>Firefox</strong>.
-          </p>
-
-          <div class="step-icon">
-            <img src="/assets/firefox-logo.webp" alt="Logo Firefox">
-          </div>
-
-          <div class="check-row">
-            <input type="checkbox" id="check1">
-            <label for="check1">J'ai compris</label>
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <span class="step-number">1</span>
+          <div class="step-text">
+            <strong>Ajoute un descripteur de contexte</strong>
+            <span>De quel type de source s'agit-il?</span>
           </div>
         </div>
-
-        <hr class="divider">
-
-        <!-- Step 2 : Autoriser les pop-ups -->
-        <div class="step">
-          <p class="step-text">
-            Tu devras <strong>autoriser les fenêtres pop-ups</strong> lorsque Firefox te le demandera.
-          </p>
-
-          <img src="/assets/popup.png" alt="Notification Firefox pour autoriser les pop-ups" class="step-screenshot">
-
-          <div class="check-row">
-            <input type="checkbox" id="check2">
-            <label for="check2">J'ai compris</label>
+        <div class="welcome-step">
+          <span class="step-number">2</span>
+          <div class="step-text">
+            <strong>Ajoute un descripteur de contenu</strong>
+            <span>De quel genre d'affirmations s'agit-il?</span>
           </div>
         </div>
-
-        <hr class="divider">
-
-        <button class="btn-continue" id="btnContinue" disabled>
-          Continuer →
-        </button>
-
+        <div class="welcome-step">
+          <span class="step-number">3</span>
+          <div class="step-text">
+            <strong>Détermine la fiabilité avec une couleur</strong>
+            <span>Dis-nous si l'on peut avoir confiance dans cette information.</span>
+          </div>
+        </div>
       </div>
 
+      <button class="welcome-start-btn" type="button" onclick="window.location.href='/descripteurs/pages/liens.html'">
+        Start!
+      </button>
     </div>
   </div>
-
-  <script>
-    const check1 = document.getElementById("check1");
-    const check2 = document.getElementById("check2");
-    const btn    = document.getElementById("btnContinue");
-
-    function update() {
-      btn.disabled = !(check1.checked && check2.checked);
-    }
-
-    check1.addEventListener("change", update);
-    check2.addEventListener("change", update);
-
-    btn.addEventListener("click", () => {
-      window.location.href = "/descripteurs/pages/liens.html";
-    });
-  </script>
 </body>
 </html>

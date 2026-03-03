@@ -218,7 +218,9 @@ export async function initTreeFromIdMap(jsonUrl) {
   ------------------------- */
   function placeBottomControlsToEnd() {
     if (!bottomControlsEl) return;
-    const main = bottomControlsEl.closest("main") || document.querySelector("main");
+    const main = bottomControlsEl.closest("[data-tree-root], main")
+              || document.querySelector("[data-tree-root]")
+              || document.querySelector("main");
     if (!main) return;
     if (main.lastElementChild !== bottomControlsEl) main.appendChild(bottomControlsEl);
   }

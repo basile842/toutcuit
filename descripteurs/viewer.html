@@ -159,7 +159,7 @@
     id="siteFrame"
     class="site-frame"
     src="about:blank"
-    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
     allowfullscreen
   ></iframe>
 
@@ -176,6 +176,20 @@
 
   <aside id="certifyPanel" aria-label="Panneau Certify">
     <h1 class="viewer-panel-title">La machine à descripteurs</h1>
+
+    <!-- Link context — populated from URL params when coming from liens.html -->
+    <div id="viewerLinkHeader" style="display:none; margin-bottom:12px;">
+      <div style="display:flex; align-items:baseline; gap:8px; font-size:0.88rem; color:var(--muted); margin-bottom:6px;">
+        <span id="viewerLinkNum" style="font-weight:850; flex-shrink:0;"></span>
+        <span id="viewerLinkTitle" style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+      </div>
+      <!-- Always-visible fallback: if the iframe is blocked, the student can still open the article -->
+      <a id="viewerOpenLink" href="#" target="_blank" rel="noopener noreferrer"
+         style="font-size:0.78rem; color:var(--muted); text-decoration:underline; display:inline-block;">
+        Si le site ne s'affiche pas → ouvrir dans un onglet ↗
+      </a>
+    </div>
+
     <p id="treeSubtitle" class="subtitle"></p>
 
     <div id="choices"></div>
@@ -238,13 +252,61 @@
       }catch{ return null; }
     }
 
-    function setSite(url){
-      frame.src = url;
-      try{ localStorage.setItem(STORAGE_KEY, url); }catch{}
+    /* Convert public page URLs to their official embeddable versions.
+       YouTube, TikTok and Vimeo all provide embed URLs that work in iframes
+       even when their regular pages block iframe embedding.
+       Returns the embed URL, or null if no conversion is available. */
+    function toEmbedUrl(raw){
+      try{
+        const u = new URL(raw);
+        const host = u.hostname.replace(/^(www\.|m\.)/, "");
+
+        // ── YouTube ──────────────────────────────────────────────────
+        if (host === "youtube.com" || host === "youtu.be"){
+          let vid = null;
+          if (host === "youtu.be"){
+            vid = u.pathname.slice(1).split("/")[0];
+          } else if (u.searchParams.get("v")){
+            vid = u.searchParams.get("v");
+          } else if (u.pathname.startsWith("/shorts/")){
+            vid = u.pathname.replace("/shorts/", "").split("?")[0];
+          } else if (u.pathname.startsWith("/live/")){
+            vid = u.pathname.replace("/live/", "").split("?")[0];
+          } else if (u.pathname.startsWith("/embed/")){
+            return raw; // already an embed URL
+          }
+          if (vid) return `https://www.youtube.com/embed/${vid}?rel=0`;
+        }
+
+        // ── TikTok ───────────────────────────────────────────────────
+        if (host === "tiktok.com"){
+          const m = u.pathname.match(/\/video\/(\d+)/);
+          if (m) return `https://www.tiktok.com/embed/v2/${m[1]}`;
+        }
+
+        // ── Vimeo ────────────────────────────────────────────────────
+        if (host === "vimeo.com"){
+          const m = u.pathname.match(/^\/(\d+)/);
+          if (m) return `https://player.vimeo.com/video/${m[1]}`;
+        }
+
+        return null; // no conversion known — use raw iframe
+      }catch{
+        return null;
+      }
+    }
+
+    function setSite(originalUrl){
+      const embedUrl = toEmbedUrl(originalUrl) || originalUrl;
+      frame.src = embedUrl;
+      try{ localStorage.setItem(STORAGE_KEY, originalUrl); }catch{}
     }
 
     const qs = new URLSearchParams(location.search);
-    const paramUrl = normalizeUrl(qs.get("url"));
+    const paramUrl    = normalizeUrl(qs.get("url"));
+    const paramId     = (qs.get("id")     || "").trim();
+    const paramTitle  = (qs.get("title")  || "").trim();
+    const paramNumber = (qs.get("number") || "").trim();
 
     let chosen = paramUrl;
     if (!chosen){
@@ -253,6 +315,27 @@
     chosen = normalizeUrl(chosen) || DEFAULT_URL;
 
     setSite(chosen);
+
+    /* --- Link context (when opened from liens.html) --- */
+    if (paramId){
+      window.CERTIFY_CONTEXT = { id: paramId, title: paramTitle, url: chosen };
+
+      const linkHeader = document.getElementById("viewerLinkHeader");
+      const numEl      = document.getElementById("viewerLinkNum");
+      const titleEl    = document.getElementById("viewerLinkTitle");
+
+      if (numEl)    numEl.textContent   = paramNumber ? `${paramNumber}.` : "";
+      if (titleEl)  titleEl.textContent = paramTitle || "";
+      if (linkHeader) linkHeader.style.display = "block";
+
+      // Open the panel immediately
+      document.body.classList.add("panel-open");
+      syncHandleA11y();
+    }
+
+    /* --- Fallback link: always points to the original (non-embed) URL --- */
+    const openLink = document.getElementById("viewerOpenLink");
+    if (openLink) openLink.href = chosen;
   </script>
 
   <script type="module">

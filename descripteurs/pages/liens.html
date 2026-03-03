@@ -331,6 +331,95 @@
       opacity: .92;
       filter: grayscale(1) brightness(0) opacity(.70);
     }
+
+    /* ===== Guide pop-ups bloquées ===== */
+    .popup-guide-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,25,.55);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 16px;
+    }
+    .popup-guide-box{
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 30px 24px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    }
+    .popup-guide-box h2{
+      margin: 0 0 6px 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+    .popup-guide-box .guide-intro{
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0 0 18px 0;
+    }
+    .popup-guide-steps{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0 0 20px 0;
+    }
+    .popup-guide-step{
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .guide-num{
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 900;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .guide-step-text{
+      font-size: 0.90rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .guide-step-text strong{
+      font-weight: 850;
+    }
+    .guide-step-text .guide-key{
+      display: inline-block;
+      background: var(--panel-2, #f0f0f0);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.6;
+    }
+    .popup-guide-note{
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: -6px 0 18px 0;
+      padding: 8px 12px;
+      background: rgba(239,68,68,.07);
+      border: 1px solid rgba(239,68,68,.20);
+      border-radius: 8px;
+    }
+    .popup-guide-actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 
@@ -339,11 +428,74 @@
     <nav></nav>
   </header>
 
+  <!-- Guide pop-ups bloquées -->
+  <div id="popupGuide" class="popup-guide-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="popupGuideTitle">
+    <div class="popup-guide-box">
+      <h2 id="popupGuideTitle">⚠️ Les fenêtres pop-up sont bloquées</h2>
+      <p class="guide-intro">Kizako a besoin d'ouvrir deux fenêtres côte à côte pour fonctionner. Voici comment autoriser les pop-ups pour ce site :</p>
+
+      <!-- Chrome -->
+      <div id="guideChrome" style="display:none">
+        <div class="popup-guide-steps">
+          <div class="popup-guide-step">
+            <span class="guide-num">1</span>
+            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Chrome, tout à droite. Tu verras une icône de pop-up bloquée (un petit carré barré).</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">2</span>
+            <span class="guide-step-text">Clique sur cette icône, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">3</span>
+            <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
+          </div>
+        </div>
+        <p class="popup-guide-note">Si l'icône n'apparaît pas ou que l'option est grisée, Chrome est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
+      </div>
+
+      <!-- Firefox -->
+      <div id="guideFirefox" style="display:none">
+        <div class="popup-guide-steps">
+          <div class="popup-guide-step">
+            <span class="guide-num">1</span>
+            <span class="guide-step-text">Une barre de notification apparaît en haut du navigateur : <strong>"Firefox a bloqué l'ouverture d'une fenêtre pop-up"</strong>.</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">2</span>
+            <span class="guide-step-text">Clique sur <strong>"Préférences"</strong> dans cette barre, puis sur <strong>"Autoriser les pop-ups de kizako.ch"</strong>.</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">3</span>
+            <span class="guide-step-text">Firefox ouvre automatiquement les fenêtres. Si ce n'est pas le cas, clique de nouveau sur le lien.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Safari / autre -->
+      <div id="guideOther" style="display:none">
+        <div class="popup-guide-steps">
+          <div class="popup-guide-step">
+            <span class="guide-num">1</span>
+            <span class="guide-step-text">Ouvre les <strong>paramètres de ton navigateur</strong> et cherche la section <strong>"Pop-ups"</strong> ou <strong>"Fenêtres"</strong>.</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">2</span>
+            <span class="guide-step-text">Autorise les pop-ups pour <strong>kizako.ch</strong>, puis recharge la page et réessaie.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-guide-actions">
+        <button id="popupGuideDismiss" class="btn" type="button">J'ai compris</button>
+      </div>
+    </div>
+  </div>
+
   <main>
     <h1>Liens à analyser</h1>
     <p class="page-lead">
       Sélectionne un lien : il s'ouvre dans une nouvelle fenêtre, et la Machine à descripteurs s'ouvre à droite.
-      Une fois le résultat obtenu, il s'affiche ici, à droite du lien. ⚠️ Il faut autoriser ton navigateur à ouvrir les fenêtres pop-ups.
+      Une fois le résultat obtenu, il s'affiche ici, à droite du lien.
     </p>
 
     <section class="card">
@@ -534,15 +686,6 @@
     flushArchiveQueue();
 
     /* ============================
-       Sidecar + windows
-    ============================ */
-    const SIDECAR_URL = "/descripteurs/sidecar.html";
-    const SIDE_W = 420;
-
-    const ARTICLE_WIN_NAME = "certify_article";
-    const SIDECAR_WIN_NAME = "certify_sidecar";
-
-    /* ============================
        Storage (résultats visibles)
        ⚠️ IMPORTANT: on ne stocke que les résultats publiés
     ============================ */
@@ -565,8 +708,13 @@
     }
 
     /* ============================
-       Helpers
+       Pop-up helpers (comportement original)
     ============================ */
+    const SIDECAR_URL      = "/descripteurs/sidecar.html";
+    const SIDE_W           = 420;
+    const ARTICLE_WIN_NAME = "certify_article";
+    const SIDECAR_WIN_NAME = "certify_sidecar";
+
     function isMobile(){
       return window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
     }
@@ -594,74 +742,63 @@
     }
 
     function getScreenBox(){
-      const W = Math.max(800, window.screen?.availWidth || window.innerWidth || 1200);
+      const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
       const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
       const X = window.screen?.availLeft ?? 0;
-      const Y = window.screen?.availTop ?? 0;
+      const Y = window.screen?.availTop  ?? 0;
       return { W, H, X, Y };
     }
 
     function openArticleLeft(url, sideW){
       const { W, H, X, Y } = getScreenBox();
-      const gap = 10;
-
-      const articleW = Math.max(520, W - sideW - gap);
-      const articleH = H;
-
-      const left = X;
-      const top  = Y;
-
+      const articleW = Math.max(520, W - sideW - 10);
       const features = [
         "popup=yes",
-        `width=${articleW}`,
-        `height=${articleH}`,
-        `left=${left}`,
-        `top=${top}`,
-        "resizable=yes",
-        "scrollbars=yes"
+        `width=${articleW}`, `height=${H}`,
+        `left=${X}`,         `top=${Y}`,
+        "resizable=yes", "scrollbars=yes"
       ].join(",");
-
       const win = window.open("about:blank", ARTICLE_WIN_NAME, features);
-      if (win){
-        try { win.focus(); } catch {}
-        try { win.location.href = url; } catch {}
-      }
+      if (win){ try{ win.focus(); }catch{} try{ win.location.href = url; }catch{} }
       return win;
     }
 
     function openSidecarRight(context, sideW){
       const { W, H, X, Y } = getScreenBox();
-
-      const finalSideW = Math.min(sideW || SIDE_W, Math.floor(W * 0.45));
-      const sideH = H;
-
-      const left = X + (W - finalSideW);
-      const top  = Y;
-
-      // ✅ Utiliser context.number directement
-      const linkNumber = context.number || "?";
-
+      const finalW = Math.min(sideW, Math.floor(W * 0.45));
       const qs = new URLSearchParams({
-        id: context.id,
-        title: context.title,
-        url: context.url,
-        number: linkNumber
+        id: context.id, title: context.title,
+        url: context.url, number: String(context.number || "?")
       });
-
       const features = [
         "popup=yes",
-        `width=${finalSideW}`,
-        `height=${sideH}`,
-        `left=${left}`,
-        `top=${top}`,
-        "resizable=yes",
-        "scrollbars=yes"
+        `width=${finalW}`, `height=${H}`,
+        `left=${X + W - finalW}`, `top=${Y}`,
+        "resizable=yes", "scrollbars=yes"
       ].join(",");
-
       const win = window.open(`${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME, features);
-      if (win) { try { win.focus(); } catch {} }
+      if (win){ try{ win.focus(); }catch{} }
       return win;
     }
+
+    /* ============================
+       Guide pop-ups bloquées
+    ============================ */
+    function showPopupGuide(){
+      const ua = navigator.userAgent;
+      const isFirefox = ua.includes("Firefox/");
+      const isChrome  = ua.includes("Chrome/") && !isFirefox;
+
+      document.getElementById("guideChrome").style.display  = isChrome  ? "" : "none";
+      document.getElementById("guideFirefox").style.display = isFirefox ? "" : "none";
+      document.getElementById("guideOther").style.display   = (!isChrome && !isFirefox) ? "" : "none";
+
+      document.getElementById("popupGuide").style.display = "flex";
+    }
+
+    document.getElementById("popupGuideDismiss")?.addEventListener("click", () => {
+      document.getElementById("popupGuide").style.display = "none";
+    });
 
     function openUrlAndSidecar(context){
       if (isMobile()){
@@ -669,18 +806,11 @@
         return;
       }
 
-      const sideW = SIDE_W;
+      const art = openArticleLeft(context.url, SIDE_W);
+      if (!art){ showPopupGuide(); return; }
 
-      const art = openArticleLeft(context.url, sideW);
-      if (!art){
-        alert("La fenêtre de l'article a été bloquée. Autorise les popups pour ce site.");
-        return;
-      }
-
-      const side = openSidecarRight(context, sideW);
-      if (!side){
-        alert("La fenêtre Certify a été bloquée. Autorise les popups pour ce site.");
-      }
+      const side = openSidecarRight(context, SIDE_W);
+      if (!side){ showPopupGuide(); }
     }
 
     /* ============================
