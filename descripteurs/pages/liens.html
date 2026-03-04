@@ -439,18 +439,18 @@
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Chrome, tout à droite. Tu verras une icône de pop-up bloquée (un petit carré barré).</span>
+            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Chrome, tout à droite. Tu verras un petit carré barré.</span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
-            <span class="guide-step-text">Clique sur cette icône, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
+            <span class="guide-step-text">Clique sur ce petit carré, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">3</span>
             <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
           </div>
         </div>
-        <p class="popup-guide-note">Si l'icône n'apparaît pas ou que l'option est grisée, Chrome est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
+        <p class="popup-guide-note">Si le petit carré n'apparaît pas ou que l'option est grisée, Chrome est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
       </div>
 
       <!-- Edge -->
@@ -458,18 +458,18 @@
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Edge, tout à droite. Tu verras une icône de pop-up bloquée (un petit carré barré).</span>
+            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Edge, tout à droite. Tu verras un petit carré barré.</span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
-            <span class="guide-step-text">Clique sur cette icône, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
+            <span class="guide-step-text">Clique sur ce petit carré, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">3</span>
             <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
           </div>
         </div>
-        <p class="popup-guide-note">Si l'icône n'apparaît pas ou que l'option est grisée, Edge est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
+        <p class="popup-guide-note">Si le petit carré n'apparaît pas ou que l'option est grisée, Edge est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
       </div>
 
       <!-- Firefox -->
@@ -768,12 +768,6 @@
       return { W, H, X, Y };
     }
 
-    function computeLayout(){
-      const { W, H, X, Y } = getScreenBox();
-      const sideW = Math.min(SIDE_W, Math.floor(W * 0.45));
-      const artW  = W - sideW;
-      return { W, H, X, Y, artW, sideW };
-    }
 
     /* ============================
        Guide pop-ups bloquées
@@ -802,24 +796,28 @@
         return;
       }
 
-      const { H, X, Y, artW, sideW } = computeLayout();
+      const { W, H, X, Y } = getScreenBox();
+      const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
+      const artW   = W - finalW;
 
-      // Article window — left side, about:blank for now
+      // Ouvrir l'article (about:blank, on navigue après)
       const art = window.open(
         "about:blank", ARTICLE_WIN_NAME,
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art){ showPopupGuide(); return; }
+      // Forcer la position contre le bord gauche (Firefox décale par défaut)
+      try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
-      // Sidecar window — right side, starts exactly where article ends
+      // Sidecar ancré au bord droit
       const qs = new URLSearchParams({
         id: context.id, title: context.title,
         url: context.url, number: String(context.number || "?")
       });
       const side = window.open(
         `${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME,
-        `popup=yes,width=${sideW},height=${H},left=${X + artW},top=${Y},resizable=yes,scrollbars=yes`
+        `popup=yes,width=${finalW},height=${H},left=${X + artW},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!side){
         try{ art.close(); }catch{}
@@ -827,7 +825,7 @@
         return;
       }
 
-      // Both open — navigate article to the actual URL
+      // Les deux ouvertes — naviguer vers l'URL réelle
       try{ art.location.href = context.url; }catch{}
     }
 
