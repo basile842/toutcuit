@@ -340,7 +340,7 @@
       z-index: 500;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       padding: 16px;
     }
     .popup-guide-box{
@@ -451,6 +451,25 @@
           </div>
         </div>
         <p class="popup-guide-note">Si l'icône n'apparaît pas ou que l'option est grisée, Chrome est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
+      </div>
+
+      <!-- Edge -->
+      <div id="guideEdge" style="display:none">
+        <div class="popup-guide-steps">
+          <div class="popup-guide-step">
+            <span class="guide-num">1</span>
+            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Edge, tout à droite. Tu verras une icône de pop-up bloquée (un petit carré barré).</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">2</span>
+            <span class="guide-step-text">Clique sur cette icône, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">3</span>
+            <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
+          </div>
+        </div>
+        <p class="popup-guide-note">Si l'icône n'apparaît pas ou que l'option est grisée, Edge est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
       </div>
 
       <!-- Firefox -->
@@ -749,36 +768,11 @@
       return { W, H, X, Y };
     }
 
-    function openArticleLeft(url, sideW){
+    function computeLayout(){
       const { W, H, X, Y } = getScreenBox();
-      const articleW = Math.max(520, W - sideW - 10);
-      const features = [
-        "popup=yes",
-        `width=${articleW}`, `height=${H}`,
-        `left=${X}`,         `top=${Y}`,
-        "resizable=yes", "scrollbars=yes"
-      ].join(",");
-      const win = window.open("about:blank", ARTICLE_WIN_NAME, features);
-      if (win){ try{ win.focus(); }catch{} try{ win.location.href = url; }catch{} }
-      return win;
-    }
-
-    function openSidecarRight(context, sideW){
-      const { W, H, X, Y } = getScreenBox();
-      const finalW = Math.min(sideW, Math.floor(W * 0.45));
-      const qs = new URLSearchParams({
-        id: context.id, title: context.title,
-        url: context.url, number: String(context.number || "?")
-      });
-      const features = [
-        "popup=yes",
-        `width=${finalW}`, `height=${H}`,
-        `left=${X + W - finalW}`, `top=${Y}`,
-        "resizable=yes", "scrollbars=yes"
-      ].join(",");
-      const win = window.open(`${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME, features);
-      if (win){ try{ win.focus(); }catch{} }
-      return win;
+      const sideW = Math.min(SIDE_W, Math.floor(W * 0.45));
+      const artW  = W - sideW;
+      return { W, H, X, Y, artW, sideW };
     }
 
     /* ============================
@@ -787,11 +781,13 @@
     function showPopupGuide(){
       const ua = navigator.userAgent;
       const isFirefox = ua.includes("Firefox/");
-      const isChrome  = ua.includes("Chrome/") && !isFirefox;
+      const isEdge    = ua.includes("Edg/") && !isFirefox;
+      const isChrome  = ua.includes("Chrome/") && !isFirefox && !isEdge;
 
       document.getElementById("guideChrome").style.display  = isChrome  ? "" : "none";
+      document.getElementById("guideEdge").style.display    = isEdge    ? "" : "none";
       document.getElementById("guideFirefox").style.display = isFirefox ? "" : "none";
-      document.getElementById("guideOther").style.display   = (!isChrome && !isFirefox) ? "" : "none";
+      document.getElementById("guideOther").style.display   = (!isChrome && !isEdge && !isFirefox) ? "" : "none";
 
       document.getElementById("popupGuide").style.display = "flex";
     }
@@ -806,11 +802,33 @@
         return;
       }
 
-      const art = openArticleLeft(context.url, SIDE_W);
-      if (!art){ showPopupGuide(); return; }
+      const { H, X, Y, artW, sideW } = computeLayout();
 
-      const side = openSidecarRight(context, SIDE_W);
-      if (!side){ showPopupGuide(); }
+      // Article window — left side, about:blank for now
+      const art = window.open(
+        "about:blank", ARTICLE_WIN_NAME,
+        `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!art){ showPopupGuide(); return; }
+      try{ art.focus(); }catch{}
+
+      // Sidecar window — right side, starts exactly where article ends
+      const qs = new URLSearchParams({
+        id: context.id, title: context.title,
+        url: context.url, number: String(context.number || "?")
+      });
+      const side = window.open(
+        `${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME,
+        `popup=yes,width=${sideW},height=${H},left=${X + artW},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side){
+        try{ art.close(); }catch{}
+        showPopupGuide();
+        return;
+      }
+
+      // Both open — navigate article to the actual URL
+      try{ art.location.href = context.url; }catch{}
     }
 
     /* ============================
