@@ -420,6 +420,67 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+
+    /* ===== Guide plein écran ===== */
+    .fullscreen-guide-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,25,.55);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .fullscreen-guide-box{
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 30px 24px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    }
+    .fullscreen-guide-box h2{
+      margin: 0 0 6px 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+    .fullscreen-guide-box .guide-intro{
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0 0 18px 0;
+    }
+    .shortcut-row{
+      display: flex;
+      gap: 12px;
+      margin: 0 0 18px 0;
+      flex-wrap: wrap;
+    }
+    .shortcut-block{
+      flex: 1 1 160px;
+      background: var(--panel-2, #f0f0f0);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+    }
+    .shortcut-block .os-label{
+      font-weight: 850;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .shortcut-block .guide-key{
+      display: inline-block;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.6;
+    }
   </style>
 </head>
 
@@ -427,6 +488,28 @@
   <header>
     <nav></nav>
   </header>
+
+  <!-- Guide plein écran -->
+  <div id="fullscreenGuide" class="fullscreen-guide-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="fullscreenGuideTitle">
+    <div class="fullscreen-guide-box">
+      <h2 id="fullscreenGuideTitle">&#9974; Les fenêtres s'ouvrent en plein écran</h2>
+      <p class="guide-intro">L'ordinateur est configuré pour ouvrir les fenêtres en plein écran. Tu peux quand même travailler en passant d'une fenêtre à l'autre avec le clavier :</p>
+      <div class="shortcut-row">
+        <div class="shortcut-block">
+          <div class="os-label">Windows</div>
+          <span class="guide-key">Alt</span> + <span class="guide-key">Tab</span>
+        </div>
+        <div class="shortcut-block">
+          <div class="os-label">Mac</div>
+          <span class="guide-key">⌘ Cmd</span> + <span class="guide-key">Tab</span>
+        </div>
+      </div>
+      <p class="popup-guide-note">Si l'option est disponible, tu peux aussi essayer de réduire les fenêtres manuellement en faisant glisser leur bord.</p>
+      <div class="popup-guide-actions">
+        <button id="fullscreenGuideDismiss" class="btn" type="button">J'ai compris</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Guide pop-ups bloquées -->
   <div id="popupGuide" class="popup-guide-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="popupGuideTitle">
@@ -770,6 +853,17 @@
 
 
     /* ============================
+       Guide plein écran
+    ============================ */
+    function showFullscreenGuide(){
+      document.getElementById("fullscreenGuide").style.display = "flex";
+    }
+
+    document.getElementById("fullscreenGuideDismiss")?.addEventListener("click", () => {
+      document.getElementById("fullscreenGuide").style.display = "none";
+    });
+
+    /* ============================
        Guide pop-ups bloquées
     ============================ */
     function showPopupGuide(){
@@ -806,7 +900,8 @@
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art){ showPopupGuide(); return; }
-      // Forcer la position contre le bord gauche (Firefox décale par défaut)
+      // Forcer la taille et la position (ignoré si navigateur administré)
+      try{ art.resizeTo(artW, H); }catch{}
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
@@ -825,8 +920,33 @@
         return;
       }
 
+      try{ side.resizeTo(finalW, H); }catch{}
+      try{ side.moveTo(X + artW, Y); }catch{}
+
       // Les deux ouvertes — naviguer vers l'URL réelle
       try{ art.location.href = context.url; }catch{}
+
+      // Détecter si le redimensionnement a été ignoré (navigateur administré / kiosk)
+      // Le sidecar est same-origin, donc outerWidth est lisible
+      setTimeout(() => {
+        try{
+          if (!side || side.closed) return;
+          if (side.outerWidth > finalW * 1.5){
+            // Deuxième tentative
+            try{ side.resizeTo(finalW, H); }catch{}
+            try{ side.moveTo(X + artW, Y); }catch{}
+            try{ art.resizeTo(artW, H); }catch{}
+            try{ art.moveTo(X, Y); }catch{}
+            // Si toujours trop grand, informer l'élève
+            setTimeout(() => {
+              try{
+                if (!side || side.closed) return;
+                if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
+              }catch{}
+            }, 400);
+          }
+        }catch{}
+      }, 600);
     }
 
     /* ============================
