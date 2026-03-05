@@ -420,6 +420,14 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+    .guide-browser-icon{
+      display: block;
+      margin-top: 8px;
+      height: 40px;
+      width: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border, #e5e7eb);
+    }
 
     /* ===== Guide plein écran ===== */
     .fullscreen-guide-overlay{
@@ -515,21 +523,16 @@
   <div id="popupGuide" class="popup-guide-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="popupGuideTitle">
     <div class="popup-guide-box">
       <h2 id="popupGuideTitle">⚠️ Les fenêtres pop-up sont bloquées</h2>
-      <p class="guide-intro">Kizako a besoin d'ouvrir deux fenêtres côte à côte pour fonctionner. Voici comment autoriser les pop-ups pour ce site :</p>
 
       <!-- Chrome -->
       <div id="guideChrome" style="display:none">
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Chrome, tout à droite. Tu verras un petit carré barré.</span>
+            <span class="guide-step-text">Clique sur le petit carré barré dans la barre en haut, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.<img src="../assets/img/ChromePopup.png" alt="Icône pop-up bloquée dans Chrome" class="guide-browser-icon"></span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
-            <span class="guide-step-text">Clique sur ce petit carré, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
-          </div>
-          <div class="popup-guide-step">
-            <span class="guide-num">3</span>
             <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
           </div>
         </div>
@@ -541,14 +544,10 @@
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Regarde la <strong>barre d'adresse</strong> de Edge, tout à droite. Tu verras un petit carré barré.</span>
+            <span class="guide-step-text">Clique sur le petit carré barré dans la barre en haut, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.<img src="../assets/img/EdgePopup.png" alt="Icône pop-up bloquée dans Edge" class="guide-browser-icon"></span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
-            <span class="guide-step-text">Clique sur ce petit carré, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
-          </div>
-          <div class="popup-guide-step">
-            <span class="guide-num">3</span>
             <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
           </div>
         </div>
@@ -560,15 +559,11 @@
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Une barre de notification apparaît en haut du navigateur : <strong>"Firefox a bloqué l'ouverture d'une fenêtre pop-up"</strong>.</span>
+            <span class="guide-step-text">Clique sur "Préférences" dans la barre en haut sur le petit carré, puis sur <strong>"Autoriser les pop-ups de kizako.ch"</strong>.<img src="../assets/img/FirefoxPopup.png" alt="Icône pop-up bloquée dans Firefox" class="guide-browser-icon"></span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
-            <span class="guide-step-text">Clique sur <strong>"Préférences"</strong> dans cette barre, puis sur <strong>"Autoriser les pop-ups de kizako.ch"</strong>.</span>
-          </div>
-          <div class="popup-guide-step">
-            <span class="guide-num">3</span>
-            <span class="guide-step-text">Firefox ouvre automatiquement les fenêtres. Si ce n'est pas le cas, clique de nouveau sur le lien.</span>
+            <span class="guide-step-text">Firefox ouvre les fenêtres. Si ce n'est pas le cas, clique de nouveau sur le lien.</span>
           </div>
         </div>
       </div>
@@ -578,7 +573,7 @@
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Clique sur <strong>l'image avec les deux petits carrés</strong> dans la barre de navigation.</span>
+            <span class="guide-step-text">Clique sur l'image avec les deux petits carrés dans la barre de navigation.<img src="../assets/img/SafariPopup.png" alt="Icône pop-up bloquée dans Safari" class="guide-browser-icon"></span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
@@ -592,13 +587,14 @@
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
-            <span class="guide-step-text">Ouvre les <strong>paramètres de ton navigateur</strong> et cherche la section <strong>"Pop-ups"</strong> ou <strong>"Fenêtres"</strong>.</span>
+            <span class="guide-step-text">Clique sur le petit carré barré dans la barre en haut, puis choisis <strong>"Toujours autoriser les pop-ups de kizako.ch"</strong>.</span>
           </div>
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
-            <span class="guide-step-text">Autorise les pop-ups pour <strong>kizako.ch</strong>, puis recharge la page et réessaie.</span>
+            <span class="guide-step-text">La page se recharge. Clique de nouveau sur le lien.</span>
           </div>
         </div>
+        <p class="popup-guide-note">Si le petit carré n'apparaît pas ou que l'option est grisée, ton navigateur est administré par l'école et bloque les pop-ups. Essaie d'utiliser <strong>Firefox</strong>.</p>
       </div>
 
       <div class="popup-guide-actions">
