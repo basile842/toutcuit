@@ -573,8 +573,8 @@
         </div>
       </div>
 
-      <!-- Safari / autre -->
-      <div id="guideOther" style="display:none">
+      <!-- Safari -->
+      <div id="guideSafari" style="display:none">
         <div class="popup-guide-steps">
           <div class="popup-guide-step">
             <span class="guide-num">1</span>
@@ -583,6 +583,20 @@
           <div class="popup-guide-step">
             <span class="guide-num">2</span>
             <span class="guide-step-text">Retourne sur la page Liens et réessaie.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Autre -->
+      <div id="guideOther" style="display:none">
+        <div class="popup-guide-steps">
+          <div class="popup-guide-step">
+            <span class="guide-num">1</span>
+            <span class="guide-step-text">Ouvre les <strong>paramètres de ton navigateur</strong> et cherche la section <strong>"Pop-ups"</strong> ou <strong>"Fenêtres"</strong>.</span>
+          </div>
+          <div class="popup-guide-step">
+            <span class="guide-num">2</span>
+            <span class="guide-step-text">Autorise les pop-ups pour <strong>kizako.ch</strong>, puis recharge la page et réessaie.</span>
           </div>
         </div>
       </div>
@@ -871,11 +885,13 @@
       const isFirefox = ua.includes("Firefox/");
       const isEdge    = ua.includes("Edg/") && !isFirefox;
       const isChrome  = ua.includes("Chrome/") && !isFirefox && !isEdge;
+      const isSafari  = ua.includes("Safari/") && !ua.includes("Chrome/") && !ua.includes("Chromium/") && !isFirefox && !isEdge;
 
       document.getElementById("guideChrome").style.display  = isChrome  ? "" : "none";
       document.getElementById("guideEdge").style.display    = isEdge    ? "" : "none";
       document.getElementById("guideFirefox").style.display = isFirefox ? "" : "none";
-      document.getElementById("guideOther").style.display   = (!isChrome && !isEdge && !isFirefox) ? "" : "none";
+      document.getElementById("guideSafari").style.display  = isSafari  ? "" : "none";
+      document.getElementById("guideOther").style.display   = (!isChrome && !isEdge && !isFirefox && !isSafari) ? "" : "none";
 
       document.getElementById("popupGuide").style.display = "flex";
     }
