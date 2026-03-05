@@ -917,6 +917,13 @@
       if (!art){ showPopupGuide(); return; }
       // Forcer la taille et la position (ignoré si navigateur administré)
       try{ art.resizeTo(artW, H); }catch{}
+      // Firefox interprète parfois resizeTo comme innerWidth au lieu de outerWidth :
+      // si outerWidth > artW après le resize, on corrige en soustrayant le delta.
+      try{
+        if (art.outerWidth > artW + 2){
+          art.resizeTo(artW - (art.outerWidth - artW), H);
+        }
+      }catch{}
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
