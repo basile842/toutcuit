@@ -978,14 +978,31 @@
       const { W, H, X, Y } = getScreenBox();
       const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
       const artW   = W - finalW;
+
+      // Ouvrir l'article
       const art = window.open(
         context.url, ARTICLE_WIN_NAME,
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art) return;
       try{ art.resizeTo(artW, H); }catch{}
+      // Même correction Firefox que dans openUrlAndSidecar
+      try{
+        if (art.outerWidth > artW + 2){
+          art.resizeTo(artW - (art.outerWidth - artW), H);
+        }
+      }catch{}
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
+
+      // Repositionner le sidecar (auto-ouvert par Firefox à une position arbitraire)
+      try{
+        const side = window.open("", SIDECAR_WIN_NAME);
+        if (side && !side.closed){
+          try{ side.resizeTo(finalW, H); }catch{}
+          try{ side.moveTo(X + artW, Y); }catch{}
+        }
+      }catch{}
     };
 
     /* ============================
