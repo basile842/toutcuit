@@ -936,6 +936,7 @@
         _poll++;
         const ow = art.outerWidth;
         const settled = ow > 0 && ow < W * 0.85; // resize effectif
+        console.log(`[kizako] poll#${_poll} outerWidth=${ow} W=${W} artW=${artW} settled=${settled} screenX=${art.screenX}`);
         if (!settled && _poll < 15){
           setTimeout(openSidecarWhenReady, 20); // réessayer dans 20ms
           return;
