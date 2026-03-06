@@ -927,22 +927,26 @@
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
-      // Ouvrir le sidecar dans un setTimeout pour laisser Firefox stabiliser les dimensions
-      // de l'article (about:blank, same-origin) avant de lire outerWidth.
-      // L'article est encore same-origin ici → outerWidth est fiable.
-      setTimeout(() => {
-        // Correction Firefox : si resizeTo a été interprété en innerWidth,
-        // art.outerWidth > artW. On recalcule la position du sidecar en conséquence.
+      // Attendre que Firefox applique le resizeTo avant d'ouvrir le sidecar.
+      // Firefox ouvre parfois la popup en plein écran puis la redimensionne :
+      // on poll toutes les 20ms jusqu'à ce que outerWidth soit stabilisé (<85% de W),
+      // puis on calcule la position réelle du sidecar.
+      let _poll = 0;
+      (function openSidecarWhenReady(){
+        _poll++;
+        const ow = art.outerWidth;
+        const settled = ow > 0 && ow < W * 0.85; // resize effectif
+        if (!settled && _poll < 15){
+          setTimeout(openSidecarWhenReady, 20); // réessayer dans 20ms
+          return;
+        }
+
+        // Correction Firefox innerWidth : si outerWidth > artW, réduire
         let sideLeft = X + artW;
         try{
-          const ow = art.outerWidth;
-          if (ow > artW + 2){
-            // Corriger la largeur de l'article
-            art.resizeTo(artW - (ow - artW), H);
-          }
-          // Utiliser le bord droit réel de l'article pour positionner le sidecar
-          const artRight = art.screenX + (art.outerWidth || artW);
-          if (artRight > X + 10) sideLeft = artRight;
+          if (ow > artW + 2) art.resizeTo(artW - (ow - artW), H);
+          const artRight = art.screenX + art.outerWidth;
+          if (artRight > X + 10 && artRight < X + W) sideLeft = artRight;
         }catch{}
 
         const qs = new URLSearchParams({
@@ -972,12 +976,10 @@
           try{
             if (!side || side.closed) return;
             if (side.outerWidth > finalW * 1.5){
-              // Deuxième tentative
               try{ side.resizeTo(finalW, H); }catch{}
               try{ side.moveTo(sideLeft, Y); }catch{}
               try{ art.resizeTo(artW, H); }catch{}
               try{ art.moveTo(X, Y); }catch{}
-              // Si toujours trop grand, informer l'élève
               setTimeout(() => {
                 try{
                   if (!side || side.closed) return;
@@ -987,7 +989,7 @@
             }
           }catch{}
         }, 600);
-      }, 100);
+      })();
     }
 
     // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox).
