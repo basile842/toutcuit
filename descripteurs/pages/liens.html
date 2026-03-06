@@ -1002,52 +1002,65 @@
 
     // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox).
     // sideWin : référence directe à la fenêtre sidecar (passée par sidecar.html).
+    //
+    // Point clé : on ouvre l'article en about:blank (same-origin) pour pouvoir
+    // le redimensionner/déplacer. Si on l'ouvrait directement sur context.url,
+    // resizeTo/moveTo seraient bloqués cross-origin dans Firefox → article
+    // plein écran → chevauchement. Même approche que openUrlAndSidecar.
     window.openArticleForSidecar = function(context, sideWin) {
       const { W, H, X, Y } = getScreenBox();
       const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
       const artW   = W - finalW;
 
-      // Ouvrir l'article
+      // Ouvrir l'article en about:blank (same-origin → resizeTo/moveTo autorisés)
       const art = window.open(
-        context.url, ARTICLE_WIN_NAME,
+        "about:blank", ARTICLE_WIN_NAME,
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art) return;
       try{ art.resizeTo(artW, H); }catch{}
-      // Même correction Firefox que dans openUrlAndSidecar
-      try{
-        if (art.outerWidth > artW + 2){
-          art.resizeTo(artW - (art.outerWidth - artW), H);
-        }
-      }catch{}
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
-      // Repositionner le sidecar après stabilisation de l'article.
-      // L'article est cross-origin (ouvert directement sur context.url) →
-      // impossible de lire art.screenX/outerWidth. On attend 300ms fixes
-      // pour que resizeTo/moveTo de l'article prennent effet, puis on poll
-      // le sidecar (aussi async) jusqu'à ce qu'il soit bien positionné.
-      setTimeout(() => {
-        try{
-          if (!sideWin || sideWin.closed) return;
-          const sideLeft = X + artW; // valeur intentionnelle (art cross-origin)
+      // Poll : attendre que Firefox applique resizeTo/moveTo sur l'article
+      let _poll = 0;
+      (function waitForArticleReady(){
+        _poll++;
+        const ow = art.outerWidth;
+        const settled = ow >= artW - 50;
+        console.log(`[kizako] recArt#${_poll} outerWidth=${ow} artW=${artW} settled=${settled}`);
+        if (!settled && _poll < 15){
+          setTimeout(waitForArticleReady, 20);
+          return;
+        }
+
+        // Repositionner le sidecar
+        const sideLeft = X + artW;
+        if (sideWin && !sideWin.closed){
           try{ sideWin.resizeTo(finalW, H); }catch{}
           try{ sideWin.moveTo(sideLeft, Y); }catch{}
-          // Poll : attendre que le sidecar soit positionné (resizeTo/moveTo async)
-          let _sPoll = 0;
-          (function waitForSidecarPosition(){
-            _sPoll++;
-            const sow = sideWin.outerWidth;
-            const ssx = sideWin.screenX;
-            const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
-            console.log(`[kizako] recPoll#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled}`);
-            if (!sSettled && _sPoll < 15){
-              setTimeout(waitForSidecarPosition, 20);
-            }
-          })();
-        }catch{}
-      }, 300);
+        }
+
+        // Poll : attendre que le sidecar soit positionné
+        let _sPoll = 0;
+        (function waitForSidecarPosition(){
+          _sPoll++;
+          if (!sideWin || sideWin.closed){
+            try{ art.location.href = context.url; }catch{}
+            return;
+          }
+          const sow = sideWin.outerWidth;
+          const ssx = sideWin.screenX;
+          const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
+          console.log(`[kizako] recSide#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled}`);
+          if (!sSettled && _sPoll < 15){
+            setTimeout(waitForSidecarPosition, 20);
+            return;
+          }
+          // Les deux fenêtres sont en place, naviguer l'article vers l'URL réelle
+          try{ art.location.href = context.url; }catch{}
+        })();
+      })();
     };
 
     /* ============================
