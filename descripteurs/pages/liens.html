@@ -907,179 +907,79 @@
 
       const { W, H, X, Y } = getScreenBox();
       const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
-      const artW   = W - finalW;
+      const gap    = 10;
+      const artW   = W - finalW - gap;
+      const sideLeft = X + W - finalW;
 
-      // Ouvrir l'article (about:blank, on navigue après)
+      // Ouvrir l'article : about:blank puis navigation immédiate.
+      // On fait confiance au feature string pour la taille (pas de resizeTo/polling).
       const art = window.open(
         "about:blank", ARTICLE_WIN_NAME,
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art){ showPopupGuide(); return; }
-      // Forcer la taille et la position (ignoré si navigateur administré)
-      try{ art.resizeTo(artW, H); }catch{}
-      // Firefox interprète parfois resizeTo comme innerWidth au lieu de outerWidth :
-      // si outerWidth > artW après le resize, on corrige en soustrayant le delta.
-      try{
-        if (art.outerWidth > artW + 2){
-          art.resizeTo(artW - (art.outerWidth - artW), H);
-        }
-      }catch{}
-      try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
+      try{ art.location.href = context.url; }catch{}
 
-      // Poll : attendre que Firefox applique resizeTo de manière asynchrone.
-      // Firefox retourne outerWidth=<valeur initiale fenêtre> jusqu'à ce que resizeTo
-      // prenne effet. On attend que outerWidth atteigne artW (±50px).
-      // Après 15 essais (300ms) on continue quand même avec la position intentionnelle.
-      let _poll = 0;
-      (function openSidecarWhenReady(){
-        _poll++;
-        const ow = art.outerWidth;
-        const settled = ow >= artW - 50; // resizeTo a pris effet
-        console.log(`[kizako] poll#${_poll} outerWidth=${ow} W=${W} artW=${artW} settled=${settled} screenX=${art.screenX}`);
-        if (!settled && _poll < 15){
-          setTimeout(openSidecarWhenReady, 20);
-          return;
-        }
+      // Ouvrir le sidecar
+      const qs = new URLSearchParams({
+        id: context.id, title: context.title,
+        url: context.url, number: String(context.number || "?")
+      });
+      const side = window.open(
+        `${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME,
+        `popup=yes,width=${finalW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side){
+        try{ art.close(); }catch{}
+        window._pendingContext = context;
+        showPopupGuide();
+        return;
+      }
 
-        // Position intentionnelle — évite le décalage dû au resizeTo asynchrone de Firefox.
-        // On ne lit pas art.outerWidth ici car il peut encore refléter l'ancienne valeur.
-        const sideLeft = X + artW;
+      window._pendingContext = null;
 
-        const qs = new URLSearchParams({
-          id: context.id, title: context.title,
-          url: context.url, number: String(context.number || "?")
-        });
-        const side = window.open(
-          `${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME,
-          `popup=yes,width=${finalW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
-        );
-        if (!side){
-          try{ art.close(); }catch{}
-          window._pendingContext = context;
-          showPopupGuide();
-          return;
-        }
-
-        window._pendingContext = null;
-        try{ side.resizeTo(finalW, H); }catch{}
-        try{ side.moveTo(sideLeft, Y); }catch{}
-
-        // Poll : attendre que le sidecar soit positionné (resizeTo/moveTo aussi async).
-        // On attend outerWidth ≤ finalW+50 ET screenX proche de sideLeft (±50px).
-        // À chaque itération, on re-appelle moveTo/resizeTo pour forcer Firefox.
-        let _sPoll = 0;
-        (function waitForSidecarReady(){
-          _sPoll++;
-          const sow = side.outerWidth;
-          const ssx = side.screenX;
-          const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
-          console.log(`[kizako] sidePoll#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled} sideLeft=${sideLeft}`);
-          if (!sSettled && _sPoll < 15){
+      // Détecter navigateur administré / kiosk (resize ignoré par le système)
+      setTimeout(() => {
+        try{
+          if (!side || side.closed) return;
+          if (side.outerWidth > finalW * 1.5){
             try{ side.resizeTo(finalW, H); }catch{}
             try{ side.moveTo(sideLeft, Y); }catch{}
-            setTimeout(waitForSidecarReady, 20);
-            return;
+            setTimeout(() => {
+              try{
+                if (!side || side.closed) return;
+                if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
+              }catch{}
+            }, 400);
           }
-          // Firefox moveTo() est imprécis (±4–12px). Si le sidecar s'est arrêté
-          // AVANT sideLeft, rétrécir l'article pour épouser la position réelle.
-          // L'article est encore about:blank (same-origin) → resizeTo autorisé.
-          const actualSideX = side.screenX;
-          if (actualSideX > X && actualSideX < sideLeft){
-            try{ art.resizeTo(actualSideX - X, H); }catch{}
-          }
-          // Naviguer l'article vers l'URL réelle (devient cross-origin après ça)
-          try{ art.location.href = context.url; }catch{}
-          // Détecter navigateur administré / kiosk (resize ignoré)
-          setTimeout(() => {
-            try{
-              if (!side || side.closed) return;
-              if (side.outerWidth > finalW * 1.5){
-                try{ side.resizeTo(finalW, H); }catch{}
-                try{ side.moveTo(sideLeft, Y); }catch{}
-                setTimeout(() => {
-                  try{
-                    if (!side || side.closed) return;
-                    if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
-                  }catch{}
-                }, 400);
-              }
-            }catch{}
-          }, 600);
-        })();
-      })();
+        }catch{}
+      }, 600);
     }
 
-    // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox).
-    // sideWin : référence directe à la fenêtre sidecar (passée par sidecar.html).
-    //
-    // Point clé : on ouvre l'article en about:blank (same-origin) pour pouvoir
-    // le redimensionner/déplacer. Si on l'ouvrait directement sur context.url,
-    // resizeTo/moveTo seraient bloqués cross-origin dans Firefox → article
-    // plein écran → chevauchement. Même approche que openUrlAndSidecar.
+    // Récupération après blocage Firefox : le sidecar a été auto-ouvert,
+    // on ouvre l'article à côté et on repositionne le sidecar.
     window.openArticleForSidecar = function(context, sideWin) {
       const { W, H, X, Y } = getScreenBox();
       const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
-      const artW   = W - finalW;
+      const gap    = 10;
+      const artW   = W - finalW - gap;
+      const sideLeft = X + W - finalW;
 
-      // Ouvrir l'article en about:blank (same-origin → resizeTo/moveTo autorisés)
+      // Ouvrir l'article : about:blank puis navigation immédiate
       const art = window.open(
         "about:blank", ARTICLE_WIN_NAME,
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art) return;
-      try{ art.resizeTo(artW, H); }catch{}
-      try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
+      try{ art.location.href = context.url; }catch{}
 
-      // Poll : attendre que Firefox applique resizeTo/moveTo sur l'article
-      let _poll = 0;
-      (function waitForArticleReady(){
-        _poll++;
-        const ow = art.outerWidth;
-        const settled = ow >= artW - 50;
-        console.log(`[kizako] recArt#${_poll} outerWidth=${ow} artW=${artW} settled=${settled}`);
-        if (!settled && _poll < 15){
-          setTimeout(waitForArticleReady, 20);
-          return;
-        }
-
-        // Repositionner le sidecar
-        const sideLeft = X + artW;
-        if (sideWin && !sideWin.closed){
-          try{ sideWin.resizeTo(finalW, H); }catch{}
-          try{ sideWin.moveTo(sideLeft, Y); }catch{}
-        }
-
-        // Poll : attendre que le sidecar soit positionné
-        // Re-appeler moveTo/resizeTo à chaque itération pour forcer Firefox.
-        let _sPoll = 0;
-        (function waitForSidecarPosition(){
-          _sPoll++;
-          if (!sideWin || sideWin.closed){
-            try{ art.location.href = context.url; }catch{}
-            return;
-          }
-          const sow = sideWin.outerWidth;
-          const ssx = sideWin.screenX;
-          const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
-          console.log(`[kizako] recSide#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled}`);
-          if (!sSettled && _sPoll < 15){
-            try{ sideWin.resizeTo(finalW, H); }catch{}
-            try{ sideWin.moveTo(sideLeft, Y); }catch{}
-            setTimeout(waitForSidecarPosition, 20);
-            return;
-          }
-          // Firefox moveTo() est imprécis. Si le sidecar s'est arrêté AVANT
-          // sideLeft, rétrécir l'article pour éviter le chevauchement.
-          const actualSideX = sideWin.screenX;
-          if (actualSideX > X && actualSideX < sideLeft){
-            try{ art.resizeTo(actualSideX - X, H); }catch{}
-          }
-          // Les deux fenêtres sont en place, naviguer l'article vers l'URL réelle
-          try{ art.location.href = context.url; }catch{}
-        })();
-      })();
+      // Repositionner le sidecar (same-origin → resizeTo/moveTo autorisés)
+      if (sideWin && !sideWin.closed){
+        try{ sideWin.resizeTo(finalW, H); }catch{}
+        try{ sideWin.moveTo(sideLeft, Y); }catch{}
+      }
     };
 
     /* ============================
