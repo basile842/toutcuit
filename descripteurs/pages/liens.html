@@ -1023,17 +1023,29 @@
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
-      // Repositionner le sidecar après stabilisation de l'article
+      // Repositionner le sidecar après stabilisation de l'article.
+      // L'article est cross-origin (ouvert directement sur context.url) →
+      // impossible de lire art.screenX/outerWidth. On attend 300ms fixes
+      // pour que resizeTo/moveTo de l'article prennent effet, puis on poll
+      // le sidecar (aussi async) jusqu'à ce qu'il soit bien positionné.
       setTimeout(() => {
         try{
           if (!sideWin || sideWin.closed) return;
-          let sideLeft = X + artW;
-          try{
-            const artRight = art.screenX + art.outerWidth;
-            if (artRight > X + 10) sideLeft = artRight;
-          }catch{}
+          const sideLeft = X + artW; // valeur intentionnelle (art cross-origin)
           try{ sideWin.resizeTo(finalW, H); }catch{}
           try{ sideWin.moveTo(sideLeft, Y); }catch{}
+          // Poll : attendre que le sidecar soit positionné (resizeTo/moveTo async)
+          let _sPoll = 0;
+          (function waitForSidecarPosition(){
+            _sPoll++;
+            const sow = sideWin.outerWidth;
+            const ssx = sideWin.screenX;
+            const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
+            console.log(`[kizako] recPoll#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled}`);
+            if (!sSettled && _sPoll < 15){
+              setTimeout(waitForSidecarPosition, 20);
+            }
+          })();
         }catch{}
       }, 300);
     };
