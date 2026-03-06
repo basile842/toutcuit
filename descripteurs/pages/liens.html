@@ -950,15 +950,25 @@
       // Les deux ouvertes — naviguer vers l'URL réelle
       try{ art.location.href = context.url; }catch{}
 
-      // Détecter si le redimensionnement a été ignoré (navigateur administré / kiosk)
-      // Le sidecar est same-origin, donc outerWidth est lisible
+      // Correction de position après stabilisation des fenêtres.
+      // screenX/outerWidth sont lisibles même en cross-origin (spec HTML).
       setTimeout(() => {
         try{
           if (!side || side.closed) return;
+          // Recalculer la position du sidecar à partir du bord droit réel de l'article
+          // (art.outerWidth peut différer d'artW si Firefox a traité resizeTo en innerWidth)
+          let sideLeft = X + artW;
+          try{
+            const artRight = art.screenX + art.outerWidth;
+            if (artRight > X + 10) sideLeft = artRight;
+          }catch{}
+          try{ side.moveTo(sideLeft, Y); }catch{}
+
+          // Détecter navigateur administré / kiosk
           if (side.outerWidth > finalW * 1.5){
             // Deuxième tentative
             try{ side.resizeTo(finalW, H); }catch{}
-            try{ side.moveTo(X + artW, Y); }catch{}
+            try{ side.moveTo(sideLeft, Y); }catch{}
             try{ art.resizeTo(artW, H); }catch{}
             try{ art.moveTo(X, Y); }catch{}
             // Si toujours trop grand, informer l'élève
@@ -970,11 +980,12 @@
             }, 400);
           }
         }catch{}
-      }, 600);
+      }, 300);
     }
 
-    // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox)
-    window.openArticleForSidecar = function(context) {
+    // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox).
+    // sideWin : référence directe à la fenêtre sidecar (passée par sidecar.html).
+    window.openArticleForSidecar = function(context, sideWin) {
       const { W, H, X, Y } = getScreenBox();
       const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
       const artW   = W - finalW;
@@ -995,14 +1006,19 @@
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
-      // Repositionner le sidecar (auto-ouvert par Firefox à une position arbitraire)
-      try{
-        const side = window.open("", SIDECAR_WIN_NAME);
-        if (side && !side.closed){
-          try{ side.resizeTo(finalW, H); }catch{}
-          try{ side.moveTo(X + artW, Y); }catch{}
-        }
-      }catch{}
+      // Repositionner le sidecar après stabilisation de l'article
+      setTimeout(() => {
+        try{
+          if (!sideWin || sideWin.closed) return;
+          let sideLeft = X + artW;
+          try{
+            const artRight = art.screenX + art.outerWidth;
+            if (artRight > X + 10) sideLeft = artRight;
+          }catch{}
+          try{ sideWin.resizeTo(finalW, H); }catch{}
+          try{ sideWin.moveTo(sideLeft, Y); }catch{}
+        }catch{}
+      }, 300);
     };
 
     /* ============================
