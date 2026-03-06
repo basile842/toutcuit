@@ -938,10 +938,12 @@
       );
       if (!side){
         try{ art.close(); }catch{}
+        window._pendingContext = context;
         showPopupGuide();
         return;
       }
 
+      window._pendingContext = null;
       try{ side.resizeTo(finalW, H); }catch{}
       try{ side.moveTo(X + artW, Y); }catch{}
 
@@ -970,6 +972,21 @@
         }catch{}
       }, 600);
     }
+
+    // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox)
+    window.openArticleForSidecar = function(context) {
+      const { W, H, X, Y } = getScreenBox();
+      const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
+      const artW   = W - finalW;
+      const art = window.open(
+        context.url, ARTICLE_WIN_NAME,
+        `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!art) return;
+      try{ art.resizeTo(artW, H); }catch{}
+      try{ art.moveTo(X, Y); }catch{}
+      try{ art.focus(); }catch{}
+    };
 
     /* ============================
        CSV parser simple

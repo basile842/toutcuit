@@ -146,6 +146,16 @@
 
     window.CERTIFY_CONTEXT = { id, title, url };
 
+    // Récupération Firefox : si le sidecar a été auto-ouvert après un blocage pop-up,
+    // ouvrir aussi la fenêtre article correspondante.
+    if (window.opener?._pendingContext) {
+      const ctx = window.opener._pendingContext;
+      if (ctx.url === url && typeof window.opener.openArticleForSidecar === "function") {
+        window.opener._pendingContext = null;
+        window.opener.openArticleForSidecar(ctx);
+      }
+    }
+
     const numEl = document.getElementById("sidecarNum");
     const titleEl = document.getElementById("sidecarLinkTitle");
 
