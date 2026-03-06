@@ -927,60 +927,67 @@
       try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
 
-      // Sidecar ancré au bord droit
-      const qs = new URLSearchParams({
-        id: context.id, title: context.title,
-        url: context.url, number: String(context.number || "?")
-      });
-      const side = window.open(
-        `${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME,
-        `popup=yes,width=${finalW},height=${H},left=${X + artW},top=${Y},resizable=yes,scrollbars=yes`
-      );
-      if (!side){
-        try{ art.close(); }catch{}
-        window._pendingContext = context;
-        showPopupGuide();
-        return;
-      }
-
-      window._pendingContext = null;
-      try{ side.resizeTo(finalW, H); }catch{}
-      try{ side.moveTo(X + artW, Y); }catch{}
-
-      // Les deux ouvertes — naviguer vers l'URL réelle
-      try{ art.location.href = context.url; }catch{}
-
-      // Correction de position après stabilisation des fenêtres.
-      // screenX/outerWidth sont lisibles même en cross-origin (spec HTML).
+      // Ouvrir le sidecar dans un setTimeout pour laisser Firefox stabiliser les dimensions
+      // de l'article (about:blank, same-origin) avant de lire outerWidth.
+      // L'article est encore same-origin ici → outerWidth est fiable.
       setTimeout(() => {
+        // Correction Firefox : si resizeTo a été interprété en innerWidth,
+        // art.outerWidth > artW. On recalcule la position du sidecar en conséquence.
+        let sideLeft = X + artW;
         try{
-          if (!side || side.closed) return;
-          // Recalculer la position du sidecar à partir du bord droit réel de l'article
-          // (art.outerWidth peut différer d'artW si Firefox a traité resizeTo en innerWidth)
-          let sideLeft = X + artW;
-          try{
-            const artRight = art.screenX + art.outerWidth;
-            if (artRight > X + 10) sideLeft = artRight;
-          }catch{}
-          try{ side.moveTo(sideLeft, Y); }catch{}
-
-          // Détecter navigateur administré / kiosk
-          if (side.outerWidth > finalW * 1.5){
-            // Deuxième tentative
-            try{ side.resizeTo(finalW, H); }catch{}
-            try{ side.moveTo(sideLeft, Y); }catch{}
-            try{ art.resizeTo(artW, H); }catch{}
-            try{ art.moveTo(X, Y); }catch{}
-            // Si toujours trop grand, informer l'élève
-            setTimeout(() => {
-              try{
-                if (!side || side.closed) return;
-                if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
-              }catch{}
-            }, 400);
+          const ow = art.outerWidth;
+          if (ow > artW + 2){
+            // Corriger la largeur de l'article
+            art.resizeTo(artW - (ow - artW), H);
           }
+          // Utiliser le bord droit réel de l'article pour positionner le sidecar
+          const artRight = art.screenX + (art.outerWidth || artW);
+          if (artRight > X + 10) sideLeft = artRight;
         }catch{}
-      }, 300);
+
+        const qs = new URLSearchParams({
+          id: context.id, title: context.title,
+          url: context.url, number: String(context.number || "?")
+        });
+        const side = window.open(
+          `${SIDECAR_URL}?${qs.toString()}`, SIDECAR_WIN_NAME,
+          `popup=yes,width=${finalW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+        );
+        if (!side){
+          try{ art.close(); }catch{}
+          window._pendingContext = context;
+          showPopupGuide();
+          return;
+        }
+
+        window._pendingContext = null;
+        try{ side.resizeTo(finalW, H); }catch{}
+        try{ side.moveTo(sideLeft, Y); }catch{}
+
+        // Naviguer l'article vers l'URL réelle (devient cross-origin après ça)
+        try{ art.location.href = context.url; }catch{}
+
+        // Détecter navigateur administré / kiosk
+        setTimeout(() => {
+          try{
+            if (!side || side.closed) return;
+            if (side.outerWidth > finalW * 1.5){
+              // Deuxième tentative
+              try{ side.resizeTo(finalW, H); }catch{}
+              try{ side.moveTo(sideLeft, Y); }catch{}
+              try{ art.resizeTo(artW, H); }catch{}
+              try{ art.moveTo(X, Y); }catch{}
+              // Si toujours trop grand, informer l'élève
+              setTimeout(() => {
+                try{
+                  if (!side || side.closed) return;
+                  if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
+                }catch{}
+              }, 400);
+            }
+          }catch{}
+        }, 600);
+      }, 100);
     }
 
     // Ouvre la fenêtre article depuis le sidecar (récupération après blocage Firefox).
