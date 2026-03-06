@@ -967,6 +967,7 @@
 
         // Poll : attendre que le sidecar soit positionné (resizeTo/moveTo aussi async).
         // On attend outerWidth ≤ finalW+50 ET screenX proche de sideLeft (±50px).
+        // À chaque itération, on re-appelle moveTo/resizeTo pour forcer Firefox.
         let _sPoll = 0;
         (function waitForSidecarReady(){
           _sPoll++;
@@ -975,8 +976,17 @@
           const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
           console.log(`[kizako] sidePoll#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled} sideLeft=${sideLeft}`);
           if (!sSettled && _sPoll < 15){
+            try{ side.resizeTo(finalW, H); }catch{}
+            try{ side.moveTo(sideLeft, Y); }catch{}
             setTimeout(waitForSidecarReady, 20);
             return;
+          }
+          // Firefox moveTo() est imprécis (±4–12px). Si le sidecar s'est arrêté
+          // AVANT sideLeft, rétrécir l'article pour épouser la position réelle.
+          // L'article est encore about:blank (same-origin) → resizeTo autorisé.
+          const actualSideX = side.screenX;
+          if (actualSideX > X && actualSideX < sideLeft){
+            try{ art.resizeTo(actualSideX - X, H); }catch{}
           }
           // Naviguer l'article vers l'URL réelle (devient cross-origin après ça)
           try{ art.location.href = context.url; }catch{}
@@ -1042,6 +1052,7 @@
         }
 
         // Poll : attendre que le sidecar soit positionné
+        // Re-appeler moveTo/resizeTo à chaque itération pour forcer Firefox.
         let _sPoll = 0;
         (function waitForSidecarPosition(){
           _sPoll++;
@@ -1054,8 +1065,16 @@
           const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
           console.log(`[kizako] recSide#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled}`);
           if (!sSettled && _sPoll < 15){
+            try{ sideWin.resizeTo(finalW, H); }catch{}
+            try{ sideWin.moveTo(sideLeft, Y); }catch{}
             setTimeout(waitForSidecarPosition, 20);
             return;
+          }
+          // Firefox moveTo() est imprécis. Si le sidecar s'est arrêté AVANT
+          // sideLeft, rétrécir l'article pour éviter le chevauchement.
+          const actualSideX = sideWin.screenX;
+          if (actualSideX > X && actualSideX < sideLeft){
+            try{ art.resizeTo(actualSideX - X, H); }catch{}
           }
           // Les deux fenêtres sont en place, naviguer l'article vers l'URL réelle
           try{ art.location.href = context.url; }catch{}
