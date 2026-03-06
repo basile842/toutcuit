@@ -965,27 +965,38 @@
         try{ side.resizeTo(finalW, H); }catch{}
         try{ side.moveTo(sideLeft, Y); }catch{}
 
-        // Naviguer l'article vers l'URL réelle (devient cross-origin après ça)
-        try{ art.location.href = context.url; }catch{}
-
-        // Détecter navigateur administré / kiosk
-        setTimeout(() => {
-          try{
-            if (!side || side.closed) return;
-            if (side.outerWidth > finalW * 1.5){
-              try{ side.resizeTo(finalW, H); }catch{}
-              try{ side.moveTo(sideLeft, Y); }catch{}
-              try{ art.resizeTo(artW, H); }catch{}
-              try{ art.moveTo(X, Y); }catch{}
-              setTimeout(() => {
-                try{
-                  if (!side || side.closed) return;
-                  if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
-                }catch{}
-              }, 400);
-            }
-          }catch{}
-        }, 600);
+        // Poll : attendre que le sidecar soit positionné (resizeTo/moveTo aussi async).
+        // On attend outerWidth ≤ finalW+50 ET screenX proche de sideLeft (±50px).
+        let _sPoll = 0;
+        (function waitForSidecarReady(){
+          _sPoll++;
+          const sow = side.outerWidth;
+          const ssx = side.screenX;
+          const sSettled = sow <= finalW + 50 && Math.abs(ssx - sideLeft) <= 50;
+          console.log(`[kizako] sidePoll#${_sPoll} outerWidth=${sow} screenX=${ssx} settled=${sSettled} sideLeft=${sideLeft}`);
+          if (!sSettled && _sPoll < 15){
+            setTimeout(waitForSidecarReady, 20);
+            return;
+          }
+          // Naviguer l'article vers l'URL réelle (devient cross-origin après ça)
+          try{ art.location.href = context.url; }catch{}
+          // Détecter navigateur administré / kiosk (resize ignoré)
+          setTimeout(() => {
+            try{
+              if (!side || side.closed) return;
+              if (side.outerWidth > finalW * 1.5){
+                try{ side.resizeTo(finalW, H); }catch{}
+                try{ side.moveTo(sideLeft, Y); }catch{}
+                setTimeout(() => {
+                  try{
+                    if (!side || side.closed) return;
+                    if (side.outerWidth > finalW * 1.5) showFullscreenGuide();
+                  }catch{}
+                }, 400);
+              }
+            }catch{}
+          }, 600);
+        })();
       })();
     }
 
