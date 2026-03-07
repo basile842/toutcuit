@@ -311,9 +311,9 @@
       "children": []
     },
     "L1E_Choice_2": {
-      "choice": "Activisme",
-      "choiceShort": "Activisme",
-      "stepTitle": "Soutient une cause",
+      "choice": "Partisan",
+      "choiceShort": "Partisan",
+      "stepTitle": "Soutient un parti ou un mouvement",
       "children": []
     },
     "L1E_Choice_12": {

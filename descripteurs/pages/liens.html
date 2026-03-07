@@ -918,7 +918,7 @@
         "about:blank", ARTICLE_WIN_NAME,
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
-      if (!art){ showPopupGuide(); return; }
+      if (!art){ window._pendingContext = context; showPopupGuide(); return; }
       try{ art.focus(); }catch{}
       try{ art.location.href = context.url; }catch{}
 
@@ -973,6 +973,9 @@
         `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!art) return;
+      // Redimensionner l'article AVANT navigation (same-origin about:blank → autorisé)
+      try{ art.resizeTo(artW, H); }catch{}
+      try{ art.moveTo(X, Y); }catch{}
       try{ art.focus(); }catch{}
       try{ art.location.href = context.url; }catch{}
 
