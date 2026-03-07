@@ -7,18 +7,6 @@
   <meta name="copyright" content="© 2026 Certify Community SA. Tous droits réservés." />
   <title>Certify — Sidecar</title>
 
-  <!-- Bloquer immédiatement les popups récupérés automatiquement (Firefox/Safari) -->
-  <script>
-  (function(){
-    var t = localStorage.getItem("certify_sidecar_token");
-    var age = t ? (Date.now() - parseInt(t, 10)) : Infinity;
-    if (age > 5000) {
-      localStorage.removeItem("certify_sidecar_token");
-      location.replace("about:blank");
-    }
-  })();
-  </script>
-
   <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
 
   <style>
@@ -159,8 +147,6 @@
 
     window.CERTIFY_CONTEXT = { id, title, url };
 
-    // Le token est vérifié dans le <head> (script inline). Ici on le consomme.
-    localStorage.removeItem("certify_sidecar_token");
 
     const numEl = document.getElementById("sidecarNum");
     const titleEl = document.getElementById("sidecarLinkTitle");
