@@ -147,7 +147,7 @@
 
     window.CERTIFY_CONTEXT = { id, title, url };
 
-    // Récupération Firefox : si le sidecar a été auto-ouvert après un blocage pop-up,
+    // Récupération Firefox/Safari : si le sidecar a été auto-ouvert après un blocage pop-up,
     // ouvrir aussi la fenêtre article correspondante.
     if (window.opener?._pendingContext) {
       const ctx = window.opener._pendingContext;
@@ -156,6 +156,34 @@
         window.opener.openArticleForSidecar(ctx, window);
       }
     }
+
+    // Fallback self-sizing : quand le navigateur récupère les popups bloqués
+    // (Firefox/Safari), window.opener peut être null et le code ci-dessus ne
+    // se déclenche pas. On détecte les dimensions incorrectes et on corrige.
+    setTimeout(() => {
+      const SIDE_W = 420;
+      const ARTICLE_WIN_NAME = "certify_article";
+      const W = Math.max(800, screen.availWidth || innerWidth || 1200);
+      const H = Math.max(600, screen.availHeight || innerHeight || 900);
+      const X = screen.availLeft ?? 0;
+      const Y = screen.availTop ?? 0;
+      const finalW = Math.min(SIDE_W, Math.floor(W * 0.45));
+      if (window.outerWidth > finalW * 1.3) {
+        const sideLeft = X + W - finalW;
+        try { window.resizeTo(finalW, H); } catch {}
+        try { window.moveTo(sideLeft, Y); } catch {}
+        // Tenter de redimensionner la fenêtre article aussi
+        const artW = W - finalW - 10;
+        try {
+          const art = window.open("", ARTICLE_WIN_NAME);
+          if (art && !art.closed) {
+            art.resizeTo(artW, H);
+            art.moveTo(X, Y);
+            art.focus();
+          }
+        } catch {}
+      }
+    }, 300);
 
     const numEl = document.getElementById("sidecarNum");
     const titleEl = document.getElementById("sidecarLinkTitle");
