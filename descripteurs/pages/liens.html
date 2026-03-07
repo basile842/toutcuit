@@ -922,6 +922,9 @@
       try{ art.focus(); }catch{}
       try{ art.location.href = context.url; }catch{}
 
+      // Token pour distinguer un vrai clic d'une récupération automatique (Firefox/Safari)
+      localStorage.setItem("certify_sidecar_token", String(Date.now()));
+
       // Ouvrir le sidecar
       const qs = new URLSearchParams({
         id: context.id, title: context.title,
