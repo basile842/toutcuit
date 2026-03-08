@@ -575,7 +575,22 @@
 
   <script type="module">
     import { renderNav } from "../assets/js/nav.js";
-    renderNav(location.pathname);
+
+    /* ============================
+       Sidecar mode: when opened via "Feed 2 fenêtres",
+       clicks on title-images open the URL in the main window
+    ============================ */
+    const _qp = new URLSearchParams(location.search);
+    const SIDECAR_MODE = _qp.get("mode") === "sidecar";
+    const MAIN_WIN_NAME = _qp.get("mainwin") || "";
+
+    // Hide nav buttons and shrink font in sidecar mode
+    renderNav(location.pathname, SIDECAR_MODE ? { variant: "sidecar" } : {});
+    if (SIDECAR_MODE) {
+      document.documentElement.style.fontSize = "14px";
+      const reloadBtn = document.getElementById("hardReloadBtn");
+      if (reloadBtn) reloadBtn.textContent = "↺";
+    }
 
     /* ============================
        ICONS (fallback depuis labels)
@@ -1054,9 +1069,13 @@
       console.log(`   CERTs trouvé: ${!!certs}, Numéro: ${num}`);
 
       // ✅ NOUVEAU: Entourer l'image d'un lien
+      // In sidecar mode, open links in the main window; otherwise _blank
+      const linkTarget = SIDECAR_MODE && MAIN_WIN_NAME ? escapeHtml(MAIN_WIN_NAME) : "_blank";
+      const linkRel = SIDECAR_MODE ? "" : `rel="noopener noreferrer"`;
+
       const media = `
         <div class="link-media">
-          <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">
+          <a href="${escapeHtml(href)}" target="${linkTarget}" ${linkRel}>
             <div
               class="typography-image image-cover"
               data-text="${escapeHtml(title)}"

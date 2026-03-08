@@ -389,6 +389,20 @@
             <span class="console-link-arrow">→</span>
           </a>
 
+          <a href="#" class="console-link" id="feed2winBtn">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="9" height="14" rx="1"/><rect x="13" y="3" width="9" height="14" rx="1"/>
+                <line x1="6.5" y1="19" x2="6.5" y2="21"/><line x1="17.5" y1="19" x2="17.5" y2="21"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Feed 2 fenêtres</div>
+              <div class="console-link-desc">Liens à gauche, feed à droite — cliquer dans le feed ouvre le lien à gauche</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
         </div>
       </div>
 
@@ -449,6 +463,50 @@
     }
 
     if (sessionStorage.getItem(SESSION_KEY) === "true") unlock();
+
+    /* ── Feed 2 fenêtres ── */
+    const FEED2_MAIN_NAME = "feed2_main";
+    const FEED2_SIDE_NAME = "feed2_sidecar";
+    const FEED2_SIDE_W    = 520;
+
+    document.getElementById("feed2winBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      if (isMobile) {
+        alert("Cette fonction n'est accessible que depuis un ordinateur desktop.");
+        return;
+      }
+
+      const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
+      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+      const X = window.screen?.availLeft ?? 0;
+      const Y = window.screen?.availTop  ?? 0;
+
+      const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
+      const gap   = 10;
+      const mainW = W - sideW - gap;
+      const sideLeft = X + W - sideW;
+
+      // Window 1 (left): liens.html
+      const main = window.open(
+        "/descripteurs/pages/liens.html", FEED2_MAIN_NAME,
+        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
+      try { main.focus(); } catch {}
+
+      // Window 2 (right): feed.html in sidecar mode
+      const side = window.open(
+        `/descripteurs/pages/feed.html?mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
+        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side) {
+        try { main.close(); } catch {}
+        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
+        return;
+      }
+    });
 
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
