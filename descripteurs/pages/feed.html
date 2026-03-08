@@ -399,10 +399,10 @@
       box-shadow: 0 4px 10px rgba(16,24,40,.03);
     }
 
-    /* Teinte selon fiabilité : couleurs opaques pour éviter tout cumul de transparence */
-    .desc-card.rel-good{ background: rgb(220,252,231); border-color: rgb(134,239,172); }
-    .desc-card.rel-mid { background: rgb(255,237,213); border-color: rgb(253,186,116); }
-    .desc-card.rel-bad { background: rgb(254,226,226); border-color: rgb(252,165,165); }
+    /* Teinte selon fiabilité */
+    .desc-card.rel-good{ background: var(--rel-good-bg); border-color: var(--rel-good-border); }
+    .desc-card.rel-mid { background: var(--rel-mid-bg);  border-color: var(--rel-mid-border); }
+    .desc-card.rel-bad { background: var(--rel-bad-bg);  border-color: var(--rel-bad-border); }
 
     /* Bandeau descripteurs horizontal en haut de la carte — pas de fond propre */
     .desc-card-header{
