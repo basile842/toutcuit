@@ -647,6 +647,33 @@
     const feedEl = document.getElementById("feedList");
     const loadingEl = document.getElementById("loading");
 
+    // Sidecar mode: intercept clicks to open articles in a correctly-sized popup.
+    // Using <a target="name"> alone fails when sites like YouTube/20min clear window.name:
+    // the browser falls back to a full-screen tab. window.open() with popup features ensures
+    // we always get a properly-sized popup, and reuses the window when the name is preserved.
+    if (SIDECAR_MODE && MAIN_WIN_NAME) {
+      const FEED2_SIDE_W = 520;
+      feedEl.addEventListener("click", (e) => {
+        const a = e.target.closest("a[href]");
+        if (!a) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
+        const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+        const X = window.screen?.availLeft ?? 0;
+        const Y = window.screen?.availTop  ?? 0;
+        const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
+        const artW  = W - sideW - 10;
+
+        const win = window.open(
+          a.href, MAIN_WIN_NAME,
+          `popup=yes,width=${artW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+        );
+        try { win?.focus(); } catch {}
+      });
+    }
+
     let allRows = [];
     let certsData = new Map(); // link_id -> certs info
     let shownLinks = 0;
@@ -1069,8 +1096,8 @@
       console.log(`   CERTs trouvé: ${!!certs}, Numéro: ${num}`);
 
       // ✅ NOUVEAU: Entourer l'image d'un lien
-      // In sidecar mode, open links in the main window; otherwise _blank
-      const linkTarget = SIDECAR_MODE && MAIN_WIN_NAME ? escapeHtml(MAIN_WIN_NAME) : "_blank";
+      // In sidecar mode, clicks are intercepted by the JS handler above
+      const linkTarget = "_blank";
       const linkRel = SIDECAR_MODE ? "" : `rel="noopener noreferrer"`;
 
       const media = `
