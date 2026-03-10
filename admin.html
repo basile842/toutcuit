@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="copyright" content="© 2026 Certify Community SA. Tous droits réservés." />
+  <title>Console — kizako.ch</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f3f9;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* ── Login ── */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .login-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .login-logo {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .login-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 1rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input[type="password"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .error-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    /* ── Console ── */
+    #consoleContent { display: none; }
+
+    .console-header {
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .console-header-logo {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .console-header-sep {
+      color: var(--border);
+      font-size: 1.2rem;
+    }
+
+    .console-header-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .console-main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .console-group-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .console-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .console-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(16,24,40,.05);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+    }
+
+    .console-link:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(111,92,247,.12);
+      transform: translateY(-1px);
+    }
+
+    .console-link-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .console-link-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .console-link-body {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .console-link-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .console-link-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .console-link-arrow {
+      color: var(--border);
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+
+    .console-link:hover .console-link-arrow {
+      color: var(--accent);
+    }
+
+    .badge-ext {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(111,92,247,.10);
+      color: var(--accent);
+      border: 1px solid rgba(111,92,247,.20);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 500px) {
+      .console-link-desc { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Login ── -->
+  <div class="login-page" id="loginPage">
+    <div class="login-card">
+      <div class="login-logo">kizako</div>
+      <div class="login-title">Console admin</div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="pwInput">Mot de passe</label>
+          <input type="password" id="pwInput" placeholder="••••••••" autofocus>
+        </div>
+        <div id="loginError" class="error-msg" style="margin-top:10px;">Mot de passe incorrect.</div>
+        <div style="margin-top:14px;">
+          <button class="btn-primary" type="submit">Accéder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Console ── -->
+  <div id="consoleContent">
+    <header class="console-header">
+      <span class="console-header-logo">kizako</span>
+      <span class="console-header-sep">/</span>
+      <span class="console-header-title">Console admin</span>
+    </header>
+
+    <main class="console-main">
+
+      <!-- Séance -->
+      <div>
+        <div class="console-group-title">Séance en classe</div>
+        <div class="console-links">
+
+          <a href="/entrer.html" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h6v18h-6"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Page d'entrée élèves</div>
+              <div class="console-link-desc">kizako.ch/entrer — instructions Firefox et pop-ups</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+          <a href="/descripteurs/pages/liens.html" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Liens à analyser</div>
+              <div class="console-link-desc">Vue élèves — résultats depuis le Google Sheet</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+          <a href="/descripteurs/pages/liens.html?admin=1" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6f5cf7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M12 2v2m0 18v-2m8-8h-2M4 12H2m15.66 5.66-1.41-1.41M7.75 7.75 6.34 6.34m11.32 0-1.41 1.41M7.75 16.25l-1.41 1.41"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Liens à analyser — mode admin</div>
+              <div class="console-link-desc">Vue admin — réinitialisation des résultats et inspection localStorage</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Outils -->
+      <div>
+        <div class="console-group-title">Outils</div>
+        <div class="console-links">
+
+          <a href="/descripteurs/pages/certs.html" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">CERTs — Gestion des liens</div>
+              <div class="console-link-desc">Ajouter des liens et leurs descripteurs dans le Google Sheet</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+          <a href="/descripteurs/index.html" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Macades</div>
+              <div class="console-link-desc">Index des descripteurs</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+          <a href="/descripteurs/pages/feed.html" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Feed</div>
+              <div class="console-link-desc">Flux des contenus</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+          <a href="#" class="console-link" id="feed2winBtn">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="9" height="14" rx="1"/><rect x="13" y="3" width="9" height="14" rx="1"/>
+                <line x1="6.5" y1="19" x2="6.5" y2="21"/><line x1="17.5" y1="19" x2="17.5" y2="21"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Feed 2 fenêtres</div>
+              <div class="console-link-desc">Liens à gauche, feed à droite — cliquer dans le feed ouvre le lien à gauche</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Google Sheets -->
+      <div>
+        <div class="console-group-title">Google Sheets</div>
+        <div class="console-links">
+
+          <a href="https://docs.google.com/spreadsheets/d/1LK_l71QBg7ZgdOHImgviycizz6nkJgxGQVRJJR27R50/edit?gid=0#gid=0"
+             target="_blank" rel="noopener" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a9a6e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Résultats des élèves <span class="badge-ext">↗</span></div>
+              <div class="console-link-desc">Données envoyées depuis les séances</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+          <a href="https://docs.google.com/spreadsheets/d/13sUvNxAhj66Sa9nTIoVjXIF6AJIjjrgFaCHmwnmK51M/edit?gid=0#gid=0"
+             target="_blank" rel="noopener" class="console-link">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a9a6e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Liens à intégrer <span class="badge-ext">↗</span></div>
+              <div class="console-link-desc">Source des liens affichés dans la séance</div>
+            </div>
+            <span class="console-link-arrow">→</span>
+          </a>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const PASSWORD = "cert2026";
+    const SESSION_KEY = "admin_authenticated";
+
+    const loginPage    = document.getElementById("loginPage");
+    const consoleContent = document.getElementById("consoleContent");
+    const loginForm    = document.getElementById("loginForm");
+    const loginError   = document.getElementById("loginError");
+    const pwInput      = document.getElementById("pwInput");
+
+    function unlock() {
+      loginPage.style.display = "none";
+      consoleContent.style.display = "block";
+    }
+
+    if (sessionStorage.getItem(SESSION_KEY) === "true") unlock();
+
+    /* ── Feed 2 fenêtres ── */
+    const FEED2_MAIN_NAME = "feed2_main";
+    const FEED2_SIDE_NAME = "feed2_sidecar";
+    const FEED2_SIDE_W    = 520;
+
+    document.getElementById("feed2winBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      if (isMobile) {
+        alert("Cette fonction n'est accessible que depuis un ordinateur desktop.");
+        return;
+      }
+
+      const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
+      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+      const X = window.screen?.availLeft ?? 0;
+      const Y = window.screen?.availTop  ?? 0;
+
+      const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
+      const gap   = 10;
+      const mainW = W - sideW - gap;
+      const sideLeft = X + W - sideW;
+
+      // Window 1 (left): liens.html
+      const main = window.open(
+        "/descripteurs/pages/liens.html", FEED2_MAIN_NAME,
+        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
+      try { main.focus(); } catch {}
+
+      // Window 2 (right): feed.html in sidecar mode
+      const side = window.open(
+        `/descripteurs/pages/feed.html?mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
+        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side) {
+        try { main.close(); } catch {}
+        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
+        return;
+      }
+    });
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (pwInput.value === PASSWORD) {
+        sessionStorage.setItem(SESSION_KEY, "true");
+        unlock();
+      } else {
+        loginError.style.display = "block";
+        pwInput.value = "";
+        pwInput.focus();
+      }
+    });
+  </script>
+</body>
+</html>
