@@ -8,6 +8,7 @@
   <title>CERTs — Gestion des liens</title>
 
   <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
 
   <style>
     .page-lead{
@@ -79,6 +80,35 @@
     #certsContent{
       display: none;
     }
+
+    .import-zone{
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      transition: border-color .2s, background .2s;
+      cursor: pointer;
+    }
+    .import-zone:hover,
+    .import-zone.dragover{
+      border-color: var(--accent);
+      background: rgba(111,92,247,.05);
+    }
+    .import-zone input[type="file"]{ display: none; }
+    .import-zone-label{
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .import-zone-label strong{ color: var(--accent); }
+    .import-status{
+      font-size: 0.82rem;
+      margin-top: 8px;
+      color: var(--muted);
+    }
+    .import-status.ok{ color: var(--good); font-weight: 600; }
+    .import-status.err{ color: var(--bad); font-weight: 600; }
   </style>
 </head>
 
@@ -115,6 +145,14 @@
       <p class="page-lead">
         Ajoutez des liens et leurs descripteurs pour les élèves. Les données seront enregistrées dans la Google Sheet.
       </p>
+
+      <div class="import-zone" id="importZone">
+        <input type="file" id="importFile" accept=".docx" />
+        <div class="import-zone-label">
+          <strong>Importer un fichier Word</strong> — glisser-déposer ou cliquer pour sélectionner un .docx
+        </div>
+        <div class="import-status" id="importStatus"></div>
+      </div>
 
       <div class="card">
         <div id="successMsg" class="success-msg"></div>
@@ -367,6 +405,187 @@
       successMsg.style.display = "none";
       errorMsg.style.display = "none";
     });
+
+    /* ============================
+       Word (.docx) import
+    ============================ */
+    const importZone = document.getElementById("importZone");
+    const importFile = document.getElementById("importFile");
+    const importStatus = document.getElementById("importStatus");
+
+    importZone.addEventListener("click", () => importFile.click());
+    importZone.addEventListener("dragover", (e) => { e.preventDefault(); importZone.classList.add("dragover"); });
+    importZone.addEventListener("dragleave", () => importZone.classList.remove("dragover"));
+    importZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      importZone.classList.remove("dragover");
+      const file = e.dataTransfer?.files?.[0];
+      if (file) processDocx(file);
+    });
+    importFile.addEventListener("change", () => {
+      const file = importFile.files?.[0];
+      if (file) processDocx(file);
+    });
+
+    async function processDocx(file) {
+      if (!file.name.endsWith(".docx")) {
+        importStatus.textContent = "Fichier non supporté. Utilisez un .docx.";
+        importStatus.className = "import-status err";
+        return;
+      }
+
+      importStatus.textContent = "Lecture du fichier...";
+      importStatus.className = "import-status";
+
+      try {
+        const zip = await JSZip.loadAsync(file);
+        const xmlText = await zip.file("word/document.xml").async("text");
+        const parsed = parseDocxXml(xmlText);
+        fillForm(parsed);
+
+        importStatus.textContent = `Import réussi : "${parsed.title || "(sans titre)}"`;
+        importStatus.className = "import-status ok";
+      } catch (err) {
+        console.error("Import error:", err);
+        importStatus.textContent = "Erreur lors de l'import : " + err.message;
+        importStatus.className = "import-status err";
+      }
+    }
+
+    function parseDocxXml(xml) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xml, "application/xml");
+      const ns = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+      const paragraphs = doc.getElementsByTagNameNS(ns, "p");
+
+      // Extract text + metadata from each paragraph
+      const paras = [];
+      for (const p of paragraphs) {
+        const runs = p.getElementsByTagNameNS(ns, "r");
+        let text = "";
+        let isBoldGray = false;
+        let isBlue = false;
+        let hasRed = false;
+        let hasGreen = false;
+        let hasOrange = false;
+
+        for (const r of runs) {
+          const tNodes = r.getElementsByTagNameNS(ns, "t");
+          for (const t of tNodes) text += t.textContent || "";
+
+          // Check formatting
+          const rPr = r.getElementsByTagNameNS(ns, "rPr")[0];
+          if (rPr) {
+            const color = rPr.getElementsByTagNameNS(ns, "color")[0];
+            const bold = rPr.getElementsByTagNameNS(ns, "b")[0];
+            const colorVal = color?.getAttribute("w:val")?.toUpperCase() || "";
+
+            if (colorVal === "A5A5A5" && bold) isBoldGray = true;
+            if (colorVal === "0096FF" || colorVal === "2E74B5") isBlue = true;
+            if (colorVal === "FF0000" || colorVal === "EF596F") hasRed = true;
+            if (colorVal === "00B050") hasGreen = true;
+            if (colorVal === "F79646") hasOrange = true;
+          }
+        }
+
+        text = text.replace(/\s+/g, " ").trim();
+        if (text || isBoldGray) {
+          paras.push({ text, isBoldGray, isBlue, hasRed, hasGreen, hasOrange });
+        }
+      }
+
+      // Split into sections by bold-gray headings
+      const sections = {};
+      let currentSection = "_header";
+      sections._header = [];
+
+      for (const p of paras) {
+        if (p.isBoldGray && p.text) {
+          currentSection = p.text.toLowerCase().trim();
+          if (!sections[currentSection]) sections[currentSection] = [];
+        } else {
+          if (!sections[currentSection]) sections[currentSection] = [];
+          sections[currentSection].push(p);
+        }
+      }
+
+      // Extract fields
+      const header = sections._header || [];
+
+      // Title = first blue line
+      const title = header.find(p => p.isBlue)?.text || "";
+
+      // URL = first line that looks like a URL
+      const urlPara = header.find(p => /^https?:\/\//.test(p.text));
+      const url = urlPara?.text || "";
+
+      // Descriptors
+      const descParas = sections["descriptors"] || [];
+      const descText = descParas.map(p => p.text).join(" ").trim();
+      const descWords = descText.split(/\s+/).filter(Boolean);
+      const descriptor1 = descWords[0] || "";
+      const descriptor2 = descWords[1] || "";
+
+      // 3-Pointer
+      const pointerParas = sections["3-pointer"] || [];
+      const threePhrases = pointerParas.map(p => p.text).filter(Boolean).join("\n");
+
+      // CCR
+      const ccrParas = sections["ccr"] || [];
+      const ccrTexts = ccrParas.map(p => p.text).filter(Boolean);
+      const context = ccrTexts[0] || "";
+      const content = ccrTexts.join("\n");
+      const reliabilityText = ccrTexts[ccrTexts.length - 1] || "";
+
+      // References
+      const refParas = sections["references"] || [];
+      const references = refParas
+        .map(p => p.text.replace(/^[•·\-–—]\s*/, "").trim())
+        .filter(Boolean)
+        .join("\n");
+
+      // Label / reliability
+      const labelParas = sections["label"] || [];
+      let reliability = "";
+      for (const p of labelParas) {
+        const t = p.text.toLowerCase();
+        if (p.hasRed || t.includes("unreliable") || t.includes("pas fiable")) {
+          reliability = "Pas fiable";
+        } else if (p.hasOrange || t.includes("undetermined") || t.includes("indéterminé")) {
+          reliability = "Indéterminé";
+        } else if (p.hasGreen || t.includes("reliable") || t.includes("fiable")) {
+          reliability = "Fiable";
+        }
+      }
+
+      return { title, url, descriptor1, descriptor2, reliability, threePhrases, context, content, reliabilityText, references };
+    }
+
+    function fillForm(data) {
+      document.getElementById("titleInput").value = data.title || "";
+      document.getElementById("urlInput").value = data.url || "";
+      document.getElementById("threePhrasesInput").value = data.threePhrases || "";
+      document.getElementById("contextInput").value = data.context || "";
+      document.getElementById("contentInput").value = data.content || "";
+      document.getElementById("reliabilityTextInput").value = data.reliabilityText || "";
+      document.getElementById("referencesInput").value = data.references || "";
+
+      // Set selects if value matches an option
+      setSelectIfValid("descriptor1Input", data.descriptor1);
+      setSelectIfValid("descriptor2Input", data.descriptor2);
+      setSelectIfValid("reliabilityInput", data.reliability);
+    }
+
+    function setSelectIfValid(id, value) {
+      const el = document.getElementById(id);
+      if (!el || !value) return;
+      for (const opt of el.options) {
+        if (opt.value.toLowerCase() === value.toLowerCase()) {
+          el.value = opt.value;
+          return;
+        }
+      }
+    }
   </script>
 </body>
 </html>
