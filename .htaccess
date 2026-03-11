@@ -2,9 +2,9 @@ SetEnv PHP_VER 4
 
 RewriteEngine On
 
-# Redirection canonique : www.kizako.ch → kizako.ch
-RewriteCond %{HTTP_HOST} ^www\.kizako\.ch$ [NC]
-RewriteRule ^(.*)$ https://kizako.ch/$1 [R=301,L]
+# Redirection canonique : www.toutcuit.ch → toutcuit.ch
+RewriteCond %{HTTP_HOST} ^www\.toutcuit\.ch$ [NC]
+RewriteRule ^(.*)$ https://toutcuit.ch/$1 [R=301,L]
 
 # Permet d'accéder aux fichiers HTML sans l'extension .html
 RewriteCond %{REQUEST_FILENAME} !-f

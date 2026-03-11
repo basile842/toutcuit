@@ -533,6 +533,16 @@
       transform: rotate(180deg);
     }
 
+    .link-host{
+      font-size: 12px;
+      color: var(--muted);
+      opacity: .7;
+      margin: 4px 0 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .muted-note{
       color: var(--muted);
       font-size: 0.95rem;
@@ -1100,6 +1110,9 @@
       const linkTarget = "_blank";
       const linkRel = SIDECAR_MODE ? "" : `rel="noopener noreferrer"`;
 
+      let hostLabel = "";
+      try { hostLabel = new URL(href).hostname.replace(/^www\./, ""); } catch {}
+
       const media = `
         <div class="link-media">
           <a href="${escapeHtml(href)}" target="${linkTarget}" ${linkRel}>
@@ -1111,6 +1124,7 @@
             ></div>
           </a>
         </div>
+        ${hostLabel ? `<div class="link-host">${escapeHtml(hostLabel)}</div>` : ""}
       `;
 
       // ✅ Chercher les données CERTs par URL normalisée
