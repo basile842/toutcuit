@@ -443,7 +443,7 @@
         const parsed = parseDocxXml(xmlText);
         fillForm(parsed);
 
-        importStatus.textContent = `Import réussi : "${parsed.title || "(sans titre)}"`;
+        importStatus.textContent = `Import réussi : "${parsed.title || '(sans titre)'}"`;
         importStatus.className = "import-status ok";
       } catch (err) {
         console.error("Import error:", err);
