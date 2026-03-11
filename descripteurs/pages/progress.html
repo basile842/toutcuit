@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Score — toutcuit.ch</title>
+
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+  <style>
+    main { max-width: 960px !important; }
+    header { display: flex; align-items: center; gap: 6px; }
+
+    .progress-lead {
+      margin: 8px 0 20px 0;
+      color: var(--muted);
+      max-width: 700px;
+    }
+
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px 20px;
+      margin-bottom: 24px;
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      max-height: 420px;
+    }
+
+    .legend-custom {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .legend-custom span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    .score-table th,
+    .score-table td {
+      padding: 8px 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .score-table th {
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--panel-2);
+    }
+
+    .score-table th:first-child,
+    .score-table td:first-child {
+      text-align: left;
+    }
+
+    .score-table tr:last-child td { border-bottom: none; }
+
+    .score-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .score-0 { color: var(--bad); }
+    .score-1 { color: var(--bad); }
+    .score-2 { color: var(--mid); }
+    .score-3 { color: var(--good); }
+
+    .info-box {
+      background: rgba(111,92,247,.06);
+      border: 1px solid rgba(111,92,247,.20);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .info-box strong { font-weight: 700; }
+
+    .no-data {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+    }
+
+    .student-name {
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .student-name:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .detail-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+    }
+
+    .detail-card-title {
+      font-weight: 700;
+      font-size: 0.78rem;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 0;
+    }
+
+    .detail-match { color: var(--good); font-weight: 700; }
+    .detail-miss { color: var(--bad); font-weight: 700; }
+
+    .error-box {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #b91c1c;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <strong style="font-size:1.1rem; font-weight:900; letter-spacing:-0.02em; color:var(--accent);">toutcuit</strong>
+    <span style="color:var(--border); margin:0 6px;">/</span>
+    <span style="font-weight:700; color:var(--muted); font-size:0.95rem;">Score des élèves</span>
+    <span style="flex:1;"></span>
+    <select id="tabSelect" style="
+      padding:6px 12px; border:1.5px solid var(--border); border-radius:7px;
+      font-size:0.82rem; font-weight:600; background:var(--bg); color:var(--text);
+      cursor:pointer; min-width:180px;
+    ">
+      <option value="">Chargement des onglets…</option>
+    </select>
+  </header>
+
+  <main>
+    <p class="progress-lead">
+      Score de similarité entre les réponses des élèves et la réponse experte (CERT).
+      Couleur identique = 1 pt, 1<sup>er</sup> descripteur identique = 1 pt, 2<sup>e</sup> descripteur identique = 1 pt.
+      Maximum : 3 points par lien.
+    </p>
+
+    <div id="loading">Chargement des données…</div>
+    <div id="content" style="display:none;">
+
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+        <span style="font-size:0.85rem; font-weight:700; color:var(--muted);">Liens :</span>
+        <label style="font-size:0.82rem; color:var(--muted);">de
+          <input id="linkFrom" type="number" min="1" value="1" style="
+            width:52px; padding:5px 8px; border:1.5px solid var(--border); border-radius:7px;
+            font-size:0.85rem; font-weight:600; text-align:center; background:var(--bg); color:var(--text);
+          "/>
+        </label>
+        <label style="font-size:0.82rem; color:var(--muted);">à
+          <input id="linkTo" type="number" min="1" value="99" style="
+            width:52px; padding:5px 8px; border:1.5px solid var(--border); border-radius:7px;
+            font-size:0.85rem; font-weight:600; text-align:center; background:var(--bg); color:var(--text);
+          "/>
+        </label>
+        <button id="linkFilterBtn" style="
+          padding:6px 14px; border:1.5px solid var(--accent); border-radius:7px;
+          background:rgba(111,92,247,.08); color:var(--accent); font-size:0.82rem;
+          font-weight:700; cursor:pointer;
+        ">Appliquer</button>
+        <button id="linkResetBtn" style="
+          padding:6px 10px; border:1.5px solid var(--border); border-radius:7px;
+          background:none; color:var(--muted); font-size:0.82rem;
+          font-weight:600; cursor:pointer;
+        ">Tous</button>
+      </div>
+
+      <div class="info-box" id="statsBox"></div>
+
+      <div class="chart-wrap">
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
+        <div class="legend-custom" id="legendCustom"></div>
+      </div>
+
+      <div class="chart-wrap" id="studentPanel" style="display:none;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+          <h3 style="font-size:0.95rem; font-weight:800; margin:0;" id="studentPanelTitle"></h3>
+          <button id="studentPanelClose" style="
+            margin-left:auto; background:none; border:1.5px solid var(--border); border-radius:7px;
+            padding:4px 10px; font-size:0.8rem; font-weight:700; color:var(--muted); cursor:pointer;
+          ">Fermer</button>
+        </div>
+        <div class="chart-container" style="max-height:280px;">
+          <canvas id="studentChart"></canvas>
+        </div>
+        <div id="studentDetailTable" style="margin-top:16px; overflow-x:auto;"></div>
+      </div>
+
+      <div class="chart-wrap">
+        <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:12px;">Détail par élève</h3>
+        <div style="overflow-x:auto;">
+          <table class="score-table" id="scoreTable">
+            <thead id="scoreHead"></thead>
+            <tbody id="scoreBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+
+    /* ============================
+       Config
+    ============================ */
+    const RESULTS_SHEET_ID = "1LK_l71QBg7ZgdOHImgviycizz6nkJgxGQVRJJR27R50";
+    const CERTS_SHEET_ID = "13sUvNxAhj66Sa9nTIoVjXIF6AJIjjrgFaCHmwnmK51M";
+    const CERTS_CSV_URL = `https://docs.google.com/spreadsheets/d/${CERTS_SHEET_ID}/export?format=csv`;
+
+    // Read gid from URL params
+    const PAGE_PARAMS = new URLSearchParams(location.search);
+    const SHEET_GID = PAGE_PARAMS.get("gid") || "";
+
+    // Load sheet tabs into dropdown, navigate on change
+    const tabSelect = document.getElementById("tabSelect");
+
+    (async function loadSheetTabs() {
+      try {
+        const res = await fetch(
+          `https://docs.google.com/spreadsheets/d/${RESULTS_SHEET_ID}/htmlview`,
+          { credentials: "omit" }
+        );
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const html = await res.text();
+
+        const tabs = [];
+        const re = /name:\s*"([^"]+)"[^}]*pageUrl[^}]*gid=(\d+)/g;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          tabs.push({ name: m[1], gid: m[2] });
+        }
+
+        const list = tabs;
+
+        if (!list.length) {
+          tabSelect.innerHTML = `<option value="">Aucun onglet détecté</option>`;
+          return;
+        }
+
+        tabSelect.innerHTML = list.map(t =>
+          `<option value="${t.gid}">${t.name}</option>`
+        ).join("");
+
+        // Select current gid, or first tab if none specified
+        if (SHEET_GID && list.some(t => t.gid === SHEET_GID)) {
+          tabSelect.value = SHEET_GID;
+        } else if (!SHEET_GID) {
+          // Auto-load first tab
+          const firstGid = list[0].gid;
+          const url = new URL(location.href);
+          url.searchParams.set("gid", firstGid);
+          location.replace(url);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to load sheet tabs:", err);
+        tabSelect.innerHTML = `<option value="">Erreur</option>`;
+      }
+    })();
+
+    tabSelect.addEventListener("change", () => {
+      const gid = tabSelect.value;
+      if (!gid) return;
+      const url = new URL(location.href);
+      url.searchParams.set("gid", gid);
+      location.href = url.toString();
+    });
+
+    /* ============================
+       Helpers (reused from feed.html)
+    ============================ */
+    function fnv1aHex(str) {
+      let h = 0x811c9dc5;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+      }
+      return ("0000000" + h.toString(16)).slice(-8);
+    }
+
+    function urlToLinkId(url) {
+      return `link_${fnv1aHex(url)}`;
+    }
+
+    function normalizeUrl(raw) {
+      let u = String(raw || "").trim();
+      if (!u) return null;
+      if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      try {
+        const url = new URL(u);
+        if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+        return url.toString();
+      } catch { return null; }
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const next = text[i + 1];
+        if (ch === '"') {
+          if (inQuotes && next === '"') { cur += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+          continue;
+        }
+        if (!inQuotes && ch === ",") { row.push(cur); cur = ""; continue; }
+        if (!inQuotes && (ch === "\n" || ch === "\r")) {
+          if (ch === "\r" && next === "\n") i++;
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      if (cur.length || row.length) { row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    /* ============================
+       Load CERTs data
+    ============================ */
+    async function loadCerts() {
+      const res = await fetch(CERTS_CSV_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load CERTs CSV");
+      const csv = await res.text();
+      const rows = parseCSV(csv);
+
+      const cleaned = rows
+        .map(r => (r || []).map(x => String(x ?? "").trim()))
+        .filter(r => r.some(v => v.length));
+
+      const firstRow = cleaned[0] || [];
+      const looksHeader =
+        /titre|title/i.test(firstRow[0] || "") ||
+        /url|lien|link/i.test(firstRow[1] || "");
+      const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+
+      const certs = new Map();
+      let idx = 0;
+
+      for (const r of dataRows) {
+        const title = r[0] || "";
+        const rawUrl = r[1] || "";
+        const url = normalizeUrl(rawUrl);
+        if (!url) continue;
+
+        idx++;
+        const linkId = urlToLinkId(url);
+
+        const descriptor1 = r[2] || "";
+        const descriptor2 = r[3] || "";
+        const reliabilityRaw = (r[4] || "").toLowerCase();
+
+        let reliability = "";
+        if (reliabilityRaw.includes("fiable") && !reliabilityRaw.includes("pas")) {
+          reliability = "good";
+        } else if (reliabilityRaw.includes("indéterminé") || reliabilityRaw.includes("indetermine")) {
+          reliability = "mid";
+        } else if (reliabilityRaw.includes("pas fiable") || reliabilityRaw.includes("pas_fiable")) {
+          reliability = "bad";
+        }
+
+        const hasCertsContent = !!(descriptor1 || descriptor2 || reliability);
+
+        if (hasCertsContent) {
+          certs.set(linkId, {
+            linkNumber: idx,
+            title,
+            descriptor1,
+            descriptor2,
+            reliability
+          });
+        }
+      }
+
+      return certs;
+    }
+
+    /* ============================
+       Load student results (direct CSV from Google Sheet)
+    ============================ */
+    async function loadFeed() {
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${RESULTS_SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+      const res = await fetch(csvUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load student results CSV");
+      const csv = await res.text();
+      const rawRows = parseCSV(csv);
+
+      const cleaned = rawRows
+        .map(r => (r || []).map(x => String(x ?? "").trim()))
+        .filter(r => r.some(v => v.length));
+
+      // Detect header row
+      const firstRow = cleaned[0] || [];
+      const looksHeader =
+        /timestamp/i.test(firstRow[0] || "") ||
+        /user_id/i.test(firstRow[1] || "");
+      const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+
+      // CSV columns: timestamp, user_id, link_id, link_title, link_url,
+      //              first_label, last_label, reliability, comment, dedup_key
+      return dataRows.map(r => ({
+        timestamp: r[0] || "",
+        user_id: r[1] || "",
+        link_id: r[2] || "",
+        link_title: r[3] || "",
+        link_url: r[4] || "",
+        first_label: r[5] || "",
+        last_label: r[6] || "",
+        reliability: r[7] || "",
+        comment: r[8] || "",
+      }));
+    }
+
+    /* ============================
+       Scoring
+    ============================ */
+    function scoreResult(studentRow, certData) {
+      const studentRel = String(studentRow.reliability || "").toLowerCase();
+      const studentFirst = String(studentRow.first_label || "").trim().toLowerCase();
+      const studentLast = String(studentRow.last_label || "").trim().toLowerCase();
+      const certFirst = certData.descriptor1.trim().toLowerCase();
+      const certLast = certData.descriptor2.trim().toLowerCase();
+
+      const relOk = !!(studentRel && studentRel === certData.reliability);
+      const firstOk = !!(studentFirst && studentFirst === certFirst);
+      const lastOk = !!(studentLast && studentLast === certLast);
+
+      return {
+        score: (relOk ? 1 : 0) + (firstOk ? 1 : 0) + (lastOk ? 1 : 0),
+        relOk, firstOk, lastOk,
+        studentRel, studentFirst, studentLast,
+        certRel: certData.reliability, certFirst, certLast,
+      };
+    }
+
+    /* ============================
+       Main
+    ============================ */
+    try {
+      const [certs, feedRows] = await Promise.all([loadCerts(), loadFeed()]);
+
+      // Normalize feed link IDs
+      const rows = feedRows.map(r => {
+        const rawUrl = String(r.link_url || "").trim();
+        const normUrl = rawUrl ? (normalizeUrl(rawUrl) || rawUrl) : "";
+        const linkId = normUrl ? urlToLinkId(normUrl) : String(r.link_id || "").trim();
+        return { ...r, link_id: linkId };
+      });
+
+      // Only keep rows that have a CERT and valid descriptors
+      const scoredRows = rows.filter(r => {
+        const hasDesc = r.first_label || r.last_label;
+        return hasDesc && certs.has(r.link_id);
+      });
+
+      if (!scoredRows.length) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("content").style.display = "block";
+        document.getElementById("content").innerHTML = `
+          <div class="no-data">Aucune donnée à afficher.<br>
+          Il faut des résultats d'élèves <em>et</em> des réponses CERT pour les mêmes liens.</div>`;
+        throw new Error("stop");
+      }
+
+      // Build per-student, per-link scores (before filtering)
+      // allStudentScores: Map<userId, Map<linkId, score>>
+      // allStudentDetails: Map<userId, Map<linkId, {score, relOk, firstOk, lastOk, ...}>>
+      const allStudentDetails = new Map();
+      for (const r of scoredRows) {
+        const userId = String(r.user_id || "Anonyme").trim();
+        const linkId = r.link_id;
+        const cert = certs.get(linkId);
+        const detail = scoreResult(r, cert);
+
+        if (!allStudentDetails.has(userId)) allStudentDetails.set(userId, new Map());
+        const existing = allStudentDetails.get(userId).get(linkId);
+        if (!existing || detail.score > existing.score) {
+          allStudentDetails.get(userId).set(linkId, detail);
+        }
+      }
+
+      // Legacy compat: allStudentScores maps userId -> Map<linkId, score (number)>
+      const allStudentScores = new Map();
+      for (const [userId, links] of allStudentDetails) {
+        const m = new Map();
+        for (const [linkId, d] of links) m.set(linkId, d.score);
+        allStudentScores.set(userId, m);
+      }
+
+      // All link IDs sorted by linkNumber
+      const everyLinkId = [...new Set(scoredRows.map(r => r.link_id))];
+      everyLinkId.sort((a, b) => (certs.get(a)?.linkNumber ?? 999) - (certs.get(b)?.linkNumber ?? 999));
+
+      // Colors for individual students
+      const STUDENT_COLORS = [
+        "#6f5cf7", "#e8425c", "#1a9a6e", "#f59e0b", "#3b82f6",
+        "#ec4899", "#14b8a6", "#8b5cf6", "#f97316", "#06b6d4",
+        "#84cc16", "#ef4444", "#6366f1", "#10b981", "#a855f7",
+      ];
+
+      // Set range inputs to actual min/max link numbers
+      const allLinkNumbers = everyLinkId.map(id => certs.get(id)?.linkNumber ?? 0).filter(n => n > 0);
+      const minLinkNum = Math.min(...allLinkNumbers);
+      const maxLinkNum = Math.max(...allLinkNumbers);
+      document.getElementById("linkFrom").value = minLinkNum;
+      document.getElementById("linkFrom").min = minLinkNum;
+      document.getElementById("linkFrom").max = maxLinkNum;
+      document.getElementById("linkTo").value = maxLinkNum;
+      document.getElementById("linkTo").min = minLinkNum;
+      document.getElementById("linkTo").max = maxLinkNum;
+
+      let mainChart = null;
+      let allLinkIds = everyLinkId;
+      let studentScores, studentDetails, tableLinkLabels;
+
+      function renderAll(fromNum, toNum) {
+        // Filter links by number range
+        allLinkIds = everyLinkId.filter(id => {
+          const n = certs.get(id)?.linkNumber ?? 0;
+          return n >= fromNum && n <= toNum;
+        });
+
+        // Filter students (30% rule based on filtered links only)
+        const filteredStudentScores = new Map();
+        for (const [userId, links] of allStudentScores) {
+          const m = new Map();
+          for (const [linkId, score] of links) {
+            if (allLinkIds.includes(linkId)) m.set(linkId, score);
+          }
+          if (m.size > 0) filteredStudentScores.set(userId, m);
+        }
+
+        const maxAnswered = Math.max(...[...filteredStudentScores.values()].map(m => m.size), 0);
+        const minRequired = Math.ceil(maxAnswered * 0.3);
+        const excluded = [];
+        studentScores = new Map();
+        studentDetails = new Map();
+        for (const [userId, links] of filteredStudentScores) {
+          if (links.size >= minRequired) {
+            studentScores.set(userId, links);
+            // Build filtered details too
+            const dMap = new Map();
+            const fullDetails = allStudentDetails.get(userId);
+            if (fullDetails) {
+              for (const [linkId, d] of fullDetails) {
+                if (allLinkIds.includes(linkId)) dMap.set(linkId, d);
+              }
+            }
+            studentDetails.set(userId, dMap);
+          } else {
+            excluded.push(userId);
+          }
+        }
+
+        // Respondents per link
+        const respondentsPerLink = allLinkIds.map(linkId => {
+          let count = 0;
+          for (const [, links] of studentScores) {
+            if (links.has(linkId)) count++;
+          }
+          return count;
+        });
+
+        // Total points per link
+        const totalPerLink = allLinkIds.map(linkId => {
+          let sum = 0;
+          for (const [, links] of studentScores) {
+            if (links.has(linkId)) sum += links.get(linkId);
+          }
+          return sum;
+        });
+
+        // Labels
+        const linkLabels = allLinkIds.map((id, i) => {
+          const c = certs.get(id);
+          const n = respondentsPerLink[i];
+          return [`Lien ${c?.linkNumber ?? "?"}`, `(${n} élève${n > 1 ? "s" : ""})`];
+        });
+
+        tableLinkLabels = allLinkIds.map(id => `Lien ${certs.get(id)?.linkNumber ?? "?"}`);
+
+        const maxPerLink = respondentsPerLink.map(n => n * 3);
+        const maxTotal = respondentsPerLink.reduce((acc, n) => acc + n * 3, 0);
+        const grandTotal = totalPerLink.reduce((a, b) => a + b, 0);
+        const totalStudents = studentScores.size;
+        const totalLinks = allLinkIds.length;
+
+        // Stats
+        const excludedInfo = excluded.length
+          ? `<br><span style="font-size:0.8rem; color:var(--muted);">Exclus (moins de ${minRequired} lien${minRequired > 1 ? "s" : ""} analysé${minRequired > 1 ? "s" : ""}, seuil 30%) : ${excluded.join(", ")}</span>`
+          : "";
+        const rangeInfo = (fromNum > minLinkNum || toNum < maxLinkNum)
+          ? ` · Liens ${fromNum} à ${toNum}`
+          : "";
+
+        document.getElementById("statsBox").innerHTML = `
+          <strong>${totalStudents}</strong> élève${totalStudents > 1 ? "s" : ""} ·
+          <strong>${totalLinks}</strong> lien${totalLinks > 1 ? "s" : ""} analysé${totalLinks > 1 ? "s" : ""}${rangeInfo} ·
+          Total : <strong>${grandTotal}</strong> / ${maxTotal} pts
+          ${excludedInfo}
+        `;
+
+        // Chart datasets
+        const datasets = [];
+
+        datasets.push({
+          label: "Total points",
+          data: totalPerLink,
+          backgroundColor: "rgba(111,92,247,.25)",
+          borderColor: "rgba(111,92,247,.6)",
+          borderWidth: 2, borderRadius: 6, order: 1, type: "bar",
+        });
+
+        datasets.push({
+          label: "Maximum possible",
+          data: maxPerLink,
+          borderColor: "rgba(31,35,40,.25)",
+          borderWidth: 2, borderDash: [6, 4], pointRadius: 0,
+          tension: 0, fill: false, order: 0, type: "line",
+        });
+
+        const studentEntries = [...studentScores.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        studentEntries.forEach(([userId, links], i) => {
+          const data = allLinkIds.map(linkId => links.get(linkId) ?? null);
+          const color = STUDENT_COLORS[i % STUDENT_COLORS.length];
+          datasets.push({
+            label: userId, data,
+            borderColor: color + "88", backgroundColor: color + "22",
+            borderWidth: 1.5, pointRadius: 4, pointBackgroundColor: color,
+            tension: 0.3, fill: false, order: 0, borderDash: [4, 3], type: "line",
+          });
+        });
+
+        // Destroy previous chart
+        if (mainChart) { mainChart.destroy(); mainChart = null; }
+
+        const ctx = document.getElementById("progressChart").getContext("2d");
+        const yMax = Math.max(...maxPerLink, ...totalPerLink, 3);
+
+        mainChart = new Chart(ctx, {
+          type: "bar",
+          data: { labels: linkLabels, datasets },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (tipCtx) => {
+                    const v = tipCtx.parsed.y;
+                    if (v === null) return null;
+                    if (tipCtx.dataset.label === "Maximum possible") return null;
+                    const suffix = tipCtx.dataset.type === "line" ? " / 3" : " pts";
+                    return `${tipCtx.dataset.label}: ${Number.isInteger(v) ? v : v.toFixed(1)}${suffix}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                min: 0, max: yMax,
+                ticks: { stepSize: yMax <= 12 ? 1 : undefined, callback: v => v + " pt" + (v > 1 ? "s" : "") },
+                grid: { color: "rgba(0,0,0,.06)" },
+              },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+
+        // Legend
+        const legendEl = document.getElementById("legendCustom");
+        legendEl.innerHTML = datasets.map((ds, i) => {
+          const color = i === 0 ? "#1f2328" : ds.pointBackgroundColor;
+          if (i >= 2) {
+            return `<span class="student-name" data-student="${ds.label}" style="cursor:pointer;"><span class="legend-dot" style="background:${color};"></span>${ds.label}</span>`;
+          }
+          const style = i === 0 ? "font-weight:700;" : "";
+          return `<span style="${style}"><span class="legend-dot" style="background:${color};"></span>${ds.label}</span>`;
+        }).join("");
+
+        // Table
+        const headEl = document.getElementById("scoreHead");
+        const bodyEl = document.getElementById("scoreBody");
+
+        headEl.innerHTML = `<tr>
+          <th>Élève</th>
+          ${tableLinkLabels.map(l => `<th>${l}</th>`).join("")}
+          <th>Total</th>
+        </tr>`;
+
+        bodyEl.innerHTML = studentEntries.map(([userId, links]) => {
+          const scores = allLinkIds.map(linkId => links.get(linkId) ?? null);
+          const valid = scores.filter(s => s !== null);
+          const total = valid.reduce((a, b) => a + b, 0);
+          const maxForStudent = valid.length * 3;
+          const cells = scores.map(s => {
+            if (s === null) return `<td class="score-cell" style="color:var(--border);">—</td>`;
+            return `<td class="score-cell score-${s}">${s}</td>`;
+          }).join("");
+          return `<tr><td class="student-name" data-student="${userId}" style="font-weight:600;">${userId}</td>${cells}<td class="score-cell" style="font-weight:800;">${total}/${maxForStudent}</td></tr>`;
+        }).join("");
+
+        const respCells = respondentsPerLink.map(n =>
+          `<td class="score-cell" style="font-weight:600; color:var(--muted);">${n}</td>`
+        ).join("");
+        bodyEl.innerHTML += `<tr style="background:var(--panel-2);">
+          <td style="font-weight:700; color:var(--muted);">Réponses</td>${respCells}
+          <td class="score-cell" style="font-weight:600; color:var(--muted);">${totalStudents}</td>
+        </tr>`;
+
+        const totalCells = totalPerLink.map((v, i) => {
+          const max = maxPerLink[i];
+          const ratio = max ? v / max : 0;
+          const cls = ratio >= 0.8 ? "score-3" : ratio >= 0.5 ? "score-2" : "score-1";
+          return `<td class="score-cell ${cls}" style="font-weight:800;">${v}/${max}</td>`;
+        }).join("");
+        bodyEl.innerHTML += `<tr style="background:var(--panel-2);">
+          <td style="font-weight:800;">Total</td>${totalCells}
+          <td class="score-cell" style="font-weight:800;">${grandTotal}/${maxTotal}</td>
+        </tr>`;
+
+        // Close student panel if open
+        document.getElementById("studentPanel").style.display = "none";
+      }
+
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("content").style.display = "block";
+
+      // Initial render with all links
+      renderAll(minLinkNum, maxLinkNum);
+
+      // Filter buttons
+      document.getElementById("linkFilterBtn").addEventListener("click", () => {
+        const from = parseInt(document.getElementById("linkFrom").value) || minLinkNum;
+        const to = parseInt(document.getElementById("linkTo").value) || maxLinkNum;
+        renderAll(Math.max(from, minLinkNum), Math.min(to, maxLinkNum));
+      });
+
+      document.getElementById("linkResetBtn").addEventListener("click", () => {
+        document.getElementById("linkFrom").value = minLinkNum;
+        document.getElementById("linkTo").value = maxLinkNum;
+        renderAll(minLinkNum, maxLinkNum);
+      });
+
+      /* ============================
+         Individual student detail
+      ============================ */
+      let studentChart = null;
+
+      function showStudentDetail(userId) {
+        const details = studentDetails.get(userId);
+        if (!details) return;
+
+        const panel = document.getElementById("studentPanel");
+        const titleEl = document.getElementById("studentPanelTitle");
+        const chartCanvas = document.getElementById("studentChart");
+        const detailDiv = document.getElementById("studentDetailTable");
+
+        titleEl.textContent = userId;
+        panel.style.display = "block";
+
+        // Build data arrays
+        const scores = allLinkIds.map(id => details.has(id) ? details.get(id).score : null);
+        const relData = allLinkIds.map(id => details.has(id) && details.get(id).relOk ? 1 : null);
+        const firstData = allLinkIds.map(id => details.has(id) && details.get(id).firstOk ? 1 : null);
+        const lastData = allLinkIds.map(id => details.has(id) && details.get(id).lastOk ? 1 : null);
+
+        // Destroy previous chart
+        if (studentChart) { studentChart.destroy(); studentChart = null; }
+
+        studentChart = new Chart(chartCanvas.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: tableLinkLabels,
+            datasets: [
+              {
+                label: "Couleur",
+                data: allLinkIds.map(id => details.has(id) ? (details.get(id).relOk ? 1 : 0) : null),
+                backgroundColor: allLinkIds.map(id => {
+                  if (!details.has(id)) return "transparent";
+                  return details.get(id).relOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.2)";
+                }),
+                borderColor: allLinkIds.map(id => {
+                  if (!details.has(id)) return "transparent";
+                  return details.get(id).relOk ? "rgba(34,197,94,.8)" : "rgba(239,68,68,.4)";
+                }),
+                borderWidth: 1.5,
+                borderRadius: 4,
+              },
+              {
+                label: "1er descripteur",
+                data: allLinkIds.map(id => details.has(id) ? (details.get(id).firstOk ? 1 : 0) : null),
+                backgroundColor: allLinkIds.map(id => {
+                  if (!details.has(id)) return "transparent";
+                  return details.get(id).firstOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.2)";
+                }),
+                borderColor: allLinkIds.map(id => {
+                  if (!details.has(id)) return "transparent";
+                  return details.get(id).firstOk ? "rgba(34,197,94,.8)" : "rgba(239,68,68,.4)";
+                }),
+                borderWidth: 1.5,
+                borderRadius: 4,
+              },
+              {
+                label: "2e descripteur",
+                data: allLinkIds.map(id => details.has(id) ? (details.get(id).lastOk ? 1 : 0) : null),
+                backgroundColor: allLinkIds.map(id => {
+                  if (!details.has(id)) return "transparent";
+                  return details.get(id).lastOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.2)";
+                }),
+                borderColor: allLinkIds.map(id => {
+                  if (!details.has(id)) return "transparent";
+                  return details.get(id).lastOk ? "rgba(34,197,94,.8)" : "rgba(239,68,68,.4)";
+                }),
+                borderWidth: 1.5,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+                labels: { boxWidth: 14, font: { size: 12, weight: 600 } },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (tipCtx) => {
+                    const v = tipCtx.parsed.y;
+                    return `${tipCtx.dataset.label}: ${v === 1 ? "correct" : "incorrect"}`;
+                  }
+                }
+              },
+            },
+            scales: {
+              x: { stacked: true, grid: { display: false } },
+              y: {
+                stacked: true,
+                min: 0,
+                max: 3,
+                ticks: { stepSize: 1, callback: v => v + " pt" + (v > 1 ? "s" : "") },
+                grid: { color: "rgba(0,0,0,.06)" },
+              },
+            },
+          },
+        });
+
+        // Detail cards per link
+        let cardsHtml = '<div class="detail-grid">';
+        for (let i = 0; i < allLinkIds.length; i++) {
+          const linkId = allLinkIds[i];
+          const d = details.get(linkId);
+          if (!d) continue;
+          const cert = certs.get(linkId);
+          const num = cert?.linkNumber ?? "?";
+
+          const icon = (ok) => ok
+            ? '<span class="detail-match">&#10003;</span>'
+            : '<span class="detail-miss">&#10007;</span>';
+
+          cardsHtml += `
+            <div class="detail-card">
+              <div class="detail-card-title">Lien ${num} — ${d.score}/3</div>
+              <div class="detail-row">
+                <span>Couleur</span>
+                <span>${icon(d.relOk)} ${d.studentRel || "—"} <span style="color:var(--muted);">/ ${d.certRel || "—"}</span></span>
+              </div>
+              <div class="detail-row">
+                <span>1er desc.</span>
+                <span>${icon(d.firstOk)} ${d.studentFirst || "—"} <span style="color:var(--muted);">/ ${d.certFirst || "—"}</span></span>
+              </div>
+              <div class="detail-row">
+                <span>2e desc.</span>
+                <span>${icon(d.lastOk)} ${d.studentLast || "—"} <span style="color:var(--muted);">/ ${d.certLast || "—"}</span></span>
+              </div>
+            </div>
+          `;
+        }
+        cardsHtml += '</div>';
+        detailDiv.innerHTML = cardsHtml;
+      }
+
+      // Wire up click handlers
+      document.addEventListener("click", (e) => {
+        const el = e.target.closest(".student-name[data-student]");
+        if (el) {
+          showStudentDetail(el.dataset.student);
+        }
+      });
+
+      document.getElementById("studentPanelClose").addEventListener("click", () => {
+        document.getElementById("studentPanel").style.display = "none";
+        if (studentChart) { studentChart.destroy(); studentChart = null; }
+      });
+
+    } catch (err) {
+      if (err.message === "stop") { /* handled above */ }
+      else {
+        console.error(err);
+        document.getElementById("loading").innerHTML = `<div class="error-box">Impossible de charger les données.</div>`;
+      }
+    }
+
+  </script>
+</body>
+</html>
