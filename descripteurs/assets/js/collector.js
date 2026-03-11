@@ -9,7 +9,7 @@
 const STORAGE_KEY = "certify.collector.user.v1";
 
 /* ⚠️ mêmes valeurs que le feed */
-const COLLECTOR_ENDPOINT = "https://script.google.com/macros/s/AKfycbzp74RFlVEL-lCN8UTGgMJlsTZpfKFnPje1lVUugc6qtzTwoDptyv57dllRnGgtBBQ/exec";
+const COLLECTOR_ENDPOINT = "https://script.google.com/macros/s/AKfycbxWriEe6HfOTaXsquTJV54nfzkmKIkb_6dHAe7MnxxPgOasuoUF9c9bIYp8rHPutH7s/exec";
 const COLLECTOR_TOKEN = "60b66cdf-3982-4e5c-9f51-z456f0da873b";
 
 const MAX_PER_USER = 2;
