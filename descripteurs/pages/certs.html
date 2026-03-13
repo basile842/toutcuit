@@ -72,11 +72,6 @@
       display: none;
     }
 
-    #loginSection{
-      max-width: 400px;
-      margin: 40px auto;
-    }
-
     #certsContent{
       display: none;
     }
@@ -118,28 +113,7 @@
   </header>
 
   <main>
-    <!-- Section de connexion -->
-    <section id="loginSection">
-      <div class="card">
-        <h1>CERTs — Connexion</h1>
-        <p class="page-lead">Entrez le mot de passe pour accéder à la gestion des liens.</p>
-
-        <div id="loginError" class="error-msg"></div>
-
-        <form id="loginForm">
-          <label>
-            <small>Mot de passe</small>
-            <input id="passwordInput" type="password" placeholder="Mot de passe" required />
-          </label>
-
-          <div class="btn-row">
-            <button class="btn" type="submit">Se connecter</button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- Section principale (cachée par défaut) -->
+    <!-- Section principale (cachée par défaut, requiert auth admin) -->
     <section id="certsContent">
       <h1>CERTs — Gestion des liens</h1>
       <p class="page-lead">
@@ -149,7 +123,7 @@
       <div class="import-zone" id="importZone">
         <input type="file" id="importFile" accept=".docx" />
         <div class="import-zone-label">
-          <strong>Importer un fichier Word</strong> — glisser-déposer ou cliquer pour sélectionner un .docx
+          <strong>Importer un fichier Word</strong> — glisser-déposer ou cliquer pour sélectionner un .docx téléchargé depuis CERTools
         </div>
         <div class="import-status" id="importStatus"></div>
       </div>
@@ -162,7 +136,7 @@
           <!-- Informations de base -->
           <div class="form-section">
             <h3>Informations de base</h3>
-            
+
             <label>
               <small>Titre du lien</small>
               <input id="titleInput" type="text" placeholder="Ex: L'eau bouillante gèle-t-elle instantanément au Canada ?" required />
@@ -172,6 +146,18 @@
               <small>URL</small>
               <input id="urlInput" type="url" placeholder="https://..." required />
             </label>
+
+            <div class="form-row two-cols" style="margin-top: 12px;">
+              <label>
+                <small>Nom de l'expert</small>
+                <input id="expertInput" type="text" placeholder="Prénom Nom" />
+              </label>
+
+              <label>
+                <small>Date de rédaction</small>
+                <input id="dateInput" type="text" placeholder="JJ.MM.AAAA" />
+              </label>
+            </div>
           </div>
 
           <!-- Descripteurs -->
@@ -276,15 +262,10 @@
     /* ============================
        Configuration
     ============================ */
-    const PASSWORD = "cert2026";  // ⚠️ Change ce mot de passe !
     const SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbx43AyvV12AXSjEAkm1aSy1CA1Aa2RGOf90a-v_YpzhRu_VVvoj3RbHzeJyDMF99L65/exec";
     const SECRET_TOKEN = "09a761d6-a4fd-4z3a-94c4-29aed7fzefa2";  // Doit correspondre au token dans le script
 
-    const loginSection = document.getElementById("loginSection");
     const certsContent = document.getElementById("certsContent");
-    const loginForm = document.getElementById("loginForm");
-    const loginError = document.getElementById("loginError");
-    const passwordInput = document.getElementById("passwordInput");
 
     const linkForm = document.getElementById("linkForm");
     const successMsg = document.getElementById("successMsg");
@@ -292,25 +273,12 @@
     const resetBtn = document.getElementById("resetBtn");
 
     /* ============================
-       Authentification
+       Authentification via admin
     ============================ */
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      
-      if (passwordInput.value === PASSWORD) {
-        loginSection.style.display = "none";
-        certsContent.style.display = "block";
-        sessionStorage.setItem("certs_authenticated", "true");
-      } else {
-        loginError.textContent = "Mot de passe incorrect";
-        loginError.style.display = "block";
-      }
-    });
-
-    // Vérifier si déjà authentifié
-    if (sessionStorage.getItem("certs_authenticated") === "true") {
-      loginSection.style.display = "none";
+    if (sessionStorage.getItem("admin_authenticated") === "true") {
       certsContent.style.display = "block";
+    } else {
+      window.location.href = "/admin.html";
     }
 
     /* ============================
@@ -387,6 +355,8 @@
       const data = {
         title: document.getElementById("titleInput").value.trim(),
         url: document.getElementById("urlInput").value.trim(),
+        expert: document.getElementById("expertInput").value.trim(),
+        date: document.getElementById("dateInput").value,
         descriptor1: document.getElementById("descriptor1Input").value,
         descriptor2: document.getElementById("descriptor2Input").value,
         reliability: document.getElementById("reliabilityInput").value,
@@ -519,6 +489,19 @@
       const urlPara = header.find(p => /^https?:\/\//.test(p.text));
       const url = urlPara?.text || "";
 
+      // Expert name (line starting with "Expert :")
+      const expertPara = header.find(p => /^expert\s*:/i.test(p.text));
+      const expert = expertPara?.text.replace(/^expert\s*:\s*/i, "").trim() || "";
+
+      // Certification date
+      const datePara = header.find(p => /certification date/i.test(p.text));
+      let date = "";
+      if (datePara) {
+        const raw = datePara.text.replace(/^.*?:\s*/i, "").trim();
+        const d = new Date(raw);
+        if (!isNaN(d)) date = String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear();
+      }
+
       // Descriptors
       const descParas = sections["descriptors"] || [];
       const descText = descParas.map(p => p.text).join(" ").trim();
@@ -558,12 +541,14 @@
         }
       }
 
-      return { title, url, descriptor1, descriptor2, reliability, threePhrases, context, content, reliabilityText, references };
+      return { title, url, expert, date, descriptor1, descriptor2, reliability, threePhrases, context, content, reliabilityText, references };
     }
 
     function fillForm(data) {
       document.getElementById("titleInput").value = data.title || "";
       document.getElementById("urlInput").value = data.url || "";
+      document.getElementById("expertInput").value = data.expert || "";
+      document.getElementById("dateInput").value = data.date || "";
       document.getElementById("threePhrasesInput").value = data.threePhrases || "";
       document.getElementById("contextInput").value = data.context || "";
       document.getElementById("contentInput").value = data.content || "";
