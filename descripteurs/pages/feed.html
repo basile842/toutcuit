@@ -243,6 +243,16 @@
       border: 1px solid rgba(111,92,247,.20);
     }
 
+    .certs-expert{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
     .certs-section-content{
       font-size: 0.92rem;
       line-height: 1.5;
@@ -891,6 +901,8 @@
             linkId,
             linkNumber: idx,
             title,
+            expert,
+            certDate,
             descriptor1,
             descriptor2,
             reliability,
@@ -1144,8 +1156,15 @@
         const lastIcon = certs.descriptor2 ? iconForLabel(certs.descriptor2) : "";
         const relClass = toRelClass(certs.reliability);  // ✅ Classe de couleur selon fiabilité
 
+        const expertHtml = certs.expert ? `
+          <div class="certs-expert">
+            <span>Expert-e ${escapeHtml(certs.expert)}</span>
+          </div>
+        ` : "";
+
         const descriptorsHtml = (certs.descriptor1 || certs.descriptor2) ? `
           <div class="certs-block certs-block--purple">
+            ${expertHtml}
             <div class="certs-descriptors">
               ${certs.descriptor1 ? `
                 <div class="certs-descriptor-pill ${relClass}">
