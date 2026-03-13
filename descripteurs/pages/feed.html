@@ -862,10 +862,12 @@
           // ✅ MODIFIÉ: Utiliser hash de l'URL
           const linkId = urlToLinkId(url);
 
-          const descriptor1 = r[2] || "";
-          const descriptor2 = r[3] || "";
-          const reliabilityRaw = (r[4] || "").toLowerCase();
-          
+          const expert = r[2] || "";
+          const certDate = r[3] || "";
+          const descriptor1 = r[4] || "";
+          const descriptor2 = r[5] || "";
+          const reliabilityRaw = (r[6] || "").toLowerCase();
+
           // ✅ Traduire français → anglais
           let reliability = "";
           if (reliabilityRaw.includes("fiable") && !reliabilityRaw.includes("pas")) {
@@ -875,12 +877,12 @@
           } else if (reliabilityRaw.includes("pas fiable") || reliabilityRaw.includes("pas_fiable")) {
             reliability = "bad";
           }
-          
-          const threePhrases = r[5] || "";
-          const context = r[6] || "";
-          const content = r[7] || "";
-          const reliabilityText = r[8] || "";
-          const references = r[9] || "";
+
+          const threePhrases = r[7] || "";
+          const context = r[8] || "";
+          const content = r[9] || "";
+          const reliabilityText = r[10] || "";
+          const references = r[11] || "";
 
           const hasCertsContent = descriptor1 || descriptor2 || threePhrases || context || content || reliabilityText || references;
 
