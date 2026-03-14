@@ -1070,13 +1070,13 @@
       if (!listEl) return;
 
       if (!items.length){
-        listEl.innerHTML = `<div class="error-box">Aucun lien valide trouvé dans le Google Sheet.</div>`;
+        listEl.innerHTML = `<div class="error-box">Aucun lien trouvé pour cette séance.</div>`;
         return;
       }
 
       linkMeta.clear();
       for (const it of items){
-        linkMeta.set(it.id, { url: it.url, title: it.title || "", number: it.n });
+        linkMeta.set(it.id, { url: it.url, title: it.title || "", number: it.n, certId: it.certId || null });
       }
 
       listEl.innerHTML = items.map((it) => {
@@ -1166,10 +1166,7 @@
 
         const linkId = urlToLinkId(url);
         const n = (cert.position || 0) + 1;
-        items.push({ id: linkId, n, title, url });
-
-        // Store certId in linkMeta for archiving
-        linkMeta.set(linkId, { title, url, number: n, certId: cert.id });
+        items.push({ id: linkId, n, title, url, certId: cert.id });
       }
 
       renderItems(items);
