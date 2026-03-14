@@ -257,70 +257,15 @@
   <script type="module">
 
     /* ============================
-       Config
+       Config — API PHP backend
     ============================ */
-    const RESULTS_SHEET_ID = "1LK_l71QBg7ZgdOHImgviycizz6nkJgxGQVRJJR27R50";
-    const CERTS_SHEET_ID = "13sUvNxAhj66Sa9nTIoVjXIF6AJIjjrgFaCHmwnmK51M";
-    const CERTS_CSV_URL = `https://docs.google.com/spreadsheets/d/${CERTS_SHEET_ID}/export?format=csv`;
-
-    // Read gid from URL params
+    const API_BASE = "/api";
     const PAGE_PARAMS = new URLSearchParams(location.search);
-    const SHEET_GID = PAGE_PARAMS.get("gid") || "";
+    const SESSION_CODE = PAGE_PARAMS.get("session") || "";
 
-    // Load sheet tabs into dropdown, navigate on change
     const tabSelect = document.getElementById("tabSelect");
-
-    (async function loadSheetTabs() {
-      try {
-        const res = await fetch(
-          `https://docs.google.com/spreadsheets/d/${RESULTS_SHEET_ID}/htmlview`,
-          { credentials: "omit" }
-        );
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const html = await res.text();
-
-        const tabs = [];
-        const re = /name:\s*"([^"]+)"[^}]*pageUrl[^}]*gid=(\d+)/g;
-        let m;
-        while ((m = re.exec(html)) !== null) {
-          tabs.push({ name: m[1], gid: m[2] });
-        }
-
-        const list = tabs;
-
-        if (!list.length) {
-          tabSelect.innerHTML = `<option value="">Aucun onglet détecté</option>`;
-          return;
-        }
-
-        tabSelect.innerHTML = list.map(t =>
-          `<option value="${t.gid}">${t.name}</option>`
-        ).join("");
-
-        // Select current gid, or first tab if none specified
-        if (SHEET_GID && list.some(t => t.gid === SHEET_GID)) {
-          tabSelect.value = SHEET_GID;
-        } else if (!SHEET_GID) {
-          // Auto-load first tab
-          const firstGid = list[0].gid;
-          const url = new URL(location.href);
-          url.searchParams.set("gid", firstGid);
-          location.replace(url);
-          return;
-        }
-      } catch (err) {
-        console.error("Failed to load sheet tabs:", err);
-        tabSelect.innerHTML = `<option value="">Erreur</option>`;
-      }
-    })();
-
-    tabSelect.addEventListener("change", () => {
-      const gid = tabSelect.value;
-      if (!gid) return;
-      const url = new URL(location.href);
-      url.searchParams.set("gid", gid);
-      location.href = url.toString();
-    });
+    // Tab selector not used with API backend — hide it
+    if (tabSelect) tabSelect.style.display = "none";
 
     /* ============================
        Helpers (reused from feed.html)
@@ -378,58 +323,31 @@
     }
 
     /* ============================
-       Load CERTs data
+       Load CERTs data from API
     ============================ */
     async function loadCerts() {
-      const res = await fetch(CERTS_CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to load CERTs CSV");
-      const csv = await res.text();
-      const rows = parseCSV(csv);
+      if (!SESSION_CODE) throw new Error("no_session");
 
-      const cleaned = rows
-        .map(r => (r || []).map(x => String(x ?? "").trim()))
-        .filter(r => r.some(v => v.length));
-
-      const firstRow = cleaned[0] || [];
-      const looksHeader =
-        /titre|title/i.test(firstRow[0] || "") ||
-        /url|lien|link/i.test(firstRow[1] || "");
-      const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+      const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load CERTs");
+      const certsArr = await res.json();
 
       const certs = new Map();
-      let idx = 0;
-
-      for (const r of dataRows) {
-        const title = r[0] || "";
-        const rawUrl = r[1] || "";
-        const url = normalizeUrl(rawUrl);
+      for (const cert of certsArr) {
+        const url = normalizeUrl(cert.url || "");
         if (!url) continue;
 
-        idx++;
         const linkId = urlToLinkId(url);
-
-        const descriptor1 = r[2] || "";
-        const descriptor2 = r[3] || "";
-        const reliabilityRaw = (r[4] || "").toLowerCase();
-
-        let reliability = "";
-        if (reliabilityRaw.includes("fiable") && !reliabilityRaw.includes("pas")) {
-          reliability = "good";
-        } else if (reliabilityRaw.includes("indéterminé") || reliabilityRaw.includes("indetermine")) {
-          reliability = "mid";
-        } else if (reliabilityRaw.includes("pas fiable") || reliabilityRaw.includes("pas_fiable")) {
-          reliability = "bad";
-        }
-
-        const hasCertsContent = !!(descriptor1 || descriptor2 || reliability);
+        const hasCertsContent = !!(cert.descriptor1 || cert.descriptor2 || cert.reliability);
 
         if (hasCertsContent) {
           certs.set(linkId, {
-            linkNumber: idx,
-            title,
-            descriptor1,
-            descriptor2,
-            reliability
+            linkNumber: (cert.position || 0) + 1,
+            certId: cert.id,
+            title: cert.title || "",
+            descriptor1: cert.descriptor1 || "",
+            descriptor2: cert.descriptor2 || "",
+            reliability: cert.reliability || ""
           });
         }
       }
@@ -438,38 +356,26 @@
     }
 
     /* ============================
-       Load student results (direct CSV from Google Sheet)
+       Load student results from API
     ============================ */
     async function loadFeed() {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${RESULTS_SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
-      const res = await fetch(csvUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to load student results CSV");
-      const csv = await res.text();
-      const rawRows = parseCSV(csv);
+      if (!SESSION_CODE) return [];
 
-      const cleaned = rawRows
-        .map(r => (r || []).map(x => String(x ?? "").trim()))
-        .filter(r => r.some(v => v.length));
+      const res = await fetch(`${API_BASE}/student/feed.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load student results");
+      const rows = await res.json();
 
-      // Detect header row
-      const firstRow = cleaned[0] || [];
-      const looksHeader =
-        /timestamp/i.test(firstRow[0] || "") ||
-        /user_id/i.test(firstRow[1] || "");
-      const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
-
-      // CSV columns: timestamp, user_id, link_id, link_title, link_url,
-      //              first_label, last_label, reliability, comment, dedup_key
-      return dataRows.map(r => ({
-        timestamp: r[0] || "",
-        user_id: r[1] || "",
-        link_id: r[2] || "",
-        link_title: r[3] || "",
-        link_url: r[4] || "",
-        first_label: r[5] || "",
-        last_label: r[6] || "",
-        reliability: r[7] || "",
-        comment: r[8] || "",
+      return rows.map(r => ({
+        timestamp: r.created_at || "",
+        user_id: r.user_id || "",
+        cert_id: r.cert_id,
+        link_id: "",
+        link_title: "",
+        link_url: "",
+        first_label: r.first_label || "",
+        last_label: r.last_label || "",
+        reliability: r.reliability || "",
+        comment: r.comment || "",
       }));
     }
 
@@ -501,11 +407,23 @@
     try {
       const [certs, feedRows] = await Promise.all([loadCerts(), loadFeed()]);
 
-      // Normalize feed link IDs
+      // Build certId → linkId mapping from certs
+      const certIdToLinkId = new Map();
+      for (const [linkId, cert] of certs) {
+        if (cert.certId) certIdToLinkId.set(String(cert.certId), linkId);
+      }
+
+      // Normalize feed link IDs using cert_id mapping
       const rows = feedRows.map(r => {
-        const rawUrl = String(r.link_url || "").trim();
-        const normUrl = rawUrl ? (normalizeUrl(rawUrl) || rawUrl) : "";
-        const linkId = normUrl ? urlToLinkId(normUrl) : String(r.link_id || "").trim();
+        let linkId = r.link_id;
+        if (!linkId && r.cert_id) {
+          linkId = certIdToLinkId.get(String(r.cert_id)) || "";
+        }
+        if (!linkId) {
+          const rawUrl = String(r.link_url || "").trim();
+          const normUrl = rawUrl ? (normalizeUrl(rawUrl) || rawUrl) : "";
+          linkId = normUrl ? urlToLinkId(normUrl) : "";
+        }
         return { ...r, link_id: linkId };
       });
 

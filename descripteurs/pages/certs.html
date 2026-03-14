@@ -117,7 +117,7 @@
     <section id="certsContent">
       <h1>CERTs — Gestion des liens</h1>
       <p class="page-lead">
-        Ajoutez des liens et leurs descripteurs pour les élèves. Les données seront enregistrées dans la Google Sheet.
+        Ajoutez des liens et leurs descripteurs pour les élèves.
       </p>
 
       <div class="import-zone" id="importZone">
@@ -262,8 +262,7 @@
     /* ============================
        Configuration
     ============================ */
-    const SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbxrCYVc4mgzpEe5f44iLvUJL_-OWhIfXhtBF_pTV5boLyLvyPJCh3v86iRqD66b9ys1/exec";
-    const SECRET_TOKEN = "09a761d6-a4fd-4z3a-94c4-29aed7fzefa2";  // Doit correspondre au token dans le script
+    const API_BASE = "/api";
 
     const certsContent = document.getElementById("certsContent");
 
@@ -273,9 +272,10 @@
     const resetBtn = document.getElementById("resetBtn");
 
     /* ============================
-       Authentification via admin
+       Authentification via JWT
     ============================ */
-    if (sessionStorage.getItem("admin_authenticated") === "true") {
+    const token = localStorage.getItem("tc_token");
+    if (token) {
       certsContent.style.display = "block";
     } else {
       window.location.href = "/admin.html";
@@ -299,52 +299,51 @@
       successMsg.style.display = "none";
     }
 
+    // Map reliability labels French → DB enum
+    function reliabilityToEnum(val){
+      if (!val) return "mid";
+      const v = val.toLowerCase();
+      if (v.includes("fiable") && !v.includes("pas")) return "good";
+      if (v.includes("indéterminé") || v.includes("indetermine")) return "mid";
+      if (v.includes("pas fiable")) return "bad";
+      return "mid";
+    }
+
     async function submitLink(data) {
       try {
-        console.log("📤 Envoi des données vers le script...");
-        console.log("URL:", SCRIPT_ENDPOINT);
-        console.log("Données:", data);
-
         const payload = {
-          token: SECRET_TOKEN,
-          action: "add",
-          ...data
+          title: data.title,
+          url: data.url,
+          expert: data.expert || null,
+          cert_date: data.date || null,
+          descriptor1: data.descriptor1 || null,
+          descriptor2: data.descriptor2 || null,
+          reliability: reliabilityToEnum(data.reliability),
+          three_phrases: data.threePhrases || null,
+          context: data.context || null,
+          content: data.content || null,
+          reliability_text: data.reliabilityText || null,
+          references_text: data.references || null
         };
 
-        console.log("Payload complet:", payload);
-
-        const response = await fetch(SCRIPT_ENDPOINT, {
+        const response = await fetch(`${API_BASE}/certs/save.php`, {
           method: "POST",
           headers: {
-            "Content-Type": "text/plain"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify(payload)
         });
 
-        console.log("✅ Requête envoyée");
-        console.log("Status:", response.status);
-        
-        const result = await response.text();
-        console.log("Réponse brute:", result);
-        
-        try {
-          const jsonResult = JSON.parse(result);
-          console.log("Réponse JSON:", jsonResult);
-          
-          if (jsonResult.success) {
-            showSuccess(jsonResult.message || "Lien ajouté avec succès dans la Google Sheet !");
-            linkForm.reset();
-          } else {
-            showError(jsonResult.error || "Erreur inconnue");
-          }
-        } catch (parseError) {
-          // Si ce n'est pas du JSON, considérer que c'est réussi
-          showSuccess("Lien ajouté avec succès dans la Google Sheet !");
+        const result = await response.json();
+
+        if (result.error) {
+          showError(result.error);
+        } else {
+          showSuccess("CERT ajouté avec succès !");
           linkForm.reset();
         }
-        
       } catch (error) {
-        console.error("❌ Erreur:", error);
         showError("Erreur lors de l'ajout : " + error.message);
       }
     }

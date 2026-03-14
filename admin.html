@@ -81,7 +81,9 @@
       color: var(--muted);
     }
 
-    input[type="password"] {
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
       width: 100%;
       padding: 10px 13px;
       border: 1.5px solid var(--border);
@@ -93,9 +95,7 @@
       transition: border-color .15s;
     }
 
-    input[type="password"]:focus {
-      border-color: var(--accent);
-    }
+    input:focus { border-color: var(--accent); }
 
     .btn-primary {
       width: 100%;
@@ -112,6 +112,20 @@
 
     .btn-primary:hover { background: var(--accent-hover); }
 
+    .btn-secondary {
+      padding: 9px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); }
+
     .error-msg {
       display: none;
       font-size: 0.85rem;
@@ -121,6 +135,15 @@
       border-radius: 8px;
       padding: 8px 12px;
     }
+
+    .toggle-link {
+      font-size: 0.82rem;
+      color: var(--accent);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .toggle-link:hover { text-decoration: underline; }
 
     /* ── Console ── */
     #consoleContent { display: none; }
@@ -154,6 +177,22 @@
       font-size: 0.95rem;
       font-weight: 700;
       color: var(--muted);
+    }
+
+    .console-header-spacer { flex: 1; }
+
+    .console-header-user {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .console-header-logout {
+      font-size: 0.82rem;
+      color: var(--accent);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-weight: 600;
     }
 
     .console-main {
@@ -246,16 +285,66 @@
       color: var(--accent);
     }
 
-    .badge-ext {
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 4px;
-      background: rgba(111,92,247,.10);
+    .session-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+
+    .session-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .session-code {
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: 800;
       color: var(--accent);
-      border: 1px solid rgba(111,92,247,.20);
-      margin-left: 6px;
-      vertical-align: middle;
+      background: rgba(111,92,247,.08);
+      padding: 2px 10px;
+      border-radius: 6px;
+    }
+
+    .session-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .session-school {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .session-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .session-actions a {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 4px 10px;
+      border: 1px solid rgba(111,92,247,.25);
+      border-radius: 6px;
+    }
+
+    .session-actions a:hover {
+      background: rgba(111,92,247,.08);
+    }
+
+    .empty-msg {
+      color: var(--muted);
+      font-size: 0.88rem;
+      padding: 14px;
     }
 
     @media (max-width: 500px) {
@@ -265,22 +354,32 @@
 </head>
 <body>
 
-  <!-- ── Login ── -->
+  <!-- ── Login / Register ── -->
   <div class="login-page" id="loginPage">
     <div class="login-card">
       <div class="login-logo">toutcuit</div>
-      <div class="login-title">Console admin</div>
+      <div class="login-title" id="formTitle">Connexion enseignant</div>
 
       <form id="loginForm">
+        <div class="field" id="nameField" style="display:none; margin-bottom:12px;">
+          <label for="nameInput">Nom</label>
+          <input type="text" id="nameInput" placeholder="Votre nom">
+        </div>
+        <div class="field" style="margin-bottom:12px;">
+          <label for="emailInput">Email</label>
+          <input type="email" id="emailInput" placeholder="votre@email.ch" autofocus required>
+        </div>
         <div class="field">
           <label for="pwInput">Mot de passe</label>
-          <input type="password" id="pwInput" placeholder="••••••••" autofocus>
+          <input type="password" id="pwInput" placeholder="••••••••" required>
         </div>
-        <div id="loginError" class="error-msg" style="margin-top:10px;">Mot de passe incorrect.</div>
+        <div id="loginError" class="error-msg" style="margin-top:10px;"></div>
         <div style="margin-top:14px;">
-          <button class="btn-primary" type="submit">Accéder</button>
+          <button class="btn-primary" type="submit" id="submitBtn">Se connecter</button>
         </div>
       </form>
+
+      <div class="toggle-link" id="toggleMode">Pas encore de compte ? S'inscrire</div>
     </div>
   </div>
 
@@ -289,76 +388,24 @@
     <header class="console-header">
       <span class="console-header-logo">toutcuit</span>
       <span class="console-header-sep">/</span>
-      <span class="console-header-title">Console admin</span>
+      <span class="console-header-title">Console</span>
+      <span class="console-header-spacer"></span>
+      <span class="console-header-user" id="userName"></span>
+      <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
     </header>
 
     <main class="console-main">
 
-      <!-- Séance -->
+      <!-- Séances -->
       <div>
-        <div class="console-group-title">Séance en classe</div>
-        <div class="console-links">
-
-          <a href="/entrer.html" class="console-link">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3h6v18h-6"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Page d'entrée élèves</div>
-              <div class="console-link-desc">toutcuit.ch/entrer — instructions Firefox et pop-ups</div>
-            </div>
-            <span class="console-link-arrow">→</span>
-          </a>
-
-          <a href="/descripteurs/pages/liens.html" class="console-link">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Liens à analyser</div>
-              <div class="console-link-desc">Vue élèves — résultats depuis le Google Sheet</div>
-            </div>
-            <span class="console-link-arrow">→</span>
-          </a>
-
-          <a href="/descripteurs/pages/liens.html?admin=1" class="console-link">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#6f5cf7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M12 2v2m0 18v-2m8-8h-2M4 12H2m15.66 5.66-1.41-1.41M7.75 7.75 6.34 6.34m11.32 0-1.41 1.41M7.75 16.25l-1.41 1.41"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Liens à analyser — mode admin</div>
-              <div class="console-link-desc">Vue admin — réinitialisation des résultats et inspection localStorage</div>
-            </div>
-            <span class="console-link-arrow">→</span>
-          </a>
-
-        </div>
+        <div class="console-group-title">Mes séances</div>
+        <div id="sessionsList"></div>
       </div>
 
       <!-- Outils -->
       <div>
         <div class="console-group-title">Outils</div>
         <div class="console-links">
-
-          <a href="/descripteurs/pages/progress.html" class="console-link">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Score des élèves</div>
-              <div class="console-link-desc">Courbe de similarité avec les réponses CERT — couleur, descripteurs</div>
-            </div>
-            <span class="console-link-arrow">→</span>
-          </a>
 
           <a href="/descripteurs/pages/certs.html" class="console-link">
             <div class="console-link-icon">
@@ -368,9 +415,9 @@
             </div>
             <div class="console-link-body">
               <div class="console-link-name">CERTs — Gestion des liens</div>
-              <div class="console-link-desc">Ajouter des liens et leurs descripteurs dans le Google Sheet</div>
+              <div class="console-link-desc">Ajouter des liens et leurs descripteurs</div>
             </div>
-            <span class="console-link-arrow">→</span>
+            <span class="console-link-arrow">&rarr;</span>
           </a>
 
           <a href="/descripteurs/index.html" class="console-link">
@@ -384,74 +431,20 @@
               <div class="console-link-name">Macades</div>
               <div class="console-link-desc">Index des descripteurs</div>
             </div>
-            <span class="console-link-arrow">→</span>
+            <span class="console-link-arrow">&rarr;</span>
           </a>
 
-          <a href="/descripteurs/pages/feed.html" class="console-link">
+          <a href="/entrer.html" class="console-link">
             <div class="console-link-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                <path d="M15 3h6v18h-6"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
               </svg>
             </div>
             <div class="console-link-body">
-              <div class="console-link-name">Feed</div>
-              <div class="console-link-desc">Flux des contenus</div>
+              <div class="console-link-name">Page d'entrée élèves</div>
+              <div class="console-link-desc">toutcuit.ch/entrer</div>
             </div>
-            <span class="console-link-arrow">→</span>
-          </a>
-
-          <a href="#" class="console-link" id="feed2winBtn">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="9" height="14" rx="1"/><rect x="13" y="3" width="9" height="14" rx="1"/>
-                <line x1="6.5" y1="19" x2="6.5" y2="21"/><line x1="17.5" y1="19" x2="17.5" y2="21"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Feed 2 fenêtres</div>
-              <div class="console-link-desc">Liens à gauche, feed à droite — cliquer dans le feed ouvre le lien à gauche</div>
-            </div>
-            <span class="console-link-arrow">→</span>
-          </a>
-
-        </div>
-      </div>
-
-      <!-- Google Sheets -->
-      <div>
-        <div class="console-group-title">Google Sheets</div>
-        <div class="console-links">
-
-          <a href="https://docs.google.com/spreadsheets/d/1LK_l71QBg7ZgdOHImgviycizz6nkJgxGQVRJJR27R50/edit?gid=0#gid=0"
-             target="_blank" rel="noopener" class="console-link">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1a9a6e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Résultats des élèves <span class="badge-ext">↗</span></div>
-              <div class="console-link-desc">Données envoyées depuis les séances</div>
-            </div>
-            <span class="console-link-arrow">→</span>
-          </a>
-
-          <a href="https://docs.google.com/spreadsheets/d/13sUvNxAhj66Sa9nTIoVjXIF6AJIjjrgFaCHmwnmK51M/edit?gid=0#gid=0"
-             target="_blank" rel="noopener" class="console-link">
-            <div class="console-link-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1a9a6e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
-              </svg>
-            </div>
-            <div class="console-link-body">
-              <div class="console-link-name">Liens à intégrer <span class="badge-ext">↗</span></div>
-              <div class="console-link-desc">Source des liens affichés dans la séance</div>
-            </div>
-            <span class="console-link-arrow">→</span>
+            <span class="console-link-arrow">&rarr;</span>
           </a>
 
         </div>
@@ -461,77 +454,211 @@
   </div>
 
   <script>
-    const PASSWORD = "cert2026";
-    const SESSION_KEY = "admin_authenticated";
+    const API = "/api";
 
-    const loginPage    = document.getElementById("loginPage");
+    const loginPage = document.getElementById("loginPage");
     const consoleContent = document.getElementById("consoleContent");
-    const loginForm    = document.getElementById("loginForm");
-    const loginError   = document.getElementById("loginError");
-    const pwInput      = document.getElementById("pwInput");
+    const loginForm = document.getElementById("loginForm");
+    const loginError = document.getElementById("loginError");
+    const emailInput = document.getElementById("emailInput");
+    const pwInput = document.getElementById("pwInput");
+    const nameInput = document.getElementById("nameInput");
+    const nameField = document.getElementById("nameField");
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const toggleMode = document.getElementById("toggleMode");
+    const userNameEl = document.getElementById("userName");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const sessionsList = document.getElementById("sessionsList");
 
-    function unlock() {
-      loginPage.style.display = "none";
-      consoleContent.style.display = "block";
+    let isRegister = false;
+
+    function getToken() { return localStorage.getItem("tc_token"); }
+    function getTeacher() {
+      try { return JSON.parse(localStorage.getItem("tc_teacher")); } catch { return null; }
     }
 
-    if (sessionStorage.getItem(SESSION_KEY) === "true") unlock();
+    function showError(msg) {
+      loginError.textContent = msg;
+      loginError.style.display = "block";
+    }
 
-    /* ── Feed 2 fenêtres ── */
-    const FEED2_MAIN_NAME = "feed2_main";
-    const FEED2_SIDE_NAME = "feed2_sidecar";
-    const FEED2_SIDE_W    = 520;
+    function hideError() {
+      loginError.style.display = "none";
+    }
 
-    document.getElementById("feed2winBtn")?.addEventListener("click", (e) => {
-      e.preventDefault();
-
-      const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-      if (isMobile) {
-        alert("Cette fonction n'est accessible que depuis un ordinateur desktop.");
-        return;
-      }
-
-      const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
-      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
-      const X = window.screen?.availLeft ?? 0;
-      const Y = window.screen?.availTop  ?? 0;
-
-      const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
-      const gap   = 10;
-      const mainW = W - sideW - gap;
-      const sideLeft = X + W - sideW;
-
-      // Window 1 (left): liens.html
-      const main = window.open(
-        "/descripteurs/pages/liens.html", FEED2_MAIN_NAME,
-        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
-      );
-      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
-      try { main.focus(); } catch {}
-
-      // Window 2 (right): feed.html in sidecar mode
-      const side = window.open(
-        `/descripteurs/pages/feed.html?mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
-        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
-      );
-      if (!side) {
-        try { main.close(); } catch {}
-        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
-        return;
-      }
+    // Toggle login / register
+    toggleMode.addEventListener("click", () => {
+      isRegister = !isRegister;
+      nameField.style.display = isRegister ? "block" : "none";
+      formTitle.textContent = isRegister ? "Inscription enseignant" : "Connexion enseignant";
+      submitBtn.textContent = isRegister ? "S'inscrire" : "Se connecter";
+      toggleMode.textContent = isRegister ? "Déjà un compte ? Se connecter" : "Pas encore de compte ? S'inscrire";
+      hideError();
     });
 
-    loginForm.addEventListener("submit", (e) => {
+    // Login / Register form
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (pwInput.value === PASSWORD) {
-        sessionStorage.setItem(SESSION_KEY, "true");
-        unlock();
+      hideError();
+
+      const email = emailInput.value.trim();
+      const password = pwInput.value;
+
+      if (isRegister) {
+        const name = nameInput.value.trim();
+        if (!name) return showError("Le nom est requis.");
+
+        try {
+          const res = await fetch(`${API}/auth/register.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, name })
+          });
+          const data = await res.json();
+          if (data.error) return showError(data.error);
+
+          localStorage.setItem("tc_token", data.token);
+          localStorage.setItem("tc_teacher", JSON.stringify(data.teacher));
+          unlock(data.teacher);
+        } catch (err) {
+          showError("Erreur réseau : " + err.message);
+        }
       } else {
-        loginError.style.display = "block";
-        pwInput.value = "";
-        pwInput.focus();
+        try {
+          const res = await fetch(`${API}/auth/login.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (data.error) return showError(data.error);
+
+          localStorage.setItem("tc_token", data.token);
+          localStorage.setItem("tc_teacher", JSON.stringify(data.teacher));
+          unlock(data.teacher);
+        } catch (err) {
+          showError("Erreur réseau : " + err.message);
+        }
       }
     });
+
+    // Logout
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("tc_token");
+      localStorage.removeItem("tc_teacher");
+      location.reload();
+    });
+
+    // Unlock console
+    function unlock(teacher) {
+      loginPage.style.display = "none";
+      consoleContent.style.display = "block";
+      if (teacher?.name) userNameEl.textContent = teacher.name;
+      loadSessions();
+    }
+
+    // Load sessions
+    async function loadSessions() {
+      const token = getToken();
+      try {
+        const res = await fetch(`${API}/sessions/list.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const sessions = await res.json();
+
+        if (!Array.isArray(sessions) || !sessions.length) {
+          sessionsList.innerHTML = `<div class="empty-msg">Aucune séance. Créez-en une ci-dessous.</div>`;
+        } else {
+          sessionsList.innerHTML = sessions.map(s => `
+            <div class="session-card">
+              <div class="session-card-header">
+                <span class="session-code">${esc(s.code)}</span>
+                <span class="session-name">${esc(s.name)}</span>
+                <span class="session-school">${esc(s.school_name || "")}</span>
+              </div>
+              <div class="session-actions">
+                <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}">Liens</a>
+                <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}&admin=1">Liens (admin)</a>
+                <a href="/descripteurs/pages/feed.html?session=${enc(s.code)}">Feed</a>
+                <a href="/descripteurs/pages/progress.html?session=${enc(s.code)}">Scores</a>
+                <a href="/collector.html?code=${enc(s.code)}">Collector</a>
+              </div>
+            </div>
+          `).join("");
+        }
+
+        // Add "create session" button
+        sessionsList.innerHTML += `
+          <div style="margin-top:12px;">
+            <button class="btn-secondary" id="newSessionBtn">+ Nouvelle séance</button>
+          </div>`;
+
+        document.getElementById("newSessionBtn")?.addEventListener("click", createSession);
+      } catch (err) {
+        sessionsList.innerHTML = `<div class="empty-msg">Erreur: ${esc(err.message)}</div>`;
+      }
+    }
+
+    // Create session
+    async function createSession() {
+      const token = getToken();
+
+      // First, ensure we have a school
+      let schools;
+      try {
+        const res = await fetch(`${API}/schools/list.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        schools = await res.json();
+      } catch { schools = []; }
+
+      let schoolId;
+      if (Array.isArray(schools) && schools.length) {
+        schoolId = schools[0].id;
+      } else {
+        const schoolName = prompt("Nom de votre école :");
+        if (!schoolName) return;
+        try {
+          const res = await fetch(`${API}/schools/save.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ name: schoolName })
+          });
+          const school = await res.json();
+          schoolId = school.id;
+        } catch { return alert("Erreur lors de la création de l'école."); }
+      }
+
+      const sessionName = prompt("Nom de la séance :");
+      if (!sessionName) return;
+
+      try {
+        const res = await fetch(`${API}/sessions/create.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ name: sessionName, school_id: schoolId })
+        });
+        const session = await res.json();
+        if (session.error) return alert(session.error);
+        alert(`Séance créée ! Code : ${session.code}`);
+        loadSessions();
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function enc(s) { return encodeURIComponent(s); }
+
+    // Auto-login if token exists
+    const existingToken = getToken();
+    const existingTeacher = getTeacher();
+    if (existingToken && existingTeacher) {
+      unlock(existingTeacher);
+    }
   </script>
 </body>
 </html>

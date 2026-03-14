@@ -635,17 +635,11 @@
     renderNav(location.pathname);
 
     /* ============================
-       CONFIG Google Sheet (source)
+       CONFIG — API PHP backend
     ============================ */
-    const SHEET_ID = "13sUvNxAhj66Sa9nTIoVjXIF6AJIjjrgFaCHmwnmK51M";
-    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+    const API_BASE = "/api";
+    const SESSION_CODE = new URLSearchParams(location.search).get("session") || "";
     const MAX_ITEMS = 15;
-
-    /* ============================
-       ARCHIVE (Apps Script)
-    ============================ */
-    const ARCHIVE_ENDPOINT = "https://script.google.com/macros/s/AKfycbxWriEe6HfOTaXsquTJV54nfzkmKIkb_6dHAe7MnxxPgOasuoUF9c9bIYp8rHPutH7s/exec";
-    const ARCHIVE_TOKEN = "60b66cdf-3982-4e5c-9f51-z456f0da873b";
 
     const USER_ID_KEY = "certify_user_id_v1";
 
@@ -758,22 +752,16 @@
       writeArchiveQueue(q);
     }
 
-    async function postArchiveNoCors(jsonPayload){
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
-
+    async function postToApi(payload){
       try{
-        await fetch(ARCHIVE_ENDPOINT, {
+        const res = await fetch(`${API_BASE}/student/submit.php`, {
           method: "POST",
-          mode: "no-cors",
-          credentials: "omit",
-          cache: "no-store",
-          body: JSON.stringify(jsonPayload),
-          signal: ctrl.signal
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
-        return true;
-      } finally {
-        clearTimeout(t);
+        return res.ok;
+      }catch{
+        return false;
       }
     }
 
@@ -788,7 +776,7 @@
         if (isSent(archiveId)) continue;
 
         try{
-          const ok = await postArchiveNoCors(item.body);
+          const ok = await postToApi(item.body);
           if (ok) markSent(archiveId);
           else remaining.push(item);
         }catch{
@@ -1155,38 +1143,33 @@
     async function loadFromSheet(){
       setStatus("Chargement des liens…");
 
-      const res = await fetch(CSV_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error("Impossible de télécharger le CSV du Google Sheet");
+      if (!SESSION_CODE) {
+        setStatus("");
+        if (listEl) {
+          listEl.innerHTML = `<div class="error-box">Code de séance manquant. Ajoutez <code>?session=CODE</code> dans l'URL.</div>`;
+        }
+        return;
+      }
 
-      const csv = await res.text();
-      const rows = parseCSV(csv);
+      const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Impossible de charger les CERTs de la séance");
 
-      const cleaned = rows
-        .map(r => (r || []).map(x => String(x ?? "").trim()))
-        .filter(r => r.some(v => v.length));
-
-      const firstRow = cleaned[0] || [];
-      const looksHeader =
-        /titre|title/i.test(firstRow[0] || "") ||
-        /url|lien|link/i.test(firstRow[1] || "");
-
-      const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+      const certs = await res.json();
 
       const items = [];
-      let idx = 0;
-
-      for (const r of dataRows){
+      for (const cert of certs){
         if (items.length >= MAX_ITEMS) break;
 
-        const title = r[0] || "";
-        const rawUrl = r[1] || "";
-        const url = normalizeUrl(rawUrl);
+        const title = cert.title || "";
+        const url = normalizeUrl(cert.url || "");
         if (!url) continue;
 
-        idx++;
-        // ✅ MODIFIÉ: Utiliser hash de l'URL au lieu de numéro séquentiel
         const linkId = urlToLinkId(url);
-        items.push({ id: linkId, n: idx, title, url });
+        const n = (cert.position || 0) + 1;
+        items.push({ id: linkId, n, title, url });
+
+        // Store certId in linkMeta for archiving
+        linkMeta.set(linkId, { title, url, number: n, certId: cert.id });
       }
 
       renderItems(items);
@@ -1210,37 +1193,26 @@
       const linkId = String(data.id || "");
 
       const meta = linkMeta.get(linkId) || {};
-      const linkTitle =
-        String(data.title || data.link_title || "").trim() ||
-        String(meta.title || "").trim();
-
-      const linkUrl =
-        String(data.url || data.link_url || data.linkUrl || "").trim() ||
-        String(meta.url || "").trim();
+      const certId = meta.certId || null;
 
       const body = {
-        token: ARCHIVE_TOKEN,
-
+        session_code: SESSION_CODE,
         user_id: userId,
-        link_id: linkId,
-        link_title: linkTitle,
-        link_url: linkUrl,
+        cert_id: certId,
 
         first_label: String(data.firstLabel || ""),
         last_label: String(data.lastLabel || ""),
         reliability: String(data.reliability || ""),
         comment: normalizeComment(data.comment || ""),
 
-        dedup_key: dedupKeyFor(userId, linkId),
-
-        timestamp_client: new Date().toISOString(),
-        page_url: String(location.href || ""),
-        user_agent: String(navigator.userAgent || "")
+        dedup_key: dedupKeyFor(userId, linkId)
       };
+
+      if (!body.cert_id || !body.session_code) return;
 
       const archiveId = buildArchiveId({
         user_id: body.user_id,
-        link_id: body.link_id,
+        link_id: linkId,
         reliability: body.reliability,
         first_label: body.first_label,
         last_label: body.last_label,
@@ -1250,7 +1222,7 @@
       if (isSent(archiveId)) return;
 
       try{
-        const ok = await postArchiveNoCors(body);
+        const ok = await postToApi(body);
         if (ok) markSent(archiveId);
       }catch{
         enqueueArchive({ archive_id: archiveId, body });
@@ -1387,8 +1359,8 @@
       if (listEl) {
         listEl.innerHTML = `
           <div class="error-box">
-            Impossible de charger la liste depuis Google Sheet.<br/>
-            Vérifie que la feuille est bien en accès public (lecture) et que l'ID est correct.
+            Impossible de charger les liens de la séance.<br/>
+            Vérifie que le code de séance est correct.
           </div>
         `;
       }

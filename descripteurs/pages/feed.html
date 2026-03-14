@@ -650,16 +650,10 @@
     }
 
     /* ============================
-       FEED source (Apps Script doGet)
+       API PHP backend
     ============================ */
-    const FEED_ENDPOINT = "https://script.google.com/macros/s/AKfycbxWriEe6HfOTaXsquTJV54nfzkmKIkb_6dHAe7MnxxPgOasuoUF9c9bIYp8rHPutH7s/exec";
-    const FEED_TOKEN = "60b66cdf-3982-4e5c-9f51-z456f0da873b";
-
-    /* ============================
-       CERTs data source (Google Sheet CSV)
-    ============================ */
-    const CERTS_SHEET_ID = "13sUvNxAhj66Sa9nTIoVjXIF6AJIjjrgFaCHmwnmK51M";
-    const CERTS_CSV_URL = `https://docs.google.com/spreadsheets/d/${CERTS_SHEET_ID}/export?format=csv`;
+    const API_BASE = "/api";
+    const SESSION_CODE = _qp.get("session") || "";
 
     const MAX_LIMIT = 200;
     const DEFAULT_LINKS_LIMIT = MAX_LIMIT;
@@ -837,72 +831,46 @@
     }
 
     /* ============================
-       Load CERTs data from Google Sheet
+       Load CERTs data from API
     ============================ */
     async function loadCertsData(){
+      if (!SESSION_CODE) return;
       try{
-        const res = await fetch(CERTS_CSV_URL, { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load CERTs CSV");
+        const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to load CERTs");
 
-        const csv = await res.text();
-        const rows = parseCSV(csv);
-
-        const cleaned = rows
-          .map(r => (r || []).map(x => String(x ?? "").trim()))
-          .filter(r => r.some(v => v.length));
-
-        const firstRow = cleaned[0] || [];
-        const looksHeader =
-          /titre|title/i.test(firstRow[0] || "") ||
-          /url|lien|link/i.test(firstRow[1] || "");
-
-        const dataRows = looksHeader ? cleaned.slice(1) : cleaned;
+        const certs = await res.json();
 
         certsData.clear();
-        let idx = 0;
         let certsCount = 0;
 
-        for (const r of dataRows){
-          const title = r[0] || "";
-          const rawUrl = r[1] || "";
+        for (const cert of certs){
+          const title = cert.title || "";
+          const rawUrl = cert.url || "";
           const url = normalizeUrl(rawUrl);
           if (!url) continue;
 
-          idx++;
-          // ✅ MODIFIÉ: Utiliser hash de l'URL
+          const idx = (cert.position || 0) + 1;
           const linkId = urlToLinkId(url);
 
-          const expert = r[2] || "";
-          const certDate = r[3] || "";
-          const descriptor1 = r[4] || "";
-          const descriptor2 = r[5] || "";
-          const reliabilityRaw = (r[6] || "").toLowerCase();
-
-          // ✅ Traduire français → anglais
-          let reliability = "";
-          if (reliabilityRaw.includes("fiable") && !reliabilityRaw.includes("pas")) {
-            reliability = "good";
-          } else if (reliabilityRaw.includes("indéterminé") || reliabilityRaw.includes("indetermine")) {
-            reliability = "mid";
-          } else if (reliabilityRaw.includes("pas fiable") || reliabilityRaw.includes("pas_fiable")) {
-            reliability = "bad";
-          }
-
-          const threePhrases = r[7] || "";
-          const context = r[8] || "";
-          const content = r[9] || "";
-          const reliabilityText = r[10] || "";
-          const references = r[11] || "";
+          const descriptor1 = cert.descriptor1 || "";
+          const descriptor2 = cert.descriptor2 || "";
+          const reliability = cert.reliability || "";
+          const threePhrases = cert.three_phrases || "";
+          const context = cert.context || "";
+          const content = cert.content || "";
+          const reliabilityText = cert.reliability_text || "";
+          const references = cert.references_text || "";
 
           const hasCertsContent = descriptor1 || descriptor2 || threePhrases || context || content || reliabilityText || references;
 
-          // ✅ MODIFIÉ: Stocker TOUS les liens, même sans contenu enseignant
           certsData.set(url, {
             linkId,
             linkNumber: idx,
+            certId: cert.id,
             title,
-            expert,
-            certDate,
+            expert: cert.expert || "",
+            certDate: cert.cert_date || "",
             descriptor1,
             descriptor2,
             reliability,
@@ -911,21 +879,15 @@
             content,
             reliabilityText,
             references,
-            hasCertsContent  // ✅ Flag pour savoir s'il y a du contenu enseignant
+            hasCertsContent
           });
 
-          if (hasCertsContent) {
-            certsCount++;
-            console.log(`📝 CERTs stored: #${idx} "${title}" → ${linkId} → ${url}`);
-          } else {
-            console.log(`📄 Link stored: #${idx} "${title}" → ${linkId} (no teacher content)`);
-          }
+          if (hasCertsContent) certsCount++;
         }
 
-        console.log(`✅ CERTs data loaded: ${certsCount} links with teacher content, ${certsData.size} total links`);
-        console.log("📋 All URLs:", Array.from(certsData.keys()));
+        console.log(`CERTs loaded: ${certsCount} with content, ${certsData.size} total`);
       }catch(err){
-        console.error("❌ Failed to load CERTs data:", err);
+        console.error("Failed to load CERTs data:", err);
       }
     }
 
@@ -1392,58 +1354,65 @@
     async function loadFeed(){
       if (feedEl) feedEl.innerHTML = "";
 
-      const qs = new URLSearchParams({
-        token: FEED_TOKEN,
-        action: "feed",
-        limit: String(MAX_LIMIT)
-      });
+      if (!SESSION_CODE) return;
 
-      const url = `${FEED_ENDPOINT}?${qs.toString()}`;
+      const url = `${API_BASE}/student/feed.php?session=${encodeURIComponent(SESSION_CODE)}`;
       const payload = await fetchJsonLoose(url);
 
-      allRows = normalizeRows(payload);
+      allRows = Array.isArray(payload) ? payload : [];
       render(true);
     }
 
     async function loadAll(){
       if (feedEl) feedEl.innerHTML = "";
-      
-      // Charger CERTs d'abord (qui contient tous les liens avec leurs numéros)
-      await loadCertsData();
-      
-      // Ensuite charger le feed (résultats des élèves)
-      const qs = new URLSearchParams({
-        token: FEED_TOKEN,
-        action: "feed",
-        limit: String(MAX_LIMIT)
-      });
 
-      const url = `${FEED_ENDPOINT}?${qs.toString()}`;
-      const payload = await fetchJsonLoose(url);
-
-      const rawFeedRows = normalizeRows(payload);
-
-      // ✅ Normaliser les link_id de tous les rows élèves via urlToLinkId (hash FNV1a)
-      const feedRows = rawFeedRows.map(r => {
-        const rawUrl = String(r.link_url || "").trim();
-        const normUrl = rawUrl ? (normalizeUrl(rawUrl) || rawUrl) : "";
-        const normalizedLinkId = normUrl ? urlToLinkId(normUrl) : String(r.link_id || r.linkId || "").trim();
-        return { ...r, link_id: normalizedLinkId };
-      });
-
-      // ✅ Ajouter les liens avec contenu CERTs qui n'ont pas de résultats élèves
-      const feedUrls = new Set();
-      for (const row of feedRows) {
-        const url = String(row.link_url || "").trim();
-        if (url) feedUrls.add(normalizeUrl(url) || url);
+      if (!SESSION_CODE) {
+        if (feedEl) feedEl.innerHTML = `<div class="error-box">Code de séance manquant. Ajoutez <code>?session=CODE</code> dans l'URL.</div>`;
+        if (loadingEl) loadingEl.style.display = "none";
+        return;
       }
-      
-      // Créer des rows synthétiques UNIQUEMENT pour les liens avec contenu CERTs
+
+      // Load CERTs first
+      await loadCertsData();
+
+      // Load student feed
+      const feedUrl = `${API_BASE}/student/feed.php?session=${encodeURIComponent(SESSION_CODE)}`;
+      const rawFeedRows = await fetchJsonLoose(feedUrl);
+
+      // Map API response to expected row format
+      const feedRows = (Array.isArray(rawFeedRows) ? rawFeedRows : []).map(r => {
+        // Find cert URL from certsData by cert_id
+        let linkUrl = "";
+        let linkTitle = "";
+        let linkId = "";
+        for (const [url, cert] of certsData.entries()) {
+          if (cert.certId === r.cert_id || String(cert.certId) === String(r.cert_id)) {
+            linkUrl = url;
+            linkTitle = cert.title || "";
+            linkId = cert.linkId;
+            break;
+          }
+        }
+        if (!linkId && linkUrl) linkId = urlToLinkId(linkUrl);
+
+        return {
+          user_id: r.user_id || "",
+          link_id: linkId,
+          link_title: linkTitle,
+          link_url: linkUrl,
+          first_label: r.first_label || "",
+          last_label: r.last_label || "",
+          reliability: r.reliability || "",
+          comment: r.comment || ""
+        };
+      });
+
+      // Add synthetic rows for CERTs without student results
+      const feedCertIds = new Set(rawFeedRows.map(r => String(r.cert_id)));
       const syntheticRows = [];
-      
+
       for (const [url, cert] of certsData.entries()) {
-        // ✅ Ajouter uniquement si a du contenu CERTs ET pas de résultats élèves
-        if (cert.hasCertsContent && !feedUrls.has(url)) {
+        if (cert.hasCertsContent && !feedCertIds.has(String(cert.certId))) {
           syntheticRows.push({
             user_id: "",
             link_id: cert.linkId,
@@ -1453,16 +1422,12 @@
             last_label: "",
             reliability: "",
             comment: "",
-            is_synthetic: true  // ✅ Flag pour identifier les rows synthétiques
+            is_synthetic: true
           });
         }
       }
-      
+
       allRows = [...feedRows, ...syntheticRows];
-      
-      console.log(`📊 Feed: ${feedRows.length} avec résultats élèves + ${syntheticRows.length} avec contenu CERTs uniquement = ${allRows.length} total`);
-      
-      // Render avec les données CERTs déjà chargées
       render(true);
     }
 

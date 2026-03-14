@@ -2,15 +2,13 @@
    Collector client
    - pseudo auto (localStorage)
    - code de séance obligatoire
-   - POST vers Apps Script (sans preflight CORS)
+   - POST vers API PHP
    - max 2 entrées (contrôle serveur + affichage local)
 ============ */
 
 const STORAGE_KEY = "certify.collector.user.v1";
 
-/* ⚠️ mêmes valeurs que le feed */
-const COLLECTOR_ENDPOINT = "https://script.google.com/macros/s/AKfycbxWriEe6HfOTaXsquTJV54nfzkmKIkb_6dHAe7MnxxPgOasuoUF9c9bIYp8rHPutH7s/exec";
-const COLLECTOR_TOKEN = "60b66cdf-3982-4e5c-9f51-z456f0da873b";
+const API_BASE = "/api/student";
 
 const MAX_PER_USER = 2;
 
@@ -86,7 +84,7 @@ function loadOrCreateUser(){
    Network
 ============ */
 
-async function fetchJsonLoose(url, opts){
+async function apiJson(url, opts){
   const res = await fetch(url, opts);
   const text = await res.text();
   if (!res.ok){
@@ -99,37 +97,30 @@ async function fetchJsonLoose(url, opts){
   }
 }
 
-function qs(params){
-  const sp = new URLSearchParams();
-  Object.entries(params || {}).forEach(([k,v]) => {
-    if (v !== undefined && v !== null) sp.set(k, String(v));
-  });
-  return sp.toString();
-}
-
 async function getCollectorStatus({ user_id, session_code }){
-  const url = `${COLLECTOR_ENDPOINT}?${qs({
-    action: "collectorStatus",
-    token: COLLECTOR_TOKEN,
-    user_id,
-    session_code
-  })}`;
-  return fetchJsonLoose(url, { cache: "no-store" });
+  const url = `${API_BASE}/status.php?session=${encodeURIComponent(session_code)}&user=${encodeURIComponent(user_id)}`;
+  const data = await apiJson(url, { cache: "no-store" });
+  // Adapter la réponse au format attendu par l'UI
+  return {
+    ok: true,
+    enabled: data.collector_open,
+    remaining: data.remaining_collect ?? MAX_PER_USER,
+    session_ok: true
+  };
 }
 
-/* ✅ FIX CORS ICI : POST sans Content-Type */
 async function postCollect({ user_id, url, comment, session_code }){
-  return fetchJsonLoose(COLLECTOR_ENDPOINT, {
+  const data = await apiJson(`${API_BASE}/collect.php`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      action: "collect",
-      token: COLLECTOR_TOKEN,
+      session_code,
       user_id,
       url,
-      comment,
-      session_code
+      comment
     })
   });
+  return data;
 }
 
 /* ============
@@ -197,29 +188,36 @@ export function initCollector(){
     setStatus("Vérification…");
 
     const session_code = String(codeEl?.value || "").trim();
-    const payload = await getCollectorStatus({ user_id: user.user_id, session_code });
 
-    if (!payload?.ok){
+    try{
+      const payload = await getCollectorStatus({ user_id: user.user_id, session_code });
+
+      if (!payload?.ok){
+        setStatus("");
+        setMsg(`Erreur: ${escapeHtml(payload?.error || "status_failed")}`, "err");
+        setEnabledUI(false);
+        return;
+      }
+
+      setEnabledUI(payload.enabled);
+
+      if (!payload.enabled){
+        setRemaining(0);
+        setMsg("Collector fermé (le professeur l'a désactivé).", "err");
+        return;
+      }
+
+      if (payload.session_ok === false){
+        setMsg("Code de séance incorrect.", "err");
+      }
+
+      setRemaining(payload.remaining ?? MAX_PER_USER);
       setStatus("");
-      setMsg(`Erreur: ${escapeHtml(payload?.error || "status_failed")}`, "err");
+    }catch(err){
+      setStatus("");
+      setMsg(escapeHtml(err.message), "err");
       setEnabledUI(false);
-      return;
     }
-
-    setEnabledUI(payload.enabled);
-
-    if (!payload.enabled){
-      setRemaining(0);
-      setMsg("Collector fermé (le professeur l’a désactivé).", "err");
-      return;
-    }
-
-    if (payload.session_ok === false){
-      setMsg("Code de séance incorrect.", "err");
-    }
-
-    setRemaining(payload.remaining ?? MAX_PER_USER);
-    setStatus("");
   }
 
   refreshBtn?.addEventListener("click", refreshStatus);
@@ -242,13 +240,13 @@ export function initCollector(){
     try{
       const res = await postCollect({ user_id: user.user_id, url, comment, session_code });
 
-      if (!res?.ok){
+      if (res?.error){
         submitBtn.disabled = false;
-        return setMsg(`Erreur: ${escapeHtml(res?.error || "collect_failed")}`, "err");
+        return setMsg(`Erreur: ${escapeHtml(res.error)}`, "err");
       }
 
       setRemaining(res.remaining);
-      setMsg("✅ Merci ! Ton lien a été enregistré.", "ok");
+      setMsg("Merci ! Ton lien a été enregistré.", "ok");
       urlEl.value = "";
       commentEl.value = "";
     }catch(err){
