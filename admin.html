@@ -427,8 +427,8 @@
               </svg>
             </div>
             <div class="console-link-body">
-              <div class="console-link-name">Depot de CERTs</div>
-              <div class="console-link-desc">Consulter et utiliser les certifications</div>
+              <div class="console-link-name">Dépôt de CERTs</div>
+              <div class="console-link-desc">Consulter et utiliser des certifications.</div>
             </div>
             <span class="console-link-arrow">&rarr;</span>
           </a>
@@ -595,8 +595,10 @@
                 <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}">Liens</a>
                 <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}&admin=1">Liens (admin)</a>
                 <a href="/descripteurs/pages/feed.html?session=${enc(s.code)}">Feed</a>
+                <a href="#" onclick="openFeed2('${esc(s.code)}'); return false;">Feed 2 fenêtres</a>
                 <a href="/descripteurs/pages/progress.html?session=${enc(s.code)}">Scores</a>
                 <a href="/collector.html?code=${enc(s.code)}">Collector</a>
+                <a href="#" onclick="deleteSession(${s.id}, '${esc(s.code)}', '${esc(s.name)}'); return false;" style="color:#b91c1c;border-color:rgba(239,68,68,.25);">Supprimer</a>
               </div>
               <div id="certs-panel-${s.id}" style="display:none; margin-top:12px;"></div>
             </div>
@@ -743,6 +745,70 @@
         });
       } catch (err) {
         panel.innerHTML = `<div style='color:#b91c1c;font-size:.85rem;'>Erreur: ${esc(err.message)}</div>`;
+      }
+    }
+
+    // Delete session
+    async function deleteSession(sessionId, code, name) {
+      if (!confirm(`Supprimer la séance « ${name} » (${code}) ?\n\nToutes les données associées (CERTs assignés, réponses élèves, liens collectés) seront définitivement supprimées.`)) return;
+
+      const token = getToken();
+      try {
+        const res = await fetch(`${API}/sessions/delete.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+        const result = await res.json();
+        if (result.error) {
+          alert("Erreur : " + result.error);
+        } else {
+          loadSessions();
+        }
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    }
+
+    // Feed 2 fenêtres
+    const FEED2_MAIN_NAME = "feed2_main";
+    const FEED2_SIDE_NAME = "feed2_sidecar";
+    const FEED2_SIDE_W    = 520;
+
+    function openFeed2(sessionCode) {
+      const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      if (isMobile) {
+        alert("Cette fonction n'est accessible que depuis un ordinateur desktop.");
+        return;
+      }
+
+      const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
+      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+      const X = window.screen?.availLeft ?? 0;
+      const Y = window.screen?.availTop  ?? 0;
+
+      const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
+      const gap   = 10;
+      const mainW = W - sideW - gap;
+      const sideLeft = X + W - sideW;
+
+      const sc = encodeURIComponent(sessionCode);
+
+      const main = window.open(
+        `/descripteurs/pages/liens.html?session=${sc}`, FEED2_MAIN_NAME,
+        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
+      try { main.focus(); } catch {}
+
+      const side = window.open(
+        `/descripteurs/pages/feed.html?session=${sc}&mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
+        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side) {
+        try { main.close(); } catch {}
+        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
+        return;
       }
     }
 

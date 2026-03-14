@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
   <meta name="copyright" content="&copy; 2026 Certify Community SA. Tous droits r&eacute;serv&eacute;s." />
-  <title>Depot de CERTs</title>
+  <title>Dépôt de CERTs</title>
 
   <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
 
@@ -246,9 +246,9 @@
 
   <main>
     <section id="depotContent">
-      <h1>Depot de CERTs</h1>
+      <h1>Dépôt de CERTs</h1>
       <p class="page-lead">
-        Toutes les certifications deposees par les enseignants. Selectionnez une seance pour y ajouter des CERTs.
+        Toutes les certifications déposées par les enseignants. Sélectionnez une séance pour y ajouter des CERTs.
       </p>
 
       <!-- Session selector -->
@@ -256,7 +256,7 @@
         <input type="search" id="searchInput" placeholder="Rechercher par titre, descripteur..." />
 
         <select id="filterReliability">
-          <option value="">Toutes fiabilites</option>
+          <option value="">Fiabilité</option>
           <option value="good">Fiable</option>
           <option value="mid">Indetermine</option>
           <option value="bad">Pas fiable</option>
@@ -383,7 +383,7 @@
                 ${c.descriptor2 ? `<span class="depot-tag desc-tag">${esc(c.descriptor2)}</span>` : ""}
                 <span class="depot-tag ${REL_CLASS[c.reliability] || ""}">${esc(REL_LABEL[c.reliability] || c.reliability)}</span>
                 <span class="depot-tag teacher-tag">${esc(c.teacher_name)}</span>
-                ${c.is_mine ? '<span class="depot-tag mine-tag">Mon CERT</span>' : ""}
+                ${c.is_mine ? '<span class="depot-tag mine-tag">Ma CERT</span>' : ""}
               </div>
               <div class="depot-detail">
                 ${c.three_phrases ? `<p><strong>3 phrases :</strong> ${esc(c.three_phrases)}</p>` : ""}
