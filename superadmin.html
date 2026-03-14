@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Superadmin — toutcuit.ch</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f3f9;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .login-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .login-logo {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .login-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 1rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .error-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    /* Console */
+    #consoleContent { display: none; }
+
+    .console-header {
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .console-header-logo {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .console-header-sep { color: var(--border); font-size: 1.2rem; }
+
+    .console-header-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .console-header-spacer { flex: 1; }
+
+    .console-header-logout {
+      font-size: 0.82rem;
+      color: var(--accent);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-weight: 600;
+    }
+
+    .console-main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .console-group-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .tool-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(16,24,40,.05);
+    }
+
+    .tool-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .tool-card .field { margin-bottom: 12px; }
+
+    .success-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #166534;
+      background: rgba(34,197,94,.08);
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+    }
+
+    /* Teachers list */
+    .teachers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .teacher-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.88rem;
+    }
+
+    .teacher-row-name {
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .teacher-row-email {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .teacher-row-date {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="login-page" id="loginPage">
+    <div class="login-card">
+      <div class="login-logo">toutcuit</div>
+      <div class="login-title">Superadmin</div>
+
+      <form id="loginForm">
+        <div class="field" style="margin-bottom:12px;">
+          <label for="pwInput">Mot de passe</label>
+          <input type="password" id="pwInput" placeholder="Mot de passe superadmin" autofocus required>
+        </div>
+        <div id="loginError" class="error-msg" style="margin-top:10px;">Mot de passe incorrect.</div>
+        <div style="margin-top:14px;">
+          <button class="btn-primary" type="submit">Accéder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Console -->
+  <div id="consoleContent">
+    <header class="console-header">
+      <span class="console-header-logo">toutcuit</span>
+      <span class="console-header-sep">/</span>
+      <span class="console-header-title">Superadmin</span>
+      <span class="console-header-spacer"></span>
+      <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
+    </header>
+
+    <main class="console-main">
+
+      <!-- Create teacher -->
+      <div>
+        <div class="console-group-title">Créer un compte enseignant</div>
+        <div class="tool-card">
+          <div id="createSuccess" class="success-msg"></div>
+          <div id="createError" class="error-msg"></div>
+
+          <form id="createForm">
+            <div class="field">
+              <label for="teacherName">Nom</label>
+              <input type="text" id="teacherName" placeholder="Prénom Nom" required>
+            </div>
+            <div class="field">
+              <label for="teacherEmail">Email</label>
+              <input type="email" id="teacherEmail" placeholder="enseignant@ecole.ch" required>
+            </div>
+            <div class="field">
+              <label for="teacherPassword">Mot de passe initial</label>
+              <input type="text" id="teacherPassword" placeholder="Min. 6 caractères" required>
+            </div>
+            <div style="margin-top:14px;">
+              <button class="btn-primary" type="submit">Créer le compte</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Teachers list -->
+      <div>
+        <div class="console-group-title">Enseignants inscrits</div>
+        <div class="tool-card">
+          <div id="teachersList" class="teachers-list">
+            <div style="color:var(--muted);font-size:.85rem;">Chargement...</div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const API = "/api";
+    const SA_KEY = "tc_superadmin";
+    const PASSWORD = "certify2026!";
+
+    const loginPage = document.getElementById("loginPage");
+    const consoleContent = document.getElementById("consoleContent");
+    const loginForm = document.getElementById("loginForm");
+    const loginError = document.getElementById("loginError");
+    const pwInput = document.getElementById("pwInput");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const createForm = document.getElementById("createForm");
+    const createSuccess = document.getElementById("createSuccess");
+    const createError = document.getElementById("createError");
+    const teachersList = document.getElementById("teachersList");
+
+    function unlock() {
+      loginPage.style.display = "none";
+      consoleContent.style.display = "block";
+      loadTeachers();
+    }
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (pwInput.value === PASSWORD) {
+        sessionStorage.setItem(SA_KEY, "true");
+        unlock();
+      } else {
+        loginError.style.display = "block";
+        pwInput.value = "";
+        pwInput.focus();
+      }
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      sessionStorage.removeItem(SA_KEY);
+      location.reload();
+    });
+
+    if (sessionStorage.getItem(SA_KEY) === "true") unlock();
+
+    // Create teacher account
+    createForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      createSuccess.style.display = "none";
+      createError.style.display = "none";
+
+      const name = document.getElementById("teacherName").value.trim();
+      const email = document.getElementById("teacherEmail").value.trim();
+      const password = document.getElementById("teacherPassword").value;
+
+      if (password.length < 6) {
+        createError.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
+        createError.style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/auth/register.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          createError.textContent = data.error;
+          createError.style.display = "block";
+        } else {
+          createSuccess.textContent = `Compte créé pour ${name} (${email}).`;
+          createSuccess.style.display = "block";
+          createForm.reset();
+          loadTeachers();
+        }
+      } catch (err) {
+        createError.textContent = "Erreur réseau : " + err.message;
+        createError.style.display = "block";
+      }
+    });
+
+    // Load teachers
+    async function loadTeachers() {
+      try {
+        const res = await fetch(`${API}/admin/teachers.php`);
+        const teachers = await res.json();
+
+        if (!Array.isArray(teachers) || !teachers.length) {
+          teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucun enseignant inscrit.</div>';
+          return;
+        }
+
+        teachersList.innerHTML = teachers.map(t => `
+          <div class="teacher-row">
+            <span class="teacher-row-name">${esc(t.name)}</span>
+            <span class="teacher-row-email">${esc(t.email)}</span>
+            <span class="teacher-row-date">${esc(t.created_at?.substring(0, 10) || "")}</span>
+          </div>
+        `).join("");
+      } catch {
+        teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
+      }
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+  </script>
+</body>
+</html>

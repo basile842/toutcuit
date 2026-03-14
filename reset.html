@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Nouveau mot de passe — toutcuit.ch</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 1rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .error-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .success-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #166534;
+      background: rgba(34,197,94,.08);
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .back-link {
+      font-size: 0.82rem;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .back-link a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .back-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">toutcuit</div>
+    <div class="title">Nouveau mot de passe</div>
+
+    <form id="resetForm">
+      <div class="field" style="margin-bottom:12px;">
+        <label for="pw1">Nouveau mot de passe</label>
+        <input type="password" id="pw1" placeholder="Min. 6 caractères" required autofocus>
+      </div>
+      <div class="field">
+        <label for="pw2">Confirmer le mot de passe</label>
+        <input type="password" id="pw2" placeholder="Répéter le mot de passe" required>
+      </div>
+
+      <div id="errorMsg" class="error-msg" style="margin-top:10px;"></div>
+      <div id="successMsg" class="success-msg" style="margin-top:10px;"></div>
+
+      <div style="margin-top:14px;">
+        <button class="btn-primary" type="submit" id="submitBtn">Changer le mot de passe</button>
+      </div>
+    </form>
+
+    <div class="back-link"><a href="/admin.html">Retour à la connexion</a></div>
+  </div>
+
+  <script>
+    const API = "/api";
+    const params = new URLSearchParams(location.search);
+    const TOKEN = params.get("token") || "";
+
+    const resetForm = document.getElementById("resetForm");
+    const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg");
+    const submitBtn = document.getElementById("submitBtn");
+
+    if (!TOKEN) {
+      errorMsg.textContent = "Lien invalide. Veuillez refaire une demande depuis la page de connexion.";
+      errorMsg.style.display = "block";
+      submitBtn.disabled = true;
+    }
+
+    resetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = "none";
+      successMsg.style.display = "none";
+
+      const pw1 = document.getElementById("pw1").value;
+      const pw2 = document.getElementById("pw2").value;
+
+      if (pw1.length < 6) {
+        errorMsg.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      if (pw1 !== pw2) {
+        errorMsg.textContent = "Les mots de passe ne correspondent pas.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/auth/reset.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: TOKEN, password: pw1 })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          errorMsg.textContent = data.error;
+          errorMsg.style.display = "block";
+        } else {
+          successMsg.textContent = "Mot de passe mis à jour. Vous pouvez vous connecter.";
+          successMsg.style.display = "block";
+          submitBtn.disabled = true;
+          resetForm.querySelectorAll("input").forEach(i => i.disabled = true);
+        }
+      } catch (err) {
+        errorMsg.textContent = "Erreur réseau : " + err.message;
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

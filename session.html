@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="copyright" content="&copy; 2026 Certify Community SA. Tous droits r&eacute;serv&eacute;s." />
+  <title>Séance — toutcuit.ch</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f3f9;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .console-header {
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .console-header-logo {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .console-header-sep {
+      color: var(--border);
+      font-size: 1.2rem;
+    }
+
+    .console-header-link {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .console-header-link:hover {
+      color: var(--accent);
+    }
+
+    .console-header-spacer { flex: 1; }
+
+    .console-main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .session-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .session-info-school {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .session-info-name {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .session-info-code {
+      font-family: monospace;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--accent);
+      background: rgba(111,92,247,.08);
+      padding: 2px 10px;
+      border-radius: 6px;
+    }
+
+    .console-group-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .console-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .console-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(16,24,40,.05);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+      cursor: pointer;
+    }
+
+    .console-link:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(111,92,247,.12);
+      transform: translateY(-1px);
+    }
+
+    .console-link-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .console-link-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .console-link-body {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .console-link-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .console-link-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .console-link-arrow {
+      color: var(--border);
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+
+    .console-link:hover .console-link-arrow {
+      color: var(--accent);
+    }
+
+    .danger-zone {
+      margin-top: 12px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .danger-link {
+      border-color: rgba(239,68,68,.25);
+    }
+
+    .danger-link .console-link-name {
+      color: #b91c1c;
+    }
+
+    .danger-link .console-link-icon {
+      background: rgba(239,68,68,.08);
+      border-color: rgba(239,68,68,.25);
+    }
+
+    .danger-link:hover {
+      border-color: rgba(239,68,68,.5);
+      box-shadow: 0 4px 16px rgba(239,68,68,.1);
+    }
+
+    .danger-link:hover .console-link-arrow {
+      color: #b91c1c;
+    }
+
+    /* CERTs panel */
+    .certs-panel {
+      display: none;
+      margin-top: 12px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .btn-secondary {
+      padding: 9px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); }
+
+    @media (max-width: 500px) {
+      .console-link-desc { display: none; }
+      .session-info { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="console-header">
+    <span class="console-header-logo">toutcuit</span>
+    <span class="console-header-sep">/</span>
+    <a href="/admin.html" class="console-header-link">Console</a>
+    <span class="console-header-spacer"></span>
+  </header>
+
+  <main class="console-main" id="sessionContent" style="display:none;">
+
+    <!-- Session info -->
+    <div>
+      <div class="session-info-school" id="schoolName"></div>
+      <div class="session-info">
+        <span class="session-info-name" id="sessionName"></span>
+        <span class="session-info-code" id="sessionCode"></span>
+      </div>
+    </div>
+
+    <!-- Outils -->
+    <div>
+      <div class="console-group-title">Outils de la séance</div>
+      <div class="console-links">
+
+        <a href="#" class="console-link" id="certsLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">CERTs</div>
+            <div class="console-link-desc">Sélectionner les certifications pour cette séance</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <div class="certs-panel" id="certsPanel"></div>
+
+        <a href="#" class="console-link" id="liensLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Liens</div>
+            <div class="console-link-desc">Voir les liens de la séance</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <a href="#" class="console-link" id="liensAdminLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              <circle cx="18" cy="18" r="4" fill="var(--panel-2)" stroke="currentColor"/>
+              <path d="M18 16.5v3M16.5 18h3"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Liens (admin)</div>
+            <div class="console-link-desc">Gérer les liens avec les droits admin</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <a href="#" class="console-link" id="feedLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Feed</div>
+            <div class="console-link-desc">Flux des résultats</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <a href="#" class="console-link" id="feed2Link">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="9" height="14" rx="1"/><rect x="13" y="3" width="9" height="14" rx="1"/>
+              <line x1="6.5" y1="19" x2="6.5" y2="21"/><line x1="17.5" y1="19" x2="17.5" y2="21"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Feed 2 fenêtres</div>
+            <div class="console-link-desc">Liens à gauche, feed à droite</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <a href="#" class="console-link" id="scoresLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Scores</div>
+            <div class="console-link-desc">Résultats des élèves</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <a href="#" class="console-link" id="collectorLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Collector</div>
+            <div class="console-link-desc">Collecte de liens par les élèves</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+      </div>
+
+      <!-- Danger zone -->
+      <div class="danger-zone">
+        <div class="console-links">
+          <a href="#" class="console-link danger-link" id="deleteLink">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Supprimer cette séance</div>
+              <div class="console-link-desc">Supprime la séance et toutes ses données</div>
+            </div>
+            <span class="console-link-arrow">&rarr;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const API = "/api";
+    const params = new URLSearchParams(location.search);
+    const SESSION_ID = params.get("id");
+    const SESSION_CODE = params.get("code") || "";
+
+    function getToken() { return localStorage.getItem("tc_token"); }
+    function getTeacher() {
+      try { return JSON.parse(localStorage.getItem("tc_teacher")); } catch { return null; }
+    }
+
+    const token = getToken();
+    if (!token) { window.location.href = "/admin.html"; }
+
+    function esc(s) {
+      return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function enc(s) { return encodeURIComponent(s); }
+
+    // Load session info
+    async function init() {
+      try {
+        const res = await fetch(`${API}/sessions/list.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const sessions = await res.json();
+        const s = (Array.isArray(sessions) ? sessions : []).find(
+          x => String(x.id) === SESSION_ID || x.code === SESSION_CODE
+        );
+
+        if (!s) {
+          alert("Séance introuvable.");
+          window.location.href = "/admin.html";
+          return;
+        }
+
+        // Fill info
+        document.getElementById("schoolName").textContent = s.school_name || "";
+        document.getElementById("sessionName").textContent = s.name;
+        document.getElementById("sessionCode").textContent = s.code;
+        document.title = `${s.name} — toutcuit.ch`;
+
+        const sc = enc(s.code);
+
+        // Set links
+        document.getElementById("liensLink").href = `/descripteurs/pages/liens.html?session=${sc}`;
+        document.getElementById("liensAdminLink").href = `/descripteurs/pages/liens.html?session=${sc}&admin=1`;
+        document.getElementById("feedLink").href = `/descripteurs/pages/feed.html?session=${sc}`;
+        document.getElementById("scoresLink").href = `/descripteurs/pages/progress.html?session=${sc}`;
+        document.getElementById("collectorLink").href = `/collector.html?code=${sc}`;
+
+        // CERTs toggle
+        document.getElementById("certsLink").addEventListener("click", (e) => {
+          e.preventDefault();
+          manageCerts(s.id, s.code);
+        });
+
+        // Feed 2 fenêtres
+        document.getElementById("feed2Link").addEventListener("click", (e) => {
+          e.preventDefault();
+          openFeed2(s.code);
+        });
+
+        // Delete
+        document.getElementById("deleteLink").addEventListener("click", (e) => {
+          e.preventDefault();
+          deleteSession(s.id, s.code, s.name);
+        });
+
+        document.getElementById("sessionContent").style.display = "flex";
+      } catch (err) {
+        alert("Erreur : " + err.message);
+        window.location.href = "/admin.html";
+      }
+    }
+
+    // CERTs management
+    async function manageCerts(sessionId, sessionCode) {
+      const panel = document.getElementById("certsPanel");
+
+      if (panel.style.display === "block") {
+        panel.style.display = "none";
+        return;
+      }
+
+      panel.style.display = "block";
+      panel.innerHTML = "<div style='color:var(--muted);font-size:.85rem;'>Chargement...</div>";
+
+      try {
+        const [certsRes, assignedRes] = await Promise.all([
+          fetch(`${API}/certs/list.php`, { headers: { "Authorization": `Bearer ${token}` } }),
+          fetch(`${API}/sessions/certs.php?session=${encodeURIComponent(sessionCode)}`)
+        ]);
+
+        const allCerts = await certsRes.json();
+        const assignedCerts = await assignedRes.json();
+        const assignedIds = new Set((Array.isArray(assignedCerts) ? assignedCerts : []).map(c => c.id));
+
+        if (!Array.isArray(allCerts) || !allCerts.length) {
+          panel.innerHTML = "<div style='color:var(--muted);font-size:.85rem;'>Aucun CERT disponible. Ajoutez-en via la page CERTs.</div>";
+          return;
+        }
+
+        const REL = { good: "Fiable", mid: "Indéterminé", bad: "Non fiable" };
+
+        panel.innerHTML = `
+          <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;">
+            Sélectionnez les CERTs pour cette séance :
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${allCerts.map(c => `
+              <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
+                <input type="checkbox" value="${c.id}" ${assignedIds.has(c.id) ? "checked" : ""} class="cert-check">
+                <span style="flex:1;font-weight:600;">${esc(c.title)}</span>
+                <span style="font-size:.75rem;color:var(--muted);">${esc(REL[c.reliability] || c.reliability)}</span>
+                ${c.is_mine ? "" : '<span style="font-size:.7rem;color:var(--accent);font-weight:700;">partagé</span>'}
+              </label>
+            `).join("")}
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn-secondary" id="saveCertsBtn">Enregistrer</button>
+          </div>
+        `;
+
+        document.getElementById("saveCertsBtn")?.addEventListener("click", async () => {
+          const checked = [...panel.querySelectorAll(".cert-check:checked")].map(cb => parseInt(cb.value));
+          try {
+            const res = await fetch(`${API}/sessions/certs.php`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ session_id: sessionId, certs: checked })
+            });
+            const result = await res.json();
+            if (result.error) {
+              alert("Erreur : " + result.error);
+            } else {
+              alert(`${result.count} CERT(s) associé(s) à la séance.`);
+              panel.style.display = "none";
+            }
+          } catch (err) {
+            alert("Erreur : " + err.message);
+          }
+        });
+      } catch (err) {
+        panel.innerHTML = `<div style='color:#b91c1c;font-size:.85rem;'>Erreur: ${esc(err.message)}</div>`;
+      }
+    }
+
+    // Feed 2 fenêtres
+    const FEED2_MAIN_NAME = "feed2_main";
+    const FEED2_SIDE_NAME = "feed2_sidecar";
+    const FEED2_SIDE_W    = 520;
+
+    function openFeed2(sessionCode) {
+      const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      if (isMobile) {
+        alert("Cette fonction n'est accessible que depuis un ordinateur desktop.");
+        return;
+      }
+
+      const W = Math.max(800, window.screen?.availWidth  || window.innerWidth  || 1200);
+      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+      const X = window.screen?.availLeft ?? 0;
+      const Y = window.screen?.availTop  ?? 0;
+
+      const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
+      const gap   = 10;
+      const mainW = W - sideW - gap;
+      const sideLeft = X + W - sideW;
+
+      const sc = encodeURIComponent(sessionCode);
+
+      const main = window.open(
+        `/descripteurs/pages/liens.html?session=${sc}`, FEED2_MAIN_NAME,
+        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
+      try { main.focus(); } catch {}
+
+      const side = window.open(
+        `/descripteurs/pages/feed.html?session=${sc}&mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
+        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side) {
+        try { main.close(); } catch {}
+        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
+        return;
+      }
+    }
+
+    // Delete session
+    async function deleteSession(sessionId, code, name) {
+      if (!confirm(`Supprimer la séance « ${name} » (${code}) ?\n\nToutes les données associées (CERTs assignés, réponses élèves, liens collectés) seront définitivement supprimées.`)) return;
+
+      try {
+        const res = await fetch(`${API}/sessions/delete.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+        const result = await res.json();
+        if (result.error) {
+          alert("Erreur : " + result.error);
+        } else {
+          window.location.href = "/admin.html";
+        }
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

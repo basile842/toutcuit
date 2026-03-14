@@ -136,6 +136,16 @@
       padding: 8px 12px;
     }
 
+    .success-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #166534;
+      background: rgba(34,197,94,.08);
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
     .toggle-link {
       font-size: 0.82rem;
       color: var(--accent);
@@ -286,23 +296,40 @@
     }
 
     .session-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px;
+      padding: 14px 16px;
       margin-bottom: 10px;
+      text-decoration: none;
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(16,24,40,.05);
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+    }
+
+    .session-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(111,92,247,.12);
+      transform: translateY(-1px);
+    }
+
+    .session-card-body {
+      flex: 1;
+      min-width: 0;
     }
 
     .session-card-header {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 8px;
     }
 
     .session-code {
       font-family: monospace;
-      font-size: 1.1rem;
+      font-size: 0.82rem;
       font-weight: 800;
       color: var(--accent);
       background: rgba(111,92,247,.08);
@@ -320,25 +347,15 @@
       color: var(--muted);
     }
 
-    .session-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
+    .session-card-arrow {
+      color: var(--border);
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: color .15s;
     }
 
-    .session-actions a {
-      font-size: 0.82rem;
-      font-weight: 600;
+    .session-card:hover .session-card-arrow {
       color: var(--accent);
-      text-decoration: none;
-      padding: 4px 10px;
-      border: 1px solid rgba(111,92,247,.25);
-      border-radius: 6px;
-    }
-
-    .session-actions a:hover {
-      background: rgba(111,92,247,.08);
     }
 
     .empty-msg {
@@ -354,17 +371,14 @@
 </head>
 <body>
 
-  <!-- ── Login / Register ── -->
+  <!-- ── Login ── -->
   <div class="login-page" id="loginPage">
     <div class="login-card">
       <div class="login-logo">toutcuit</div>
-      <div class="login-title" id="formTitle">Connexion enseignant</div>
+      <div class="login-title">Connexion enseignant</div>
 
+      <!-- Login form -->
       <form id="loginForm">
-        <div class="field" id="nameField" style="display:none; margin-bottom:12px;">
-          <label for="nameInput">Nom</label>
-          <input type="text" id="nameInput" placeholder="Votre nom">
-        </div>
         <div class="field" style="margin-bottom:12px;">
           <label for="emailInput">Email</label>
           <input type="email" id="emailInput" placeholder="votre@email.ch" autofocus required>
@@ -375,11 +389,24 @@
         </div>
         <div id="loginError" class="error-msg" style="margin-top:10px;"></div>
         <div style="margin-top:14px;">
-          <button class="btn-primary" type="submit" id="submitBtn">Se connecter</button>
+          <button class="btn-primary" type="submit">Se connecter</button>
         </div>
       </form>
 
-      <div class="toggle-link" id="toggleMode">Pas encore de compte ? S'inscrire</div>
+      <!-- Reset password form (hidden by default) -->
+      <form id="resetForm" style="display:none;">
+        <div class="field">
+          <label for="resetEmail">Email</label>
+          <input type="email" id="resetEmail" placeholder="votre@email.ch" required>
+        </div>
+        <div id="resetError" class="error-msg" style="margin-top:10px;"></div>
+        <div id="resetSuccess" class="success-msg" style="margin-top:10px;display:none;"></div>
+        <div style="margin-top:14px;">
+          <button class="btn-primary" type="submit">Envoyer le lien</button>
+        </div>
+      </form>
+
+      <div class="toggle-link" id="toggleMode">Mot de passe oublié ? Réinitialiser</div>
     </div>
   </div>
 
@@ -475,16 +502,15 @@
     const loginError = document.getElementById("loginError");
     const emailInput = document.getElementById("emailInput");
     const pwInput = document.getElementById("pwInput");
-    const nameInput = document.getElementById("nameInput");
-    const nameField = document.getElementById("nameField");
-    const formTitle = document.getElementById("formTitle");
-    const submitBtn = document.getElementById("submitBtn");
     const toggleMode = document.getElementById("toggleMode");
+    const resetForm = document.getElementById("resetForm");
+    const resetError = document.getElementById("resetError");
+    const resetSuccess = document.getElementById("resetSuccess");
     const userNameEl = document.getElementById("userName");
     const logoutBtn = document.getElementById("logoutBtn");
     const sessionsList = document.getElementById("sessionsList");
 
-    let isRegister = false;
+    let isResetMode = false;
 
     function getToken() { return localStorage.getItem("tc_token"); }
     function getTeacher() {
@@ -500,17 +526,18 @@
       loginError.style.display = "none";
     }
 
-    // Toggle login / register
+    // Toggle login / reset
     toggleMode.addEventListener("click", () => {
-      isRegister = !isRegister;
-      nameField.style.display = isRegister ? "block" : "none";
-      formTitle.textContent = isRegister ? "Inscription enseignant" : "Connexion enseignant";
-      submitBtn.textContent = isRegister ? "S'inscrire" : "Se connecter";
-      toggleMode.textContent = isRegister ? "Déjà un compte ? Se connecter" : "Pas encore de compte ? S'inscrire";
+      isResetMode = !isResetMode;
+      loginForm.style.display = isResetMode ? "none" : "block";
+      resetForm.style.display = isResetMode ? "block" : "none";
+      toggleMode.textContent = isResetMode ? "Retour à la connexion" : "Mot de passe oublié ? Réinitialiser";
       hideError();
+      resetError.style.display = "none";
+      resetSuccess.style.display = "none";
     });
 
-    // Login / Register form
+    // Login form
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       hideError();
@@ -518,41 +545,49 @@
       const email = emailInput.value.trim();
       const password = pwInput.value;
 
-      if (isRegister) {
-        const name = nameInput.value.trim();
-        if (!name) return showError("Le nom est requis.");
+      try {
+        const res = await fetch(`${API}/auth/login.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error) return showError(data.error);
 
-        try {
-          const res = await fetch(`${API}/auth/register.php`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, name })
-          });
-          const data = await res.json();
-          if (data.error) return showError(data.error);
+        localStorage.setItem("tc_token", data.token);
+        localStorage.setItem("tc_teacher", JSON.stringify(data.teacher));
+        unlock(data.teacher);
+      } catch (err) {
+        showError("Erreur réseau : " + err.message);
+      }
+    });
 
-          localStorage.setItem("tc_token", data.token);
-          localStorage.setItem("tc_teacher", JSON.stringify(data.teacher));
-          unlock(data.teacher);
-        } catch (err) {
-          showError("Erreur réseau : " + err.message);
+    // Password reset form
+    resetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resetError.style.display = "none";
+      resetSuccess.style.display = "none";
+
+      const email = document.getElementById("resetEmail").value.trim();
+
+      try {
+        const res = await fetch(`${API}/auth/reset-request.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          resetError.textContent = data.error;
+          resetError.style.display = "block";
+        } else {
+          resetSuccess.textContent = data.message;
+          resetSuccess.style.display = "block";
         }
-      } else {
-        try {
-          const res = await fetch(`${API}/auth/login.php`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-          });
-          const data = await res.json();
-          if (data.error) return showError(data.error);
-
-          localStorage.setItem("tc_token", data.token);
-          localStorage.setItem("tc_teacher", JSON.stringify(data.teacher));
-          unlock(data.teacher);
-        } catch (err) {
-          showError("Erreur réseau : " + err.message);
-        }
+      } catch (err) {
+        resetError.textContent = "Erreur réseau : " + err.message;
+        resetError.style.display = "block";
       }
     });
 
@@ -584,24 +619,16 @@
           sessionsList.innerHTML = `<div class="empty-msg">Aucune séance. Créez-en une ci-dessous.</div>`;
         } else {
           sessionsList.innerHTML = sessions.map(s => `
-            <div class="session-card">
-              <div class="session-card-header">
-                <span class="session-code">${esc(s.code)}</span>
-                <span class="session-name">${esc(s.name)}</span>
-                <span class="session-school">${esc(s.school_name || "")}</span>
+            <a href="/session.html?id=${s.id}&code=${enc(s.code)}" class="session-card">
+              <div class="session-card-body">
+                <div class="session-school">${esc(s.school_name || "")}</div>
+                <div class="session-card-header">
+                  <span class="session-name">${esc(s.name)}</span>
+                  <span class="session-code">${esc(s.code)}</span>
+                </div>
               </div>
-              <div class="session-actions">
-                <a href="#" onclick="manageCerts(${s.id}, '${esc(s.code)}'); return false;">CERTs</a>
-                <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}">Liens</a>
-                <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}&admin=1">Liens (admin)</a>
-                <a href="/descripteurs/pages/feed.html?session=${enc(s.code)}">Feed</a>
-                <a href="#" onclick="openFeed2('${esc(s.code)}'); return false;">Feed 2 fenêtres</a>
-                <a href="/descripteurs/pages/progress.html?session=${enc(s.code)}">Scores</a>
-                <a href="/collector.html?code=${enc(s.code)}">Collector</a>
-                <a href="#" onclick="deleteSession(${s.id}, '${esc(s.code)}', '${esc(s.name)}'); return false;" style="color:#b91c1c;border-color:rgba(239,68,68,.25);">Supprimer</a>
-              </div>
-              <div id="certs-panel-${s.id}" style="display:none; margin-top:12px;"></div>
-            </div>
+              <span class="session-card-arrow">&rarr;</span>
+            </a>
           `).join("");
         }
 
