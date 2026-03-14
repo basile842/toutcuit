@@ -2,10 +2,176 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="refresh" content="0;url=/descripteurs/pages/liens.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
   <meta name="copyright" content="© 2026 Certify Community SA. Tous droits réservés." />
-  <title>Toutcuit</title>
+  <title>Entrer — toutcuit.ch</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      font-family: monospace;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input[type="text"]::placeholder {
+      font-weight: 500;
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      letter-spacing: 0;
+      font-size: 1rem;
+      color: var(--muted);
+      text-transform: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+
+    .error-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
 </head>
-<body></body>
+<body>
+  <div class="card">
+    <div class="logo">toutcuit</div>
+    <div class="subtitle">Entre le code donné par ton professeur</div>
+
+    <form id="codeForm">
+      <input type="text" id="codeInput" placeholder="Code de séance" maxlength="10" autofocus required autocomplete="off">
+      <div id="errorMsg" class="error-msg"></div>
+      <button class="btn" type="submit">Entrer</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("codeForm");
+    const input = document.getElementById("codeInput");
+    const errorMsg = document.getElementById("errorMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = "none";
+
+      const code = input.value.trim().toUpperCase();
+      if (!code) return;
+
+      // Verify session exists
+      try {
+        const res = await fetch(`/api/student/status.php?session=${encodeURIComponent(code)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          errorMsg.textContent = "Code de séance introuvable.";
+          errorMsg.style.display = "block";
+          input.select();
+          return;
+        }
+
+        // Session exists — redirect to liens.html
+        window.location.href = `/descripteurs/pages/liens.html?session=${encodeURIComponent(code)}`;
+      } catch {
+        errorMsg.textContent = "Erreur de connexion. Réessaye.";
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+</body>
 </html>
