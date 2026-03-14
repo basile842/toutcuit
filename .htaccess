@@ -1,4 +1,4 @@
-SetEnv PHP_VER 4
+SetEnv PHP_VER 8_2
 
 RewriteEngine On
 
@@ -9,6 +9,7 @@ RewriteRule ^(.*)$ https://toutcuit.ch/$1 [R=301,L]
 # Permet d'accéder aux fichiers HTML sans l'extension .html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.php$ [NC]
 RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^(.+)$ $1.html [L]
 
