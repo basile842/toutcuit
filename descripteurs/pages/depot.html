@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="copyright" content="&copy; 2026 Certify Community SA. Tous droits r&eacute;serv&eacute;s." />
+  <title>Depot de CERTs</title>
+
+  <link rel="stylesheet" href="/descripteurs/assets/css/main.css" />
+
+  <style>
+    .page-lead {
+      margin: 8px 0 14px 0;
+      color: var(--muted);
+      max-width: 900px;
+    }
+
+    /* Toolbar */
+    .depot-toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .depot-toolbar input[type="search"] {
+      flex: 1 1 220px;
+      min-width: 180px;
+    }
+
+    .depot-toolbar select {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.95);
+      color: var(--text);
+      outline: none;
+      font-size: .88rem;
+    }
+
+    .depot-toolbar select:focus {
+      border-color: rgba(111,92,247,.45);
+      box-shadow: var(--ring);
+    }
+
+    /* Grid */
+    .depot-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .depot-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(16,24,40,.05);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .depot-card:hover {
+      border-color: rgba(111,92,247,.3);
+      box-shadow: 0 4px 16px rgba(111,92,247,.08);
+    }
+
+    .depot-card.is-selected {
+      border-color: var(--accent);
+      background: rgba(111,92,247,.04);
+    }
+
+    .depot-check {
+      margin-top: 3px;
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      display: none;
+    }
+
+    .depot-card.show-check .depot-check {
+      display: block;
+    }
+
+    .depot-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .depot-title {
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .depot-title a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .depot-title a:hover {
+      color: var(--accent);
+    }
+
+    .depot-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .depot-tag {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: .75rem;
+    }
+
+    .depot-tag.rel-good {
+      background: var(--rel-good-bg);
+      border: 1px solid var(--rel-good-border);
+      color: #166534;
+    }
+
+    .depot-tag.rel-mid {
+      background: var(--rel-mid-bg);
+      border: 1px solid var(--rel-mid-border);
+      color: #9a3412;
+    }
+
+    .depot-tag.rel-bad {
+      background: var(--rel-bad-bg);
+      border: 1px solid var(--rel-bad-border);
+      color: #991b1b;
+    }
+
+    .depot-tag.desc-tag {
+      background: rgba(111,92,247,.08);
+      border: 1px solid rgba(111,92,247,.2);
+      color: var(--text);
+    }
+
+    .depot-tag.teacher-tag {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .depot-tag.mine-tag {
+      background: rgba(111,92,247,.12);
+      border: 1px solid rgba(111,92,247,.3);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .depot-detail {
+      margin-top: 8px;
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.45;
+      display: none;
+    }
+
+    .depot-card.is-expanded .depot-detail {
+      display: block;
+    }
+
+    .depot-toggle {
+      flex-shrink: 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: .82rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .depot-toggle:hover {
+      background: rgba(111,92,247,.08);
+      color: var(--accent);
+    }
+
+    /* Session bar */
+    .session-bar {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(111,92,247,.1);
+    }
+
+    .session-bar.is-active {
+      display: flex;
+    }
+
+    .session-bar-info {
+      flex: 1;
+      font-size: .88rem;
+      font-weight: 600;
+    }
+
+    .session-bar-count {
+      font-size: .82rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .empty-msg {
+      color: var(--muted);
+      font-size: .88rem;
+      padding: 28px 14px;
+      text-align: center;
+    }
+
+    .depot-count {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    #depotContent { display: none; }
+
+    @media (max-width: 500px) {
+      .depot-meta span:not(.depot-tag) { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav></nav>
+  </header>
+
+  <main>
+    <section id="depotContent">
+      <h1>Depot de CERTs</h1>
+      <p class="page-lead">
+        Toutes les certifications deposees par les enseignants. Selectionnez une seance pour y ajouter des CERTs.
+      </p>
+
+      <!-- Session selector -->
+      <div class="depot-toolbar">
+        <input type="search" id="searchInput" placeholder="Rechercher par titre, descripteur..." />
+
+        <select id="filterReliability">
+          <option value="">Toutes fiabilites</option>
+          <option value="good">Fiable</option>
+          <option value="mid">Indetermine</option>
+          <option value="bad">Pas fiable</option>
+        </select>
+
+        <select id="sessionSelect">
+          <option value="">-- Associer a une seance --</option>
+        </select>
+      </div>
+
+      <!-- Session action bar -->
+      <div class="session-bar" id="sessionBar">
+        <div class="session-bar-info">
+          Seance : <span id="sessionBarName"></span>
+        </div>
+        <div class="session-bar-count" id="sessionBarCount">0 selectionne(s)</div>
+        <button class="btn" id="saveSessionBtn">Enregistrer</button>
+      </div>
+
+      <div class="depot-count" id="depotCount"></div>
+      <div class="depot-grid" id="depotGrid"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderNav } from "/descripteurs/assets/js/nav.js";
+    renderNav(location.pathname);
+
+    const API = "/api";
+    const token = localStorage.getItem("tc_token");
+    if (!token) {
+      window.location.href = "/admin.html";
+    }
+
+    const depotContent = document.getElementById("depotContent");
+    const searchInput = document.getElementById("searchInput");
+    const filterReliability = document.getElementById("filterReliability");
+    const sessionSelect = document.getElementById("sessionSelect");
+    const sessionBar = document.getElementById("sessionBar");
+    const sessionBarName = document.getElementById("sessionBarName");
+    const sessionBarCount = document.getElementById("sessionBarCount");
+    const saveSessionBtn = document.getElementById("saveSessionBtn");
+    const depotGrid = document.getElementById("depotGrid");
+    const depotCount = document.getElementById("depotCount");
+
+    const REL_LABEL = { good: "Fiable", mid: "Indetermine", bad: "Pas fiable" };
+    const REL_CLASS = { good: "rel-good", mid: "rel-mid", bad: "rel-bad" };
+
+    let allCerts = [];
+    let sessions = [];
+    let assignedIds = new Set();
+    let activeSessionId = null;
+    let activeSessionCode = null;
+
+    function esc(s) {
+      return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    // Load data
+    async function init() {
+      try {
+        const [certsRes, sessionsRes] = await Promise.all([
+          fetch(`${API}/certs/depot.php`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/sessions/list.php`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+
+        allCerts = await certsRes.json();
+        sessions = await sessionsRes.json();
+
+        if (!Array.isArray(allCerts)) allCerts = [];
+        if (!Array.isArray(sessions)) sessions = [];
+
+        // Populate session dropdown
+        sessions.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.dataset.code = s.code;
+          opt.textContent = `${s.code} — ${s.name}`;
+          sessionSelect.appendChild(opt);
+        });
+
+        depotContent.style.display = "block";
+        render();
+      } catch (err) {
+        depotContent.style.display = "block";
+        depotGrid.innerHTML = `<div class="empty-msg">Erreur : ${esc(err.message)}</div>`;
+      }
+    }
+
+    // Filter + render
+    function render() {
+      const query = searchInput.value.toLowerCase().trim();
+      const relFilter = filterReliability.value;
+
+      const filtered = allCerts.filter(c => {
+        if (relFilter && c.reliability !== relFilter) return false;
+        if (query) {
+          const haystack = [c.title, c.descriptor1, c.descriptor2, c.teacher_name, c.expert]
+            .filter(Boolean).join(" ").toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+        return true;
+      });
+
+      depotCount.textContent = `${filtered.length} certification${filtered.length !== 1 ? "s" : ""} sur ${allCerts.length}`;
+
+      if (!filtered.length) {
+        depotGrid.innerHTML = `<div class="empty-msg">Aucune certification trouvee.</div>`;
+        return;
+      }
+
+      depotGrid.innerHTML = filtered.map(c => {
+        const checked = assignedIds.has(c.id);
+        const showCheck = activeSessionId !== null;
+        return `
+          <div class="depot-card ${showCheck ? "show-check" : ""} ${checked ? "is-selected" : ""}" data-id="${c.id}">
+            <input type="checkbox" class="depot-check" value="${c.id}" ${checked ? "checked" : ""} />
+            <div class="depot-body">
+              <div class="depot-title">
+                <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a>
+              </div>
+              <div class="depot-meta">
+                ${c.descriptor1 ? `<span class="depot-tag desc-tag">${esc(c.descriptor1)}</span>` : ""}
+                ${c.descriptor2 ? `<span class="depot-tag desc-tag">${esc(c.descriptor2)}</span>` : ""}
+                <span class="depot-tag ${REL_CLASS[c.reliability] || ""}">${esc(REL_LABEL[c.reliability] || c.reliability)}</span>
+                <span class="depot-tag teacher-tag">${esc(c.teacher_name)}</span>
+                ${c.is_mine ? '<span class="depot-tag mine-tag">Mon CERT</span>' : ""}
+              </div>
+              <div class="depot-detail">
+                ${c.three_phrases ? `<p><strong>3 phrases :</strong> ${esc(c.three_phrases)}</p>` : ""}
+                ${c.context ? `<p><strong>Contexte :</strong> ${esc(c.context)}</p>` : ""}
+                ${c.expert ? `<p><strong>Expert :</strong> ${esc(c.expert)}</p>` : ""}
+                ${c.cert_date ? `<p><strong>Date :</strong> ${esc(c.cert_date)}</p>` : ""}
+              </div>
+            </div>
+            <button class="depot-toggle" title="Details">&#9662;</button>
+          </div>
+        `;
+      }).join("");
+
+      // Attach events
+      depotGrid.querySelectorAll(".depot-toggle").forEach(btn => {
+        btn.addEventListener("click", () => {
+          btn.closest(".depot-card").classList.toggle("is-expanded");
+          btn.textContent = btn.closest(".depot-card").classList.contains("is-expanded") ? "\u25B4" : "\u25BE";
+        });
+      });
+
+      depotGrid.querySelectorAll(".depot-check").forEach(cb => {
+        cb.addEventListener("change", () => {
+          const id = parseInt(cb.value);
+          const card = cb.closest(".depot-card");
+          if (cb.checked) {
+            assignedIds.add(id);
+            card.classList.add("is-selected");
+          } else {
+            assignedIds.delete(id);
+            card.classList.remove("is-selected");
+          }
+          updateSessionCount();
+        });
+      });
+    }
+
+    function updateSessionCount() {
+      sessionBarCount.textContent = `${assignedIds.size} selectionne(s)`;
+    }
+
+    // Session change
+    sessionSelect.addEventListener("change", async () => {
+      const opt = sessionSelect.selectedOptions[0];
+      activeSessionId = sessionSelect.value ? parseInt(sessionSelect.value) : null;
+      activeSessionCode = opt?.dataset.code || null;
+
+      if (activeSessionId) {
+        sessionBarName.textContent = opt.textContent;
+        sessionBar.classList.add("is-active");
+
+        // Load assigned CERTs for this session
+        try {
+          const res = await fetch(`${API}/sessions/certs.php?session=${encodeURIComponent(activeSessionCode)}`);
+          const assigned = await res.json();
+          assignedIds = new Set((Array.isArray(assigned) ? assigned : []).map(c => c.id));
+        } catch {
+          assignedIds = new Set();
+        }
+        updateSessionCount();
+      } else {
+        sessionBar.classList.remove("is-active");
+        assignedIds = new Set();
+        activeSessionId = null;
+        activeSessionCode = null;
+      }
+
+      render();
+    });
+
+    // Save
+    saveSessionBtn.addEventListener("click", async () => {
+      if (!activeSessionId) return;
+
+      try {
+        const res = await fetch(`${API}/sessions/certs.php`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            session_id: activeSessionId,
+            certs: [...assignedIds]
+          })
+        });
+
+        const result = await res.json();
+        if (result.error) {
+          alert("Erreur : " + result.error);
+        } else {
+          alert(`${result.count} CERT(s) associe(s) a la seance.`);
+        }
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    });
+
+    // Filters
+    searchInput.addEventListener("input", render);
+    filterReliability.addEventListener("change", render);
+
+    init();
+  </script>
+</body>
+</html>

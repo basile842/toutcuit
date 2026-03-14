@@ -1,0 +1,27 @@
+<?php
+// GET — All CERTs from all teachers (browsable depot)
+require_once __DIR__ . '/../middleware.php';
+handleCors();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    jsonError('Method not allowed', 405);
+}
+
+$teacherId = getTeacherId();
+$db = getDB();
+
+$stmt = $db->prepare('
+    SELECT c.*, t.name AS teacher_name
+    FROM certs c
+    JOIN teachers t ON t.id = c.teacher_id
+    ORDER BY c.created_at DESC
+');
+$stmt->execute();
+
+$certs = $stmt->fetchAll();
+
+foreach ($certs as &$cert) {
+    $cert['is_mine'] = ((int) $cert['teacher_id'] === $teacherId);
+}
+
+jsonResponse($certs);
