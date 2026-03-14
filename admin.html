@@ -578,12 +578,14 @@
                 <span class="session-school">${esc(s.school_name || "")}</span>
               </div>
               <div class="session-actions">
+                <a href="#" onclick="manageCerts(${s.id}, '${esc(s.code)}'); return false;">CERTs</a>
                 <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}">Liens</a>
                 <a href="/descripteurs/pages/liens.html?session=${enc(s.code)}&admin=1">Liens (admin)</a>
                 <a href="/descripteurs/pages/feed.html?session=${enc(s.code)}">Feed</a>
                 <a href="/descripteurs/pages/progress.html?session=${enc(s.code)}">Scores</a>
                 <a href="/collector.html?code=${enc(s.code)}">Collector</a>
               </div>
+              <div id="certs-panel-${s.id}" style="display:none; margin-top:12px;"></div>
             </div>
           `).join("");
         }
@@ -652,6 +654,84 @@
       return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
     function enc(s) { return encodeURIComponent(s); }
+
+    // Manage CERTs for a session
+    async function manageCerts(sessionId, sessionCode) {
+      const panel = document.getElementById(`certs-panel-${sessionId}`);
+      if (!panel) return;
+
+      // Toggle visibility
+      if (panel.style.display !== "none") {
+        panel.style.display = "none";
+        return;
+      }
+
+      panel.style.display = "block";
+      panel.innerHTML = "<div style='color:var(--muted);font-size:.85rem;'>Chargement...</div>";
+
+      const token = getToken();
+
+      try {
+        // Load all my CERTs + shared
+        const certsRes = await fetch(`${API}/certs/list.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const allCerts = await certsRes.json();
+
+        // Load currently assigned CERTs
+        const assignedRes = await fetch(`${API}/sessions/certs.php?session=${encodeURIComponent(sessionCode)}`);
+        const assignedCerts = await assignedRes.json();
+        const assignedIds = new Set((Array.isArray(assignedCerts) ? assignedCerts : []).map(c => c.id));
+
+        if (!Array.isArray(allCerts) || !allCerts.length) {
+          panel.innerHTML = "<div style='color:var(--muted);font-size:.85rem;'>Aucun CERT disponible. Ajoutez-en via la page CERTs.</div>";
+          return;
+        }
+
+        const REL = { good: "Fiable", mid: "Indéterminé", bad: "Non fiable" };
+
+        panel.innerHTML = `
+          <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;">
+            Sélectionnez les CERTs pour cette séance :
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${allCerts.map(c => `
+              <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
+                <input type="checkbox" value="${c.id}" ${assignedIds.has(c.id) ? "checked" : ""} class="cert-check-${sessionId}">
+                <span style="flex:1;font-weight:600;">${esc(c.title)}</span>
+                <span style="font-size:.75rem;color:var(--muted);">${esc(REL[c.reliability] || c.reliability)}</span>
+                ${c.is_mine ? "" : '<span style="font-size:.7rem;color:var(--accent);font-weight:700;">partagé</span>'}
+              </label>
+            `).join("")}
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn-secondary" id="saveCerts-${sessionId}">Enregistrer</button>
+          </div>
+        `;
+
+        document.getElementById(`saveCerts-${sessionId}`)?.addEventListener("click", async () => {
+          const checked = [...panel.querySelectorAll(`.cert-check-${sessionId}:checked`)].map(cb => parseInt(cb.value));
+          try {
+            const res = await fetch(`${API}/sessions/certs.php`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ session_id: sessionId, certs: checked })
+            });
+            const result = await res.json();
+            if (result.error) {
+              alert("Erreur : " + result.error);
+            } else {
+              alert(`${result.count} CERT(s) associé(s) à la séance.`);
+              panel.style.display = "none";
+            }
+          } catch (err) {
+            alert("Erreur : " + err.message);
+          }
+        });
+      } catch (err) {
+        panel.innerHTML = `<div style='color:#b91c1c;font-size:.85rem;'>Erreur: ${esc(err.message)}</div>`;
+      }
+    }
 
     // Auto-login if token exists
     const existingToken = getToken();
