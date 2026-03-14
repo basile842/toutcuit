@@ -370,11 +370,24 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Collector</div>
+            <div class="console-link-name">Collector <span id="collectorStatus" style="font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:6px;"></span></div>
             <div class="console-link-desc">Collecte de liens par les élèves</div>
           </div>
           <span class="console-link-arrow">&rarr;</span>
         </a>
+
+        <div id="collectorToggle" class="console-link" style="cursor:pointer;">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="5" width="22" height="14" rx="7"/>
+              <circle id="toggleCircle" cx="8" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name" id="collectorToggleLabel">Ouvrir le Collector</div>
+            <div class="console-link-desc">Autoriser les élèves à soumettre des liens</div>
+          </div>
+        </div>
 
       </div>
 
@@ -418,6 +431,32 @@
     }
     function enc(s) { return encodeURIComponent(s); }
 
+    function updateCollectorUI(isOpen) {
+      const status = document.getElementById("collectorStatus");
+      const label = document.getElementById("collectorToggleLabel");
+      const circle = document.getElementById("toggleCircle");
+
+      if (isOpen) {
+        status.textContent = "ouvert";
+        status.style.background = "rgba(34,197,94,.15)";
+        status.style.color = "#166534";
+        status.style.border = "1px solid rgba(34,197,94,.35)";
+        label.textContent = "Fermer le Collector";
+        circle.setAttribute("cx", "16");
+        circle.closest("svg").querySelector("rect").setAttribute("stroke", "#22c55e");
+        circle.setAttribute("fill", "#22c55e");
+      } else {
+        status.textContent = "fermé";
+        status.style.background = "rgba(239,68,68,.1)";
+        status.style.color = "#b91c1c";
+        status.style.border = "1px solid rgba(239,68,68,.25)";
+        label.textContent = "Ouvrir le Collector";
+        circle.setAttribute("cx", "8");
+        circle.closest("svg").querySelector("rect").setAttribute("stroke", "currentColor");
+        circle.setAttribute("fill", "none");
+      }
+    }
+
     // Load session info
     async function init() {
       try {
@@ -449,6 +488,27 @@
         document.getElementById("feedLink").href = `/descripteurs/pages/feed.html?session=${sc}`;
         document.getElementById("scoresLink").href = `/descripteurs/pages/progress.html?session=${sc}`;
         document.getElementById("collectorLink").href = `/collector.html?code=${sc}`;
+
+        // Collector status
+        let collectorOpen = !!(s.collector_open);
+        updateCollectorUI(collectorOpen);
+
+        document.getElementById("collectorToggle").addEventListener("click", async () => {
+          const newState = !collectorOpen;
+          try {
+            const res = await fetch(`${API}/sessions/update.php`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ session_id: s.id, collector_open: newState ? 1 : 0 })
+            });
+            const result = await res.json();
+            if (result.error) return alert("Erreur : " + result.error);
+            collectorOpen = newState;
+            updateCollectorUI(collectorOpen);
+          } catch (err) {
+            alert("Erreur : " + err.message);
+          }
+        });
 
         // CERTs toggle
         document.getElementById("certsLink").addEventListener("click", (e) => {
