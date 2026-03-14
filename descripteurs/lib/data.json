@@ -46,8 +46,8 @@
       ]
     },
     "L1A_Choice_111": {
-      "choice": "Vulgarisation",
-      "choiceShort": "Vulgarisation",
+      "choice": "Vulgarisation scientifique",
+      "choiceShort": "Vulgarisation scientifique",
       "stepTitle": "Communiquer la science au grand public",
       "children": []
     },
@@ -145,8 +145,8 @@
       "children": []
     },
     "L1B_Choice_12": {
-      "choice": "Vulgarisation",
-      "choiceShort": "Vulgarisation",
+      "choice": "Vulgarisation scientifique",
+      "choiceShort": "Vulgarisation scientifique",
       "stepTitle": "Communiquer la science au grand public",
       "children": []
     },
