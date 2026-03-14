@@ -621,8 +621,8 @@
           sessionsList.innerHTML = sessions.map(s => `
             <a href="/session.html?id=${s.id}&code=${enc(s.code)}" class="session-card">
               <div class="session-card-body">
-                <div class="session-school">${esc(s.school_name || "")}</div>
                 <div class="session-card-header">
+                  <span class="session-school">${esc(s.school_name || "")}</span>
                   <span class="session-name">${esc(s.name)}</span>
                   <span class="session-code">${esc(s.code)}</span>
                 </div>
@@ -632,63 +632,67 @@
           `).join("");
         }
 
-        // Add "create session" button
+        // Add "create session" form
         sessionsList.innerHTML += `
-          <div style="margin-top:12px;">
+          <div id="newSessionForm" style="margin-top:12px;">
             <button class="btn-secondary" id="newSessionBtn">+ Nouvelle séance</button>
           </div>`;
 
-        document.getElementById("newSessionBtn")?.addEventListener("click", createSession);
+        document.getElementById("newSessionBtn")?.addEventListener("click", () => {
+          const form = document.getElementById("newSessionForm");
+          form.innerHTML = `
+            <div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:12px;">
+              <div style="font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Nouvelle séance</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:.85rem;font-weight:600;color:var(--muted);">Nom de l'école</label>
+                <input type="text" id="newSchoolName" placeholder="Ex: Collège Voltaire" style="padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:1rem;background:var(--bg);color:var(--text);outline:none;" required>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:.85rem;font-weight:600;color:var(--muted);">Nom de la séance</label>
+                <input type="text" id="newSessionName" placeholder="Ex: Séance 1 — Introduction" style="padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:1rem;background:var(--bg);color:var(--text);outline:none;" required>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-secondary" id="submitNewSession" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;">Créer</button>
+                <button class="btn-secondary" id="cancelNewSession">Annuler</button>
+              </div>
+            </div>
+          `;
+
+          document.getElementById("cancelNewSession").addEventListener("click", () => loadSessions());
+
+          document.getElementById("submitNewSession").addEventListener("click", async () => {
+            const schoolName = document.getElementById("newSchoolName").value.trim();
+            const sessionName = document.getElementById("newSessionName").value.trim();
+            if (!schoolName || !sessionName) return alert("Les deux champs sont requis.");
+
+            const token = getToken();
+            try {
+              // Create or find school
+              const schoolRes = await fetch(\`\${API}/schools/save.php\`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${token}\` },
+                body: JSON.stringify({ name: schoolName })
+              });
+              const school = await schoolRes.json();
+              if (school.error) return alert("Erreur école : " + school.error);
+
+              // Create session
+              const sessRes = await fetch(\`\${API}/sessions/create.php\`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${token}\` },
+                body: JSON.stringify({ name: sessionName, school_id: school.id })
+              });
+              const session = await sessRes.json();
+              if (session.error) return alert(session.error);
+              alert(\`Séance créée ! Code : \${session.code}\`);
+              loadSessions();
+            } catch (err) {
+              alert("Erreur : " + err.message);
+            }
+          });
+        });
       } catch (err) {
         sessionsList.innerHTML = `<div class="empty-msg">Erreur: ${esc(err.message)}</div>`;
-      }
-    }
-
-    // Create session
-    async function createSession() {
-      const token = getToken();
-
-      // First, ensure we have a school
-      let schools;
-      try {
-        const res = await fetch(`${API}/schools/list.php`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        schools = await res.json();
-      } catch { schools = []; }
-
-      let schoolId;
-      if (Array.isArray(schools) && schools.length) {
-        schoolId = schools[0].id;
-      } else {
-        const schoolName = prompt("Nom de votre école :");
-        if (!schoolName) return;
-        try {
-          const res = await fetch(`${API}/schools/save.php`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify({ name: schoolName })
-          });
-          const school = await res.json();
-          schoolId = school.id;
-        } catch { return alert("Erreur lors de la création de l'école."); }
-      }
-
-      const sessionName = prompt("Nom de la séance :");
-      if (!sessionName) return;
-
-      try {
-        const res = await fetch(`${API}/sessions/create.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          body: JSON.stringify({ name: sessionName, school_id: schoolId })
-        });
-        const session = await res.json();
-        if (session.error) return alert(session.error);
-        alert(`Séance créée ! Code : ${session.code}`);
-        loadSessions();
-      } catch (err) {
-        alert("Erreur : " + err.message);
       }
     }
 
