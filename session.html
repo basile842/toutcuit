@@ -257,56 +257,15 @@
 
     .btn-secondary:hover { border-color: var(--accent); }
 
-    /* Collector switch */
-    .collector-switch {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
-    .collector-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute;
-    }
-
-    .collector-switch .track {
-      position: absolute;
-      inset: 0;
-      border-radius: 12px;
-      background: var(--border);
-      transition: background .2s;
-    }
-
-    .collector-switch input:checked + .track {
-      background: #22c55e;
-    }
-
-    .collector-switch .thumb {
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,.2);
-      transition: transform .2s;
-    }
-
-    .collector-switch input:checked ~ .thumb {
-      transform: translateX(20px);
-    }
-
+    /* Collector status badge */
     .collector-status {
-      font-size: .75rem;
+      font-size: .78rem;
       font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 6px;
-      margin-left: 6px;
+      padding: 4px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all .15s;
     }
 
     .collector-status.is-open {
@@ -315,10 +274,18 @@
       border: 1px solid rgba(34,197,94,.35);
     }
 
+    .collector-status.is-open:hover {
+      background: rgba(34,197,94,.25);
+    }
+
     .collector-status.is-closed {
       background: rgba(239,68,68,.1);
       color: #b91c1c;
       border: 1px solid rgba(239,68,68,.25);
+    }
+
+    .collector-status.is-closed:hover {
+      background: rgba(239,68,68,.18);
     }
 
     @media (max-width: 500px) {
@@ -442,7 +409,7 @@
           <span class="console-link-arrow">&rarr;</span>
         </a>
 
-        <a href="#" class="console-link" id="collectorLink">
+        <div class="console-link" id="collectorLink" style="cursor:pointer;">
           <div class="console-link-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -450,15 +417,11 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Collector <span class="collector-status" id="collectorStatus"></span></div>
+            <div class="console-link-name">Collector</div>
             <div class="console-link-desc">Collecte de liens par les élèves</div>
           </div>
-          <label class="collector-switch" id="collectorToggle" title="Ouvrir / fermer le Collector">
-            <input type="checkbox" id="collectorCheckbox">
-            <span class="track"></span>
-            <span class="thumb"></span>
-          </label>
-        </a>
+          <span class="collector-status" id="collectorStatus" title="Cliquer pour changer"></span>
+        </div>
 
       </div>
 
@@ -512,9 +475,6 @@
 
     function updateCollectorUI(isOpen) {
       const status = document.getElementById("collectorStatus");
-      const checkbox = document.getElementById("collectorCheckbox");
-
-      checkbox.checked = isOpen;
       status.textContent = isOpen ? "ouvert" : "fermé";
       status.className = "collector-status " + (isOpen ? "is-open" : "is-closed");
     }
@@ -555,20 +515,14 @@
         let collectorOpen = !!(s.collector_open);
         updateCollectorUI(collectorOpen);
 
-        // Prevent collector link navigation when clicking the switch
-        document.getElementById("collectorToggle").addEventListener("click", (e) => {
-          e.stopPropagation();
-        });
+        // Click on collector status badge to toggle
+        document.getElementById("collectorStatus").addEventListener("click", async () => {
+          const newState = !collectorOpen;
+          const msg = newState
+            ? "Ouvrir le Collector ?\n\nLes élèves pourront soumettre des liens."
+            : "Fermer le Collector ?\n\nLes élèves ne pourront plus soumettre de liens.";
+          if (!confirm(msg)) return;
 
-        // Prevent the <a> from navigating when clicking on the switch
-        document.getElementById("collectorLink").addEventListener("click", (e) => {
-          if (e.target.closest(".collector-switch")) {
-            e.preventDefault();
-          }
-        });
-
-        document.getElementById("collectorCheckbox").addEventListener("change", async (e) => {
-          const newState = e.target.checked;
           try {
             const res = await fetch(`${API}/sessions/update.php`, {
               method: "POST",
@@ -576,16 +530,11 @@
               body: JSON.stringify({ session_id: s.id, collector_open: newState ? 1 : 0 })
             });
             const result = await res.json();
-            if (result.error) {
-              alert("Erreur : " + result.error);
-              e.target.checked = !newState;
-              return;
-            }
+            if (result.error) return alert("Erreur : " + result.error);
             collectorOpen = newState;
             updateCollectorUI(collectorOpen);
           } catch (err) {
             alert("Erreur : " + err.message);
-            e.target.checked = !newState;
           }
         });
 

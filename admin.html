@@ -874,9 +874,8 @@
 
     // Auto-login if token exists
     const existingToken = getToken();
-    const existingTeacher = getTeacher();
-    if (existingToken && existingTeacher) {
-      unlock(existingTeacher);
+    if (existingToken) {
+      unlock(getTeacher() || {});
     }
   </script>
 </body>
