@@ -18,7 +18,17 @@ function requireAuth(): array {
 
 function getTeacherId(): int {
     $payload = requireAuth();
-    return (int) $payload['teacher_id'];
+    $teacherId = (int) $payload['teacher_id'];
+
+    // Verify teacher still exists in DB
+    $db = getDB();
+    $stmt = $db->prepare('SELECT id FROM teachers WHERE id = ?');
+    $stmt->execute([$teacherId]);
+    if (!$stmt->fetch()) {
+        jsonError('Compte supprimé. Veuillez vous reconnecter.', 401);
+    }
+
+    return $teacherId;
 }
 
 // Handle CORS preflight — called by .htaccess or at the top of endpoints
