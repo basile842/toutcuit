@@ -327,24 +327,40 @@
       gap: 12px;
     }
 
-    .session-code {
+    .session-name {
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .session-school {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .btn-copy-code {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 2px 8px;
       font-family: monospace;
       font-size: 0.82rem;
       font-weight: 800;
       color: var(--accent);
       background: rgba(111,92,247,.08);
-      padding: 2px 10px;
-      border-radius: 6px;
+      transition: all .15s;
+      position: relative;
     }
 
-    .session-name {
-      font-weight: 700;
-      font-size: 0.95rem;
+    .btn-copy-code:hover {
+      border-color: var(--accent);
+      background: rgba(111,92,247,.15);
     }
 
-    .session-school {
-      font-size: 0.82rem;
-      color: var(--muted);
+    .btn-copy-code.copied {
+      background: rgba(34,197,94,.12);
+      color: #166534;
+      border-color: rgba(34,197,94,.3);
     }
 
     .session-card-arrow {
@@ -423,12 +439,6 @@
 
     <main class="console-main">
 
-      <!-- Séances -->
-      <div>
-        <div class="console-group-title">Mes séances</div>
-        <div id="sessionsList"></div>
-      </div>
-
       <!-- Outils -->
       <div>
         <div class="console-group-title">Outils</div>
@@ -488,6 +498,12 @@
           </a>
 
         </div>
+      </div>
+
+      <!-- Séances -->
+      <div>
+        <div class="console-group-title">Mes séances</div>
+        <div id="sessionsList"></div>
       </div>
 
     </main>
@@ -615,16 +631,22 @@
         });
         const sessions = await res.json();
 
+        // Add "create session" button at the top
+        let html = `
+          <div id="newSessionForm" style="margin-bottom:12px;">
+            <button class="btn-secondary" id="newSessionBtn">+ Nouvelle séance</button>
+          </div>`;
+
         if (!Array.isArray(sessions) || !sessions.length) {
-          sessionsList.innerHTML = `<div class="empty-msg">Aucune séance. Créez-en une ci-dessous.</div>`;
+          html += `<div class="empty-msg">Aucune séance.</div>`;
         } else {
-          sessionsList.innerHTML = sessions.map(s => `
+          html += sessions.map(s => `
             <a href="/session.html?id=${s.id}&code=${enc(s.code)}" class="session-card">
               <div class="session-card-body">
                 <div class="session-card-header">
                   <span class="session-school">${esc(s.school_name || "")}</span>
                   <span class="session-name">${esc(s.name)}</span>
-                  <span class="session-code">${esc(s.code)}</span>
+                  <button class="btn-copy-code" onclick="copyCode(event, this, '${esc(s.code)}')" title="Copier le code">${esc(s.code)}</button>
                 </div>
               </div>
               <span class="session-card-arrow">&rarr;</span>
@@ -632,11 +654,7 @@
           `).join("");
         }
 
-        // Add "create session" form
-        sessionsList.innerHTML += `
-          <div id="newSessionForm" style="margin-top:12px;">
-            <button class="btn-secondary" id="newSessionBtn">+ Nouvelle séance</button>
-          </div>`;
+        sessionsList.innerHTML = html;
 
         document.getElementById("newSessionBtn")?.addEventListener("click", () => {
           const form = document.getElementById("newSessionForm");
@@ -694,6 +712,17 @@
       } catch (err) {
         sessionsList.innerHTML = `<div class="empty-msg">Erreur: ${esc(err.message)}</div>`;
       }
+    }
+
+    function copyCode(e, btn, code) {
+      e.preventDefault();
+      e.stopPropagation();
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = "Copié !";
+        btn.classList.add("copied");
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove("copied"); }, 1200);
+      });
     }
 
     function esc(s) {

@@ -30,6 +30,68 @@
       min-width: 180px;
     }
 
+    .search-box {
+      flex: 1 1 220px;
+      min-width: 180px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.95);
+      cursor: text;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .search-box:focus-within {
+      border-color: rgba(111,92,247,.45);
+      box-shadow: var(--ring);
+    }
+
+    .search-box input {
+      flex: 1 1 100px;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: .88rem;
+      color: var(--text);
+      padding: 4px 0;
+      min-width: 80px;
+    }
+
+    .search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px 3px 10px;
+      border-radius: 7px;
+      background: rgba(111,92,247,.1);
+      border: 1px solid rgba(111,92,247,.25);
+      color: var(--text);
+      font-size: .8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .search-chip button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: .85rem;
+      line-height: 1;
+      padding: 0 2px;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+
+    .search-chip button:hover {
+      color: #b91c1c;
+      background: rgba(239,68,68,.1);
+    }
+
     .depot-toolbar select {
       padding: 10px 12px;
       border-radius: 12px;
@@ -257,7 +319,9 @@
 
       <!-- Session selector -->
       <div class="depot-toolbar">
-        <input type="search" id="searchInput" placeholder="Rechercher par titre, descripteur..." />
+        <div class="search-box" id="searchBox">
+          <input type="text" id="searchInput" placeholder="Rechercher par titre, descripteur..." />
+        </div>
 
         <select id="filterReliability">
           <option value="">Fiabilité</option>
@@ -267,7 +331,7 @@
         </select>
 
         <select id="sessionSelect">
-          <option value="">-- Associer a une seance --</option>
+          <option value="">-- Associer à une séance --</option>
         </select>
       </div>
 
@@ -293,8 +357,11 @@
     }
 
     const depotContent = document.getElementById("depotContent");
+    const searchBox = document.getElementById("searchBox");
     const searchInput = document.getElementById("searchInput");
     const filterReliability = document.getElementById("filterReliability");
+
+    let searchTerms = [];
     const sessionSelect = document.getElementById("sessionSelect");
     const sessionBar = document.getElementById("sessionBar");
     const sessionBarName = document.getElementById("sessionBarName");
@@ -335,7 +402,7 @@
           const opt = document.createElement("option");
           opt.value = s.id;
           opt.dataset.code = s.code;
-          opt.textContent = `${s.code} — ${s.name}`;
+          opt.textContent = `${s.school_name || ""} — ${s.name} (${s.code})`;
           sessionSelect.appendChild(opt);
         });
 
@@ -349,15 +416,14 @@
 
     // Filter + render
     function render() {
-      const query = searchInput.value.toLowerCase().trim();
       const relFilter = filterReliability.value;
 
       const filtered = allCerts.filter(c => {
         if (relFilter && c.reliability !== relFilter) return false;
-        if (query) {
+        if (searchTerms.length) {
           const haystack = [c.title, c.descriptor1, c.descriptor2, c.teacher_name, c.expert]
             .filter(Boolean).join(" ").toLowerCase();
-          if (!haystack.includes(query)) return false;
+          if (!searchTerms.every(t => haystack.includes(t))) return false;
         }
         return true;
       });
@@ -483,8 +549,47 @@
       }
     });
 
+    // Search chips
+    function addSearchTerm(term) {
+      term = term.trim().toLowerCase();
+      if (!term || searchTerms.includes(term)) return;
+      searchTerms.push(term);
+      renderChips();
+      render();
+    }
+
+    function removeSearchTerm(term) {
+      searchTerms = searchTerms.filter(t => t !== term);
+      renderChips();
+      render();
+    }
+
+    function renderChips() {
+      searchBox.querySelectorAll(".search-chip").forEach(el => el.remove());
+      searchTerms.forEach(term => {
+        const chip = document.createElement("span");
+        chip.className = "search-chip";
+        chip.innerHTML = `${esc(term)}<button title="Supprimer">&times;</button>`;
+        chip.querySelector("button").addEventListener("click", () => removeSearchTerm(term));
+        searchBox.insertBefore(chip, searchInput);
+      });
+      searchInput.placeholder = searchTerms.length ? "Ajouter un critère..." : "Rechercher par titre, descripteur...";
+    }
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addSearchTerm(searchInput.value);
+        searchInput.value = "";
+      }
+      if (e.key === "Backspace" && !searchInput.value && searchTerms.length) {
+        removeSearchTerm(searchTerms[searchTerms.length - 1]);
+      }
+    });
+
+    searchBox.addEventListener("click", () => searchInput.focus());
+
     // Filters
-    searchInput.addEventListener("input", render);
     filterReliability.addEventListener("change", render);
 
     init();
