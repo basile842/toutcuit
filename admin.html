@@ -668,23 +668,23 @@
             const token = getToken();
             try {
               // Create or find school
-              const schoolRes = await fetch(\`\${API}/schools/save.php\`, {
+              const schoolRes = await fetch(`${API}/schools/save.php`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${token}\` },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ name: schoolName })
               });
               const school = await schoolRes.json();
               if (school.error) return alert("Erreur école : " + school.error);
 
               // Create session
-              const sessRes = await fetch(\`\${API}/sessions/create.php\`, {
+              const sessRes = await fetch(`${API}/sessions/create.php`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": \`Bearer \${token}\` },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ name: sessionName, school_id: school.id })
               });
               const session = await sessRes.json();
               if (session.error) return alert(session.error);
-              alert(\`Séance créée ! Code : \${session.code}\`);
+              alert(`Séance créée ! Code : ${session.code}`);
               loadSessions();
             } catch (err) {
               alert("Erreur : " + err.message);
