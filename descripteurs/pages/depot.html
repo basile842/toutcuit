@@ -561,16 +561,13 @@
                 ${c.is_mine ? '<span class="depot-tag mine-tag">Ma CERT</span>' : ""}
               </div>
               <div class="depot-detail">
-                ${c.url ? `<p><strong>URL :</strong> <a href="${esc(c.url)}" target="_blank" rel="noopener" style="color:var(--accent);word-break:break-all;">${esc(c.url)}</a></p>` : ""}
-                ${c.expert ? `<p><strong>Expert :</strong> ${esc(c.expert)}</p>` : ""}
-                ${c.cert_date ? `<p><strong>Date :</strong> ${esc(c.cert_date)}</p>` : ""}
-                ${c.descriptor1 ? `<p><strong>Descripteur 1 :</strong> ${esc(c.descriptor1)}</p>` : ""}
-                ${c.descriptor2 ? `<p><strong>Descripteur 2 :</strong> ${esc(c.descriptor2)}</p>` : ""}
-                ${c.three_phrases ? `<p><strong>3 phrases :</strong> ${esc(c.three_phrases)}</p>` : ""}
-                ${c.context ? `<p><strong>Contexte :</strong> ${esc(c.context)}</p>` : ""}
-                ${c.content ? `<p><strong>Contenu :</strong> ${esc(c.content)}</p>` : ""}
-                ${c.reliability_text ? `<p><strong>Fiabilité (explication) :</strong> ${esc(c.reliability_text)}</p>` : ""}
-                ${c.references_text ? `<p><strong>Références :</strong> ${esc(c.references_text)}</p>` : ""}
+                ${c.expert || c.cert_date ? `<p>${c.expert ? `<strong>${esc(c.expert)}</strong>` : ""}${c.expert && c.cert_date ? ` — ` : ""}${c.cert_date ? `${esc(c.cert_date)}` : ""}</p>` : ""}
+                ${c.url ? `<p><a href="${esc(c.url)}" target="_blank" rel="noopener" style="color:var(--accent);word-break:break-all;">${esc(c.url)}</a></p>` : ""}
+                ${c.three_phrases ? `<ul style="margin:6px 0;padding-left:18px;">${esc(c.three_phrases).split(/[\n;]+/).filter(s => s.trim()).map(s => `<li>${s.trim()}</li>`).join("")}</ul>` : ""}
+                ${c.context ? `<p>${esc(c.context)}</p>` : ""}
+                ${c.content ? `<p>${esc(c.content)}</p>` : ""}
+                ${c.reliability_text ? `<p>${esc(c.reliability_text)}</p>` : ""}
+                ${c.references_text ? `<p>${esc(c.references_text)}</p>` : ""}
                 ${c.is_mine ? `<div class="depot-actions">
                   <button onclick="editCert(${c.id})">Modifier</button>
                   <button class="btn-del" onclick="deleteCert(${c.id}, this)">Supprimer</button>

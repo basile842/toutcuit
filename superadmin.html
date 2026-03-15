@@ -364,6 +364,12 @@
       color: var(--muted);
     }
 
+    .cert-row-date {
+      color: var(--muted);
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
     .cert-desc-tag {
       font-size: 0.72rem;
       font-weight: 700;
@@ -808,6 +814,7 @@
             <span class="cert-row-title" title="${esc(c.title)}">${esc(c.title)}</span>
             ${c.descriptor1 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor1)}</span>` : ""}
             ${c.descriptor2 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor2)}</span>` : ""}
+            ${c.cert_date ? `<span class="cert-row-date">${esc(c.cert_date.substring(0, 10))}</span>` : ""}
             <span class="cert-row-teacher">${esc(c.teacher_name || "—")}</span>
             <button class="btn-edit" onclick="toggleCertEdit(${c.id})">Modifier</button>
             <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>

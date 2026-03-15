@@ -38,13 +38,16 @@ export function renderNav(activePath = "", options = {}) {
     links.push(["Liens", "/descripteurs/pages/liens.html"]);
   }
 
+  // Propagate query string (e.g. ?session=...) to nav links
+  const qs = window.location.search;
+
   // 🌐 Rendu HTML
   nav.innerHTML = links
     .map(([label, href]) => {
       const active = activePath.endsWith(href)
         ? "aria-current='page'"
         : "";
-      return `<a href="${href}" ${active}>${label}</a>`;
+      return `<a href="${href}${qs}" ${active}>${label}</a>`;
     })
     .join("");
 }

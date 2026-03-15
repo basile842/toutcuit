@@ -927,11 +927,14 @@
         let max = this.maxFontSize;
         const el = this.textEl;
         const box = this.container;
+        const cs = getComputedStyle(box);
+        const availW = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        const availH = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
 
         while (min <= max) {
           const mid = (min + max) >> 1;
           el.style.fontSize = mid + "px";
-          if (el.scrollWidth <= box.clientWidth && el.scrollHeight <= box.clientHeight) {
+          if (el.scrollWidth <= availW && el.scrollHeight <= availH) {
             min = mid + 1;
           } else {
             max = mid - 1;
