@@ -239,6 +239,98 @@
       color: var(--muted);
       font-size: 0.75rem;
     }
+
+    .btn-delete {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      transition: all .15s;
+    }
+
+    .btn-delete:hover {
+      color: #b91c1c;
+      border-color: rgba(239,68,68,.3);
+      background: rgba(239,68,68,.06);
+    }
+
+    .confirm-dialog {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(4px);
+    }
+
+    .confirm-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px 24px 20px;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .confirm-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .confirm-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+
+    .confirm-card .warn {
+      font-size: 0.82rem;
+      color: #92400e;
+      background: rgba(245,158,11,.08);
+      border: 1px solid rgba(245,158,11,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin: 10px 0 16px;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--panel);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 9px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn-danger:hover { background: #b91c1c; }
   </style>
 </head>
 <body>
@@ -276,7 +368,7 @@
 
       <!-- Create teacher -->
       <div>
-        <div class="console-group-title">Créer un compte enseignant</div>
+        <div class="console-group-title">Créer un compte enseignant-e</div>
         <div class="tool-card">
           <div id="createSuccess" class="success-msg"></div>
           <div id="createError" class="error-msg"></div>
@@ -288,7 +380,7 @@
             </div>
             <div class="field">
               <label for="teacherEmail">Email</label>
-              <input type="email" id="teacherEmail" placeholder="enseignant@ecole.ch" required>
+              <input type="email" id="teacherEmail" placeholder="enseignant-e@ecole.ch" required>
             </div>
             <div class="field">
               <label for="teacherPassword">Mot de passe initial</label>
@@ -303,8 +395,10 @@
 
       <!-- Teachers list -->
       <div>
-        <div class="console-group-title">Enseignants inscrits</div>
+        <div class="console-group-title">Enseignant-es inscrit-es</div>
         <div class="tool-card">
+          <div id="deleteSuccess" class="success-msg"></div>
+          <div id="deleteError" class="error-msg"></div>
           <div id="teachersList" class="teachers-list">
             <div style="color:var(--muted);font-size:.85rem;">Chargement...</div>
           </div>
@@ -329,6 +423,8 @@
     const createForm = document.getElementById("createForm");
     const createSuccess = document.getElementById("createSuccess");
     const createError = document.getElementById("createError");
+    const deleteSuccess = document.getElementById("deleteSuccess");
+    const deleteError = document.getElementById("deleteError");
     const teachersList = document.getElementById("teachersList");
 
     function unlock() {
@@ -402,7 +498,7 @@
         const teachers = await res.json();
 
         if (!Array.isArray(teachers) || !teachers.length) {
-          teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucun enseignant inscrit.</div>';
+          teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucun-e enseignant-e inscrit-e.</div>';
           return;
         }
 
@@ -411,10 +507,69 @@
             <span class="teacher-row-name">${esc(t.name)}</span>
             <span class="teacher-row-email">${esc(t.email)}</span>
             <span class="teacher-row-date">${esc(t.created_at?.substring(0, 10) || "")}</span>
+            <button class="btn-delete" onclick="confirmDelete(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}', '${esc(t.email).replace(/'/g, "\\'")}')">Supprimer</button>
           </div>
         `).join("");
       } catch {
         teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
+      }
+    }
+
+    // Delete teacher — confirmation dialog
+    function confirmDelete(id, name, email) {
+      deleteSuccess.style.display = "none";
+      deleteError.style.display = "none";
+
+      const overlay = document.createElement("div");
+      overlay.className = "confirm-dialog";
+      overlay.innerHTML = `
+        <div class="confirm-card">
+          <h3>Supprimer ce compte ?</h3>
+          <p><strong>${name}</strong> (${email})</p>
+          <div class="warn">
+            Le login et les séances seront supprimés.<br>
+            Les résultats d'élèves et les CERTs déposées dans le dépôt seront conservés.
+          </div>
+          <div class="confirm-actions">
+            <button class="btn-cancel" id="cancelDelete">Annuler</button>
+            <button class="btn-danger" id="confirmDeleteBtn">Supprimer</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector("#cancelDelete").addEventListener("click", () => overlay.remove());
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+
+      overlay.querySelector("#confirmDeleteBtn").addEventListener("click", async () => {
+        overlay.remove();
+        await deleteTeacher(id, name);
+      });
+    }
+
+    async function deleteTeacher(id, name) {
+      deleteSuccess.style.display = "none";
+      deleteError.style.display = "none";
+
+      try {
+        const res = await fetch(`${API}/admin/delete-teacher.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teacher_id: id })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          deleteError.textContent = data.error;
+          deleteError.style.display = "block";
+        } else {
+          deleteSuccess.textContent = `Compte de ${name} supprimé (${data.sessions_deleted} séance(s) supprimée(s)).`;
+          deleteSuccess.style.display = "block";
+          loadTeachers();
+        }
+      } catch (err) {
+        deleteError.textContent = "Erreur réseau : " + err.message;
+        deleteError.style.display = "block";
       }
     }
 
