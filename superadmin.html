@@ -364,16 +364,16 @@
       color: var(--muted);
     }
 
-    .cert-row-rel {
+    .cert-desc-tag {
       font-size: 0.72rem;
       font-weight: 700;
       padding: 1px 7px;
       border-radius: 5px;
     }
 
-    .cert-row-rel.good { background: rgba(34,197,94,.12); color: #166534; }
-    .cert-row-rel.mid  { background: rgba(245,158,11,.12); color: #9a3412; }
-    .cert-row-rel.bad  { background: rgba(239,68,68,.1); color: #991b1b; }
+    .cert-desc-tag.good { background: rgba(34,197,94,.12); color: #166534; border: 1px solid rgba(34,197,94,.3); }
+    .cert-desc-tag.mid  { background: rgba(245,158,11,.12); color: #9a3412; border: 1px solid rgba(245,158,11,.3); }
+    .cert-desc-tag.bad  { background: rgba(239,68,68,.1); color: #991b1b; border: 1px solid rgba(239,68,68,.3); }
 
     .btn-edit {
       background: none;
@@ -528,6 +528,7 @@
       <div>
         <div class="console-group-title">Dépôt de CERTs</div>
         <div class="tool-card">
+          <input type="search" id="certSearch" placeholder="Rechercher par titre, descripteur, enseignant-e..." style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;background:var(--bg);color:var(--text);outline:none;margin-bottom:10px;">
           <div id="certSuccess" class="success-msg"></div>
           <div id="certError" class="error-msg"></div>
           <div id="certsList" class="teachers-list">
@@ -561,8 +562,8 @@
     const certSuccess = document.getElementById("certSuccess");
     const certError = document.getElementById("certError");
     const certsList = document.getElementById("certsList");
+    const certSearch = document.getElementById("certSearch");
 
-    const REL_LABEL = { good: "Fiable", mid: "Indéterminé", bad: "Pas fiable" };
     let allCertsData = [];
 
     function unlock() {
@@ -718,28 +719,44 @@
       try {
         const res = await fetch(`${API}/admin/certs.php`);
         allCertsData = await res.json();
-
-        if (!Array.isArray(allCertsData) || !allCertsData.length) {
-          certsList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucune CERT dans le dépôt.</div>';
-          return;
-        }
-
-        certsList.innerHTML = allCertsData.map(c => `
-          <div class="cert-row" id="cert-row-${c.id}">
-            <div class="cert-row-header">
-              <span class="cert-row-title" title="${esc(c.title)}">${esc(c.title)}</span>
-              <span class="cert-row-rel ${c.reliability}">${esc(REL_LABEL[c.reliability] || c.reliability)}</span>
-              <span class="cert-row-teacher">${esc(c.teacher_name || "—")}</span>
-              <button class="btn-edit" onclick="toggleCertEdit(${c.id})">Modifier</button>
-              <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>
-            </div>
-            <div class="cert-edit-form" id="cert-edit-${c.id}"></div>
-          </div>
-        `).join("");
+        if (!Array.isArray(allCertsData)) allCertsData = [];
+        renderCerts();
       } catch {
         certsList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
       }
     }
+
+    function renderCerts() {
+      const query = (certSearch.value || "").toLowerCase().trim();
+
+      const filtered = allCertsData.filter(c => {
+        if (!query) return true;
+        const haystack = [c.title, c.descriptor1, c.descriptor2, c.teacher_name, c.expert]
+          .filter(Boolean).join(" ").toLowerCase();
+        return haystack.includes(query);
+      });
+
+      if (!filtered.length) {
+        certsList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucune CERT trouvée.</div>';
+        return;
+      }
+
+      certsList.innerHTML = filtered.map(c => `
+        <div class="cert-row" id="cert-row-${c.id}">
+          <div class="cert-row-header">
+            <span class="cert-row-title" title="${esc(c.title)}">${esc(c.title)}</span>
+            ${c.descriptor1 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor1)}</span>` : ""}
+            ${c.descriptor2 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor2)}</span>` : ""}
+            <span class="cert-row-teacher">${esc(c.teacher_name || "—")}</span>
+            <button class="btn-edit" onclick="toggleCertEdit(${c.id})">Modifier</button>
+            <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>
+          </div>
+          <div class="cert-edit-form" id="cert-edit-${c.id}"></div>
+        </div>
+      `).join("");
+    }
+
+    certSearch.addEventListener("input", renderCerts);
 
     function toggleCertEdit(id) {
       const form = document.getElementById(`cert-edit-${id}`);
@@ -773,6 +790,10 @@
         <textarea data-field="three_phrases" rows="2">${esc(c.three_phrases || "")}</textarea>
         <label>Contexte</label>
         <textarea data-field="context" rows="2">${esc(c.context || "")}</textarea>
+        <label>Fiabilité (explication)</label>
+        <textarea data-field="reliability_text" rows="2">${esc(c.reliability_text || "")}</textarea>
+        <label>Références</label>
+        <textarea data-field="references_text" rows="2">${esc(c.references_text || "")}</textarea>
         <div class="cert-edit-btns">
           <button class="btn-save" onclick="saveCertAdmin(${id})">Enregistrer</button>
           <button onclick="document.getElementById('cert-edit-${id}').style.display='none'">Annuler</button>

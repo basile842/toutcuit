@@ -333,12 +333,13 @@
     .depot-toggle {
       flex-shrink: 0;
       cursor: pointer;
-      background: none;
-      border: none;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
       color: var(--muted);
-      font-size: .82rem;
-      padding: 4px 8px;
-      border-radius: 6px;
+      font-size: 1.1rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      line-height: 1;
     }
 
     .depot-toggle:hover {
@@ -547,10 +548,16 @@
                 ${c.is_mine ? '<span class="depot-tag mine-tag">Ma CERT</span>' : ""}
               </div>
               <div class="depot-detail">
-                ${c.three_phrases ? `<p><strong>3 phrases :</strong> ${esc(c.three_phrases)}</p>` : ""}
-                ${c.context ? `<p><strong>Contexte :</strong> ${esc(c.context)}</p>` : ""}
+                ${c.url ? `<p><strong>URL :</strong> <a href="${esc(c.url)}" target="_blank" rel="noopener" style="color:var(--accent);word-break:break-all;">${esc(c.url)}</a></p>` : ""}
                 ${c.expert ? `<p><strong>Expert :</strong> ${esc(c.expert)}</p>` : ""}
                 ${c.cert_date ? `<p><strong>Date :</strong> ${esc(c.cert_date)}</p>` : ""}
+                ${c.descriptor1 ? `<p><strong>Descripteur 1 :</strong> ${esc(c.descriptor1)}</p>` : ""}
+                ${c.descriptor2 ? `<p><strong>Descripteur 2 :</strong> ${esc(c.descriptor2)}</p>` : ""}
+                ${c.three_phrases ? `<p><strong>3 phrases :</strong> ${esc(c.three_phrases)}</p>` : ""}
+                ${c.context ? `<p><strong>Contexte :</strong> ${esc(c.context)}</p>` : ""}
+                ${c.content ? `<p><strong>Contenu :</strong> ${esc(c.content)}</p>` : ""}
+                ${c.reliability_text ? `<p><strong>Fiabilité (explication) :</strong> ${esc(c.reliability_text)}</p>` : ""}
+                ${c.references_text ? `<p><strong>Références :</strong> ${esc(c.references_text)}</p>` : ""}
                 ${c.is_mine ? `<div class="depot-actions">
                   <button onclick="editCert(${c.id})">Modifier</button>
                   <button class="btn-del" onclick="deleteCert(${c.id}, this)">Supprimer</button>

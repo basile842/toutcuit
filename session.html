@@ -533,8 +533,14 @@
 
         // Prevent collector link navigation when clicking the switch
         document.getElementById("collectorToggle").addEventListener("click", (e) => {
-          e.preventDefault();
           e.stopPropagation();
+        });
+
+        // Prevent the <a> from navigating when clicking on the switch
+        document.getElementById("collectorLink").addEventListener("click", (e) => {
+          if (e.target.closest(".collector-switch")) {
+            e.preventDefault();
+          }
         });
 
         document.getElementById("collectorCheckbox").addEventListener("change", async (e) => {
