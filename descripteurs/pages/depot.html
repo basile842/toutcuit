@@ -403,6 +403,9 @@
       <span style="font-weight:900;letter-spacing:-0.02em;color:var(--accent);margin-right:6px;">toutcuit</span>
       <span style="color:var(--border);margin-right:6px;">/</span>
       <a href="/admin.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Console</a>
+      <span style="flex:1;"></span>
+      <span id="userName" style="font-size:.82rem;color:var(--muted);"></span>
+      <button id="logoutBtn" style="font-size:.82rem;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600;">Déconnexion</button>
     </nav>
   </header>
 
@@ -451,6 +454,16 @@
     if (!token) {
       window.location.href = "/admin.html";
     }
+
+    try {
+      const t = JSON.parse(localStorage.getItem("tc_teacher"));
+      if (t?.name) document.getElementById("userName").textContent = t.name;
+    } catch {}
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("tc_token");
+      localStorage.removeItem("tc_teacher");
+      window.location.href = "/admin.html";
+    });
 
     const depotContent = document.getElementById("depotContent");
     const searchBox = document.getElementById("searchBox");

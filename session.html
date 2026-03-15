@@ -72,6 +72,20 @@
 
     .console-header-spacer { flex: 1; }
 
+    .console-header-user {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .console-header-logout {
+      font-size: 0.82rem;
+      color: var(--accent);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-weight: 600;
+    }
+
     .console-main {
       max-width: 860px;
       margin: 0 auto;
@@ -320,6 +334,8 @@
     <span class="console-header-sep">/</span>
     <a href="/admin.html" class="console-header-link">Console</a>
     <span class="console-header-spacer"></span>
+    <span class="console-header-user" id="userName"></span>
+    <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
   </header>
 
   <main class="console-main" id="sessionContent" style="display:none;">
@@ -480,6 +496,14 @@
 
     const token = getToken();
     if (!token) { window.location.href = "/admin.html"; }
+
+    const teacher = getTeacher();
+    if (teacher?.name) document.getElementById("userName").textContent = teacher.name;
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("tc_token");
+      localStorage.removeItem("tc_teacher");
+      window.location.href = "/admin.html";
+    });
 
     function esc(s) {
       return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");

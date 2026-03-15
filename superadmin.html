@@ -450,6 +450,65 @@
     }
 
     .cert-edit-btns .btn-save:hover { background: var(--accent-hover); }
+
+    /* Search chips */
+    .search-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 9px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      cursor: text;
+      margin-bottom: 10px;
+      transition: border-color .15s;
+    }
+
+    .search-box:focus-within { border-color: var(--accent); }
+
+    .search-box input {
+      flex: 1 1 100px;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: .88rem;
+      color: var(--text);
+      padding: 4px 0;
+      min-width: 80px;
+    }
+
+    .search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px 3px 10px;
+      border-radius: 7px;
+      background: rgba(111,92,247,.1);
+      border: 1px solid rgba(111,92,247,.25);
+      color: var(--text);
+      font-size: .8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .search-chip button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: .85rem;
+      line-height: 1;
+      padding: 0 2px;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+
+    .search-chip button:hover {
+      color: #b91c1c;
+      background: rgba(239,68,68,.1);
+    }
   </style>
 </head>
 <body>
@@ -528,7 +587,9 @@
       <div>
         <div class="console-group-title">Dépôt de CERTs</div>
         <div class="tool-card">
-          <input type="search" id="certSearch" placeholder="Rechercher par titre, descripteur, enseignant-e..." style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;background:var(--bg);color:var(--text);outline:none;margin-bottom:10px;">
+          <div class="search-box" id="certSearchBox">
+            <input type="text" id="certSearchInput" placeholder="Rechercher par titre, descripteur, enseignant-e..." />
+          </div>
           <div id="certSuccess" class="success-msg"></div>
           <div id="certError" class="error-msg"></div>
           <div id="certsList" class="teachers-list">
@@ -562,9 +623,11 @@
     const certSuccess = document.getElementById("certSuccess");
     const certError = document.getElementById("certError");
     const certsList = document.getElementById("certsList");
-    const certSearch = document.getElementById("certSearch");
+    const certSearchBox = document.getElementById("certSearchBox");
+    const certSearchInput = document.getElementById("certSearchInput");
 
     let allCertsData = [];
+    let certSearchTerms = [];
 
     function unlock() {
       loginPage.style.display = "none";
@@ -727,13 +790,11 @@
     }
 
     function renderCerts() {
-      const query = (certSearch.value || "").toLowerCase().trim();
-
       const filtered = allCertsData.filter(c => {
-        if (!query) return true;
+        if (!certSearchTerms.length) return true;
         const haystack = [c.title, c.descriptor1, c.descriptor2, c.teacher_name, c.expert]
           .filter(Boolean).join(" ").toLowerCase();
-        return haystack.includes(query);
+        return certSearchTerms.every(t => haystack.includes(t));
       });
 
       if (!filtered.length) {
@@ -756,7 +817,44 @@
       `).join("");
     }
 
-    certSearch.addEventListener("input", renderCerts);
+    function addCertSearchTerm(term) {
+      term = term.trim().toLowerCase();
+      if (!term || certSearchTerms.includes(term)) return;
+      certSearchTerms.push(term);
+      renderCertChips();
+      renderCerts();
+    }
+
+    function removeCertSearchTerm(term) {
+      certSearchTerms = certSearchTerms.filter(t => t !== term);
+      renderCertChips();
+      renderCerts();
+    }
+
+    function renderCertChips() {
+      certSearchBox.querySelectorAll(".search-chip").forEach(el => el.remove());
+      certSearchTerms.forEach(term => {
+        const chip = document.createElement("span");
+        chip.className = "search-chip";
+        chip.innerHTML = `${esc(term)}<button title="Supprimer">&times;</button>`;
+        chip.querySelector("button").addEventListener("click", () => removeCertSearchTerm(term));
+        certSearchBox.insertBefore(chip, certSearchInput);
+      });
+      certSearchInput.placeholder = certSearchTerms.length ? "Ajouter un critère..." : "Rechercher par titre, descripteur, enseignant-e...";
+    }
+
+    certSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addCertSearchTerm(certSearchInput.value);
+        certSearchInput.value = "";
+      }
+      if (e.key === "Backspace" && !certSearchInput.value && certSearchTerms.length) {
+        removeCertSearchTerm(certSearchTerms[certSearchTerms.length - 1]);
+      }
+    });
+
+    certSearchBox.addEventListener("click", () => certSearchInput.focus());
 
     function toggleCertEdit(id) {
       const form = document.getElementById(`cert-edit-${id}`);
