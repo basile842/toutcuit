@@ -310,13 +310,21 @@
       return "mid";
     }
 
+    // Convert DD.MM.YYYY to YYYY-MM-DD for MySQL
+    function toIsoDate(val) {
+      if (!val) return "";
+      const m = val.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+      if (m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+      return val;
+    }
+
     async function submitLink(data) {
       try {
         const payload = {
           title: data.title,
           url: data.url,
           expert: data.expert || null,
-          cert_date: data.date || null,
+          cert_date: toIsoDate(data.date) || null,
           descriptor1: data.descriptor1 || null,
           descriptor2: data.descriptor2 || null,
           reliability: reliabilityToEnum(data.reliability),

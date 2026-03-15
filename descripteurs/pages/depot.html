@@ -223,6 +223,101 @@
       font-weight: 700;
     }
 
+    .depot-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .depot-actions button {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px 12px;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all .15s;
+    }
+
+    .depot-actions button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(111,92,247,.05);
+    }
+
+    .depot-actions button.btn-del:hover {
+      border-color: rgba(239,68,68,.4);
+      color: #b91c1c;
+      background: rgba(239,68,68,.05);
+    }
+
+    .depot-edit-form {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .depot-edit-form label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .depot-edit-form input,
+    .depot-edit-form textarea,
+    .depot-edit-form select {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: .85rem;
+      background: var(--panel);
+      color: var(--text);
+      outline: none;
+    }
+
+    .depot-edit-form textarea {
+      resize: vertical;
+      min-height: 50px;
+    }
+
+    .depot-edit-form input:focus,
+    .depot-edit-form textarea:focus,
+    .depot-edit-form select:focus {
+      border-color: rgba(111,92,247,.45);
+    }
+
+    .depot-edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .depot-edit-actions button {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      transition: all .15s;
+    }
+
+    .depot-edit-actions .btn-save {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .depot-edit-actions .btn-save:hover { background: var(--accent-hover); }
+
     .depot-detail {
       margin-top: 8px;
       font-size: .82rem;
@@ -326,7 +421,7 @@
         <select id="filterReliability">
           <option value="">Fiabilité</option>
           <option value="good">Fiable</option>
-          <option value="mid">Indetermine</option>
+          <option value="mid">Indéterminé</option>
           <option value="bad">Pas fiable</option>
         </select>
 
@@ -370,7 +465,7 @@
     const depotGrid = document.getElementById("depotGrid");
     const depotCount = document.getElementById("depotCount");
 
-    const REL_LABEL = { good: "Fiable", mid: "Indetermine", bad: "Pas fiable" };
+    const REL_LABEL = { good: "Fiable", mid: "Indéterminé", bad: "Pas fiable" };
     const REL_CLASS = { good: "rel-good", mid: "rel-mid", bad: "rel-bad" };
 
     let allCerts = [];
@@ -446,9 +541,8 @@
                 <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a>
               </div>
               <div class="depot-meta">
-                ${c.descriptor1 ? `<span class="depot-tag desc-tag">${esc(c.descriptor1)}</span>` : ""}
-                ${c.descriptor2 ? `<span class="depot-tag desc-tag">${esc(c.descriptor2)}</span>` : ""}
-                <span class="depot-tag ${REL_CLASS[c.reliability] || ""}">${esc(REL_LABEL[c.reliability] || c.reliability)}</span>
+                ${c.descriptor1 ? `<span class="depot-tag ${REL_CLASS[c.reliability] || "desc-tag"}">${esc(c.descriptor1)}</span>` : ""}
+                ${c.descriptor2 ? `<span class="depot-tag ${REL_CLASS[c.reliability] || "desc-tag"}">${esc(c.descriptor2)}</span>` : ""}
                 <span class="depot-tag teacher-tag">${esc(c.teacher_name)}</span>
                 ${c.is_mine ? '<span class="depot-tag mine-tag">Ma CERT</span>' : ""}
               </div>
@@ -457,6 +551,11 @@
                 ${c.context ? `<p><strong>Contexte :</strong> ${esc(c.context)}</p>` : ""}
                 ${c.expert ? `<p><strong>Expert :</strong> ${esc(c.expert)}</p>` : ""}
                 ${c.cert_date ? `<p><strong>Date :</strong> ${esc(c.cert_date)}</p>` : ""}
+                ${c.is_mine ? `<div class="depot-actions">
+                  <button onclick="editCert(${c.id})">Modifier</button>
+                  <button class="btn-del" onclick="deleteCert(${c.id}, this)">Supprimer</button>
+                </div>
+                <div class="depot-edit-form" id="edit-${c.id}" style="display:none;"></div>` : ""}
               </div>
             </div>
             <button class="depot-toggle" title="Details">&#9662;</button>
@@ -591,6 +690,103 @@
 
     // Filters
     filterReliability.addEventListener("change", render);
+
+    // Edit CERT
+    window.editCert = function(id) {
+      const form = document.getElementById(`edit-${id}`);
+      if (!form) return;
+      if (form.style.display === "flex") { form.style.display = "none"; return; }
+
+      const c = allCerts.find(x => x.id === id);
+      if (!c) return;
+
+      form.style.display = "flex";
+      form.innerHTML = `
+        <label>Titre</label>
+        <input type="text" data-field="title" value="${esc(c.title)}" />
+        <label>URL</label>
+        <input type="text" data-field="url" value="${esc(c.url)}" />
+        <label>Expert</label>
+        <input type="text" data-field="expert" value="${esc(c.expert || "")}" />
+        <label>Date (JJ.MM.AAAA)</label>
+        <input type="text" data-field="cert_date" value="${esc(c.cert_date || "")}" />
+        <label>Descripteur 1</label>
+        <input type="text" data-field="descriptor1" value="${esc(c.descriptor1 || "")}" />
+        <label>Descripteur 2</label>
+        <input type="text" data-field="descriptor2" value="${esc(c.descriptor2 || "")}" />
+        <label>Fiabilité</label>
+        <select data-field="reliability">
+          <option value="good" ${c.reliability === "good" ? "selected" : ""}>Fiable</option>
+          <option value="mid" ${c.reliability === "mid" ? "selected" : ""}>Indéterminé</option>
+          <option value="bad" ${c.reliability === "bad" ? "selected" : ""}>Pas fiable</option>
+        </select>
+        <label>3 phrases</label>
+        <textarea data-field="three_phrases" rows="2">${esc(c.three_phrases || "")}</textarea>
+        <label>Contexte</label>
+        <textarea data-field="context" rows="2">${esc(c.context || "")}</textarea>
+        <div class="depot-edit-actions">
+          <button class="btn-save" onclick="saveCert(${id})">Enregistrer</button>
+          <button onclick="document.getElementById('edit-${id}').style.display='none'">Annuler</button>
+        </div>
+      `;
+    };
+
+    // Save edited CERT
+    window.saveCert = async function(id) {
+      const form = document.getElementById(`edit-${id}`);
+      if (!form) return;
+
+      const payload = { id };
+      form.querySelectorAll("[data-field]").forEach(el => {
+        payload[el.dataset.field] = el.value;
+      });
+
+      // Convert date format
+      const dateVal = payload.cert_date || "";
+      const dm = dateVal.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+      if (dm) payload.cert_date = `${dm[3]}-${dm[2].padStart(2,"0")}-${dm[1].padStart(2,"0")}`;
+
+      try {
+        const res = await fetch(`${API}/certs/save.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.error) return alert("Erreur : " + result.error);
+
+        // Update local data
+        const c = allCerts.find(x => x.id === id);
+        if (c) {
+          form.querySelectorAll("[data-field]").forEach(el => { c[el.dataset.field] = el.value; });
+        }
+        form.style.display = "none";
+        render();
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    };
+
+    // Delete CERT
+    window.deleteCert = async function(id) {
+      if (!confirm("Supprimer cette CERT ? Cette action est irréversible.")) return;
+
+      try {
+        const res = await fetch(`${API}/certs/delete.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ id })
+        });
+        const result = await res.json();
+        if (result.error) return alert("Erreur : " + result.error);
+
+        allCerts = allCerts.filter(c => c.id !== id);
+        assignedIds.delete(id);
+        render();
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    };
 
     init();
   </script>
