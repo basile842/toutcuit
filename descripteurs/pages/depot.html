@@ -567,7 +567,7 @@
                 ${c.context ? `<p>${esc(c.context)}</p>` : ""}
                 ${c.content ? `<p>${esc(c.content)}</p>` : ""}
                 ${c.reliability_text ? `<p>${esc(c.reliability_text)}</p>` : ""}
-                ${c.references_text ? `<p>${esc(c.references_text)}</p>` : ""}
+                ${c.references_text ? `<ol style="margin:6px 0;padding-left:22px;">${esc(c.references_text).split(/[\n;]+/).filter(s => s.trim()).map(s => `<li>${s.trim()}</li>`).join("")}</ol>` : ""}
                 ${c.is_mine ? `<div class="depot-actions">
                   <button onclick="editCert(${c.id})">Modifier</button>
                   <button class="btn-del" onclick="deleteCert(${c.id}, this)">Supprimer</button>
@@ -741,6 +741,10 @@
         <textarea data-field="three_phrases" rows="2">${esc(c.three_phrases || "")}</textarea>
         <label>Contexte</label>
         <textarea data-field="context" rows="2">${esc(c.context || "")}</textarea>
+        <label>Fiabilité (explication)</label>
+        <textarea data-field="reliability_text" rows="2">${esc(c.reliability_text || "")}</textarea>
+        <label>Références</label>
+        <textarea data-field="references_text" rows="2">${esc(c.references_text || "")}</textarea>
         <div class="depot-edit-actions">
           <button class="btn-save" onclick="saveCert(${id})">Enregistrer</button>
           <button onclick="document.getElementById('edit-${id}').style.display='none'">Annuler</button>
