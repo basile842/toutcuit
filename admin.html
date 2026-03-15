@@ -695,7 +695,9 @@
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ name: schoolName })
               });
-              const school = await schoolRes.json();
+              const schoolText = await schoolRes.text();
+              let school;
+              try { school = JSON.parse(schoolText); } catch { return alert("Erreur serveur (école) : " + schoolText.substring(0, 200)); }
               if (school.error) return alert("Erreur école : " + school.error);
 
               // Create session
@@ -704,7 +706,9 @@
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ name: sessionName, school_id: school.id })
               });
-              const session = await sessRes.json();
+              const sessText = await sessRes.text();
+              let session;
+              try { session = JSON.parse(sessText); } catch { return alert("Erreur serveur (séance) : " + sessText.substring(0, 200)); }
               if (session.error) return alert(session.error);
               alert(`Séance créée ! Code : ${session.code}`);
               loadSessions();

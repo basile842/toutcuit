@@ -371,9 +371,9 @@
       border-radius: 5px;
     }
 
-    .cert-desc-tag.good { background: rgba(34,197,94,.12); color: #166534; border: 1px solid rgba(34,197,94,.3); }
-    .cert-desc-tag.mid  { background: rgba(245,158,11,.12); color: #9a3412; border: 1px solid rgba(245,158,11,.3); }
-    .cert-desc-tag.bad  { background: rgba(239,68,68,.1); color: #991b1b; border: 1px solid rgba(239,68,68,.3); }
+    .cert-desc-tag.good { background: rgba(34,197,94,.30); color: #166534; border: 1px solid rgba(34,197,94,.75); }
+    .cert-desc-tag.mid  { background: rgba(249,115,22,.30); color: #9a3412; border: 1px solid rgba(249,115,22,.75); }
+    .cert-desc-tag.bad  { background: rgba(239,68,68,.32); color: #991b1b; border: 1px solid rgba(239,68,68,.80); }
 
     .btn-edit {
       background: none;
@@ -710,7 +710,6 @@
             <span class="teacher-row-name">${esc(t.name)}</span>
             <span class="teacher-row-email">${esc(t.email)}</span>
             <span class="teacher-row-date">${esc(t.created_at?.substring(0, 10) || "")}</span>
-            <button class="btn-edit" onclick="resetPassword('${esc(t.email).replace(/'/g, "\\'")}', '${esc(t.name).replace(/'/g, "\\'")}', this)">Réinit. mdp</button>
             <button class="btn-delete" onclick="confirmDelete(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}', '${esc(t.email).replace(/'/g, "\\'")}')">Supprimer</button>
           </div>
         `).join("");
@@ -960,35 +959,6 @@
       } catch (err) {
         certError.textContent = "Erreur réseau : " + err.message;
         certError.style.display = "block";
-      }
-    }
-
-    // Reset password — generate link
-    async function resetPassword(email, name, btn) {
-      deleteSuccess.style.display = "none";
-      deleteError.style.display = "none";
-
-      try {
-        const res = await fetch(`${API}/auth/reset-request.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-
-        if (data.error) {
-          deleteError.textContent = data.error;
-          deleteError.style.display = "block";
-        } else if (data.reset_url) {
-          deleteSuccess.innerHTML = `Lien de réinitialisation pour ${esc(name)} : <a href="${data.reset_url}" target="_blank" style="color:var(--accent);font-weight:600;">Ouvrir le lien</a>`;
-          deleteSuccess.style.display = "block";
-        } else {
-          deleteSuccess.textContent = data.message;
-          deleteSuccess.style.display = "block";
-        }
-      } catch (err) {
-        deleteError.textContent = "Erreur : " + err.message;
-        deleteError.style.display = "block";
       }
     }
 
