@@ -418,7 +418,7 @@
         <div id="resetError" class="error-msg" style="margin-top:10px;"></div>
         <div id="resetSuccess" class="success-msg" style="margin-top:10px;display:none;"></div>
         <div style="margin-top:14px;">
-          <button class="btn-primary" type="submit">Envoyer le lien</button>
+          <button class="btn-primary" type="submit">Envoyer la demande</button>
         </div>
       </form>
 
@@ -598,7 +598,11 @@
           resetError.textContent = data.error;
           resetError.style.display = "block";
         } else {
-          resetSuccess.textContent = data.message;
+          if (data.reset_url) {
+            resetSuccess.innerHTML = data.message + '<br><a href="' + data.reset_url + '" style="color:var(--accent);font-weight:600;">Cliquer ici pour réinitialiser</a>';
+          } else {
+            resetSuccess.textContent = data.message;
+          }
           resetSuccess.style.display = "block";
         }
       } catch (err) {

@@ -509,7 +509,12 @@
         document.getElementById("liensAdminLink").href = `/descripteurs/pages/liens.html?session=${sc}&admin=1`;
         document.getElementById("feedLink").href = `/descripteurs/pages/feed.html?session=${sc}`;
         document.getElementById("scoresLink").href = `/descripteurs/pages/progress.html?session=${sc}`;
-        document.getElementById("collectorLink").href = `/collector.html?code=${sc}`;
+        const collectorUrl = `/collector.html?code=${sc}`;
+        document.getElementById("collectorLink").addEventListener("click", (e) => {
+          if (!e.target.closest(".collector-status")) {
+            window.location.href = collectorUrl;
+          }
+        });
 
         // Collector status
         let collectorOpen = !!(s.collector_open);

@@ -55,6 +55,12 @@ $headers = "From: noreply@toutcuit.ch\r\n";
 $headers .= "Reply-To: noreply@toutcuit.ch\r\n";
 $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 
-mail($email, $subject, $body, $headers);
+// Try sending email (may not be available on all hosts)
+if (function_exists('mail')) {
+    @mail($email, $subject, $body, $headers);
+}
+
+// Return reset URL in response (prototype only — remove in production)
+$successMsg['reset_url'] = $resetUrl;
 
 jsonResponse($successMsg);
