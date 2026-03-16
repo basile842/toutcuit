@@ -589,6 +589,23 @@
         </div>
       </div>
 
+      <!-- Feed global -->
+      <div>
+        <div class="console-group-title">Feed global</div>
+        <div class="tool-card">
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">
+            Sélectionnez les séances à inclure dans le feed, puis ouvrez-le en 2 fenêtres.
+          </p>
+          <div id="globalFeedSessions" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+            <div style="color:var(--muted);font-size:.85rem;">Chargement des séances...</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-primary" id="openGlobalFeedBtn" style="width:auto;padding:10px 20px;" disabled>Ouvrir le Feed global</button>
+            <span id="globalFeedCount" style="font-size:.82rem;color:var(--muted);"></span>
+          </div>
+        </div>
+      </div>
+
       <!-- CERTs depot -->
       <div>
         <div class="console-group-title">Dépôt de CERTs</div>
@@ -640,6 +657,7 @@
       consoleContent.style.display = "block";
       loadTeachers();
       loadCerts();
+      loadGlobalFeedSessions();
     }
 
     loginForm.addEventListener("submit", (e) => {
@@ -781,6 +799,107 @@
         deleteError.style.display = "block";
       }
     }
+
+    // ── Global Feed ──
+
+    let globalFeedSelectedCodes = new Set();
+
+    async function loadGlobalFeedSessions() {
+      const container = document.getElementById("globalFeedSessions");
+      try {
+        const res = await fetch(`${API}/admin/sessions.php`);
+        const sessions = await res.json();
+
+        if (!Array.isArray(sessions) || !sessions.length) {
+          container.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucune séance.</div>';
+          return;
+        }
+
+        container.innerHTML = sessions.map(s => `
+          <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
+            <input type="checkbox" value="${esc(s.code)}" class="gf-session-check">
+            <span style="flex:1;font-weight:600;">${esc(s.school_name || "")} — ${esc(s.name)}</span>
+            <span style="font-size:.75rem;color:var(--muted);font-family:monospace;font-weight:800;">${esc(s.code)}</span>
+            <span style="font-size:.72rem;color:var(--muted);">${esc(s.teacher_name || "—")}</span>
+          </label>
+        `).join("");
+
+        container.querySelectorAll(".gf-session-check").forEach(cb => {
+          cb.addEventListener("change", () => {
+            if (cb.checked) globalFeedSelectedCodes.add(cb.value);
+            else globalFeedSelectedCodes.delete(cb.value);
+            updateGlobalFeedBtn();
+          });
+        });
+      } catch {
+        container.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
+      }
+    }
+
+    function updateGlobalFeedBtn() {
+      const btn = document.getElementById("openGlobalFeedBtn");
+      const count = document.getElementById("globalFeedCount");
+      const n = globalFeedSelectedCodes.size;
+      btn.disabled = n === 0;
+      count.textContent = n ? `${n} séance(s) sélectionnée(s)` : "";
+    }
+
+    document.getElementById("openGlobalFeedBtn").addEventListener("click", () => {
+      if (!globalFeedSelectedCodes.size) return;
+
+      const codes = [...globalFeedSelectedCodes].join(",");
+
+      const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      if (isMobile) {
+        window.open(`/global-feed.html?sessions=${encodeURIComponent(codes)}`, "_blank");
+        return;
+      }
+
+      const FEED2_MAIN_NAME = "gfeed_main";
+      const FEED2_SIDE_NAME = "gfeed_sidecar";
+      const FEED2_SIDE_W = 520;
+
+      const W = Math.max(800, window.screen?.availWidth || window.innerWidth || 1200);
+      const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
+      const X = window.screen?.availLeft ?? 0;
+      const Y = window.screen?.availTop ?? 0;
+
+      const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
+      const gap = 10;
+      const mainW = W - sideW - gap;
+      const sideLeft = X + W - sideW;
+
+      const sc = encodeURIComponent(codes);
+
+      // Main window: empty "Feed Tout Cuit" page
+      const main = window.open("about:blank", FEED2_MAIN_NAME,
+        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
+
+      main.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Feed Tout Cuit</title>
+        <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+        <style>
+          *{box-sizing:border-box;margin:0;padding:0;}
+          html,body{min-height:100vh;background:#f6f7fb;display:flex;align-items:center;justify-content:center;font-family:'Inter var','Inter',system-ui,sans-serif;}
+          .brand{text-align:center;}
+          .brand h1{font-size:3rem;font-weight:900;letter-spacing:-0.03em;color:#6f5cf7;}
+          .brand p{font-size:1rem;color:#5e6673;margin-top:8px;}
+        </style></head><body>
+        <div class="brand"><h1>Feed Tout Cuit</h1><p>Cliquez sur un lien dans le feed pour l'afficher ici.</p></div>
+      </body></html>`);
+      main.document.close();
+
+      // Sidecar: global feed
+      const side = window.open(
+        `/global-feed.html?sessions=${sc}&mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
+        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
+      );
+      if (!side) {
+        try { main.close(); } catch {}
+        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
+      }
+    });
 
     // ── CERTs management ──
 
