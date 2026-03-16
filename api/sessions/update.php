@@ -22,6 +22,21 @@ if (!$stmt->fetch()) {
     jsonError('Session not found or not yours', 403);
 }
 
+// Rename school if requested
+if (array_key_exists('school_name', $data)) {
+    $newSchoolName = trim($data['school_name']);
+    if (!$newSchoolName) {
+        jsonError('Le nom de l\'école est requis');
+    }
+    $stmt = $db->prepare('SELECT school_id FROM sessions WHERE id = ?');
+    $stmt->execute([$sessionId]);
+    $row = $stmt->fetch();
+    if ($row && $row['school_id']) {
+        $stmt = $db->prepare('UPDATE schools SET name = ? WHERE id = ?');
+        $stmt->execute([$newSchoolName, $row['school_id']]);
+    }
+}
+
 // Build dynamic update
 $allowed = ['collector_open', 'is_open', 'max_collect', 'name'];
 $sets = [];
@@ -34,13 +49,15 @@ foreach ($allowed as $field) {
     }
 }
 
-if (empty($sets)) {
+if (empty($sets) && !array_key_exists('school_name', $data)) {
     jsonError('Nothing to update');
 }
 
-$params[] = $sessionId;
-$sql = 'UPDATE sessions SET ' . implode(', ', $sets) . ' WHERE id = ?';
-$stmt = $db->prepare($sql);
-$stmt->execute($params);
+if (!empty($sets)) {
+    $params[] = $sessionId;
+    $sql = 'UPDATE sessions SET ' . implode(', ', $sets) . ' WHERE id = ?';
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+}
 
 jsonResponse(['ok' => true, 'session_id' => $sessionId]);
