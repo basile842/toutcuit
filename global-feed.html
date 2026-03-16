@@ -58,9 +58,37 @@
       background: rgba(111,92,247,.18);
     }
     .chip[aria-pressed="true"]{
-      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(111,92,247,.18);
+      border-color: rgba(111,92,247,.45);
+      background: rgba(111,92,247,.18);
+    }
+
+    .chip[data-rel="good"]{
+      border-color: var(--rel-good-border);
+      background: var(--rel-good-bg);
+    }
+    .chip[data-rel="mid"]{
+      border-color: var(--rel-mid-border);
+      background: var(--rel-mid-bg);
+    }
+    .chip[data-rel="bad"]{
+      border-color: var(--rel-bad-border);
+      background: var(--rel-bad-bg);
+    }
+    .chip[data-rel="good"][aria-pressed="true"]{
+      background: var(--rel-good-border);
+      border-color: var(--rel-good-border);
       color: #fff;
-      border-color: var(--accent);
+    }
+    .chip[data-rel="mid"][aria-pressed="true"]{
+      background: var(--rel-mid-border);
+      border-color: var(--rel-mid-border);
+      color: #fff;
+    }
+    .chip[data-rel="bad"][aria-pressed="true"]{
+      background: var(--rel-bad-border);
+      border-color: var(--rel-bad-border);
+      color: #fff;
     }
 
     /* Link groups */
