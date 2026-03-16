@@ -425,9 +425,23 @@
 
       </div>
 
-      <!-- Danger zone -->
-      <div class="danger-zone">
+      <!-- Gestion -->
+      <div style="margin-top:12px;padding-top:20px;border-top:1px solid var(--border);">
         <div class="console-links">
+
+          <a href="#" class="console-link" id="duplicateLink">
+            <div class="console-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </div>
+            <div class="console-link-body">
+              <div class="console-link-name">Dupliquer cette séance</div>
+              <div class="console-link-desc">Copie les paramètres et les CERTs assignés</div>
+            </div>
+            <span class="console-link-arrow">&rarr;</span>
+          </a>
+
           <a href="#" class="console-link danger-link" id="deleteLink">
             <div class="console-link-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -440,6 +454,7 @@
             </div>
             <span class="console-link-arrow">&rarr;</span>
           </a>
+
         </div>
       </div>
     </div>
@@ -552,6 +567,12 @@
         document.getElementById("feed2Link").addEventListener("click", (e) => {
           e.preventDefault();
           openFeed2(s.code);
+        });
+
+        // Duplicate
+        document.getElementById("duplicateLink").addEventListener("click", (e) => {
+          e.preventDefault();
+          duplicateSession(s.id, s.name);
         });
 
         // Delete
@@ -678,6 +699,33 @@
         try { main.close(); } catch {}
         alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
         return;
+      }
+    }
+
+    // Duplicate session
+    async function duplicateSession(sessionId, originalName) {
+      const newName = prompt(`Nom de la nouvelle séance :`, `${originalName} (copie)`);
+      if (!newName || !newName.trim()) return;
+
+      if (newName.trim() === originalName) {
+        alert("Le nom doit être différent de la séance originale.");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/sessions/duplicate.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ session_id: sessionId, name: newName.trim() })
+        });
+        const result = await res.json();
+        if (result.error) {
+          alert("Erreur : " + result.error);
+        } else {
+          window.location.href = `/session.html?id=${result.id}&code=${enc(result.code)}`;
+        }
+      } catch (err) {
+        alert("Erreur : " + err.message);
       }
     }
 

@@ -496,7 +496,7 @@
     async function init() {
       try {
         const [certsRes, sessionsRes] = await Promise.all([
-          fetch(`${API}/certs/depot.php`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/certs/list.php`, { headers: { Authorization: `Bearer ${token}` } }),
           fetch(`${API}/sessions/list.php`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
 

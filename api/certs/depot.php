@@ -13,7 +13,7 @@ $db = getDB();
 $stmt = $db->prepare('
     SELECT c.*, t.name AS teacher_name
     FROM certs c
-    JOIN teachers t ON t.id = c.teacher_id
+    LEFT JOIN teachers t ON t.id = c.teacher_id
     ORDER BY c.created_at DESC
 ');
 $stmt->execute();
