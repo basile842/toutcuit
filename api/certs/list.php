@@ -1,5 +1,5 @@
 <?php
-// GET — Teacher's own CERTs + shared (fonds commun)
+// GET — All CERTs (tagged with is_mine for the authenticated teacher)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
 
@@ -10,15 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $teacherId = getTeacherId();
 $db = getDB();
 
-// Own CERTs + all shared CERTs (deduplicated by UNION)
 $stmt = $db->prepare('
     SELECT c.*, t.name AS teacher_name
     FROM certs c
-    JOIN teachers t ON t.id = c.teacher_id
-    WHERE c.teacher_id = ? OR c.is_shared = 1
+    LEFT JOIN teachers t ON t.id = c.teacher_id
     ORDER BY c.created_at DESC
 ');
-$stmt->execute([$teacherId]);
+$stmt->execute();
 
 $certs = $stmt->fetchAll();
 
