@@ -60,8 +60,13 @@ if (!empty($data['id'])) {
     jsonResponse(['id' => $certId, 'updated' => true]);
 }
 
-// Create new CERT
+// Create new CERT — store teacher name so it survives account deletion
 $fields['teacher_id'] = $teacherId;
+
+$stmt = $db->prepare('SELECT name FROM teachers WHERE id = ?');
+$stmt->execute([$teacherId]);
+$teacher = $stmt->fetch();
+$fields['teacher_name'] = $teacher ? $teacher['name'] : null;
 
 $cols = array_keys($fields);
 $placeholders = array_fill(0, count($cols), '?');

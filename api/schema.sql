@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS teacher_school (
 -- CERTs (fonds commun + privés)
 CREATE TABLE IF NOT EXISTS certs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    teacher_id INT NOT NULL,
+    teacher_id INT,
+    teacher_name VARCHAR(100),
     title VARCHAR(500) NOT NULL,
     url VARCHAR(2000) NOT NULL,
     expert VARCHAR(200),
@@ -47,7 +48,7 @@ CREATE TABLE IF NOT EXISTS certs (
     references_text TEXT,
     is_shared BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Sessions

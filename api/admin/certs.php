@@ -8,7 +8,7 @@ $db = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt = $db->query('
-        SELECT c.*, t.name AS teacher_name
+        SELECT c.*, COALESCE(c.teacher_name, t.name) AS teacher_name
         FROM certs c
         LEFT JOIN teachers t ON t.id = c.teacher_id
         ORDER BY c.created_at DESC

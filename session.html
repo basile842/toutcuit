@@ -608,7 +608,7 @@
 
         const allCerts = await certsRes.json();
         const assignedCerts = await assignedRes.json();
-        const assignedIds = new Set((Array.isArray(assignedCerts) ? assignedCerts : []).map(c => c.id));
+        const checkedIds = new Set((Array.isArray(assignedCerts) ? assignedCerts : []).map(c => c.id));
 
         if (!Array.isArray(allCerts) || !allCerts.length) {
           panel.innerHTML = "<div style='color:var(--muted);font-size:.85rem;'>Aucun CERT disponible. Ajoutez-en via la page CERTs.</div>";
@@ -616,33 +616,97 @@
         }
 
         const REL = { good: "Fiable", mid: "Indéterminé", bad: "Non fiable" };
+        let searchTerms = [];
 
         panel.innerHTML = `
           <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;">
             Sélectionnez les CERTs pour cette séance :
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            ${allCerts.map(c => `
-              <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
-                <input type="checkbox" value="${c.id}" ${assignedIds.has(c.id) ? "checked" : ""} class="cert-check">
-                <span style="flex:1;font-weight:600;">${esc(c.title)}</span>
-                <span style="font-size:.75rem;color:var(--muted);">${esc(REL[c.reliability] || c.reliability)}</span>
-                ${c.is_mine ? "" : '<span style="font-size:.7rem;color:var(--accent);font-weight:700;">partagé</span>'}
-              </label>
-            `).join("")}
+          <div id="certSearchBox" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.95);margin-bottom:10px;cursor:text;">
+            <input type="text" id="certSearchInput" placeholder="Rechercher par titre, descripteur..." style="flex:1 1 100px;border:none;outline:none;background:transparent;font-size:.85rem;color:var(--text);padding:4px 0;min-width:80px;" />
           </div>
+          <div id="certsList" style="display:flex;flex-direction:column;gap:6px;"></div>
           <div style="margin-top:10px;">
             <button class="btn-secondary" id="saveCertsBtn">Enregistrer</button>
           </div>
         `;
 
+        function renderCertsList() {
+          const list = document.getElementById("certsList");
+          const filtered = allCerts.filter(c => {
+            if (!searchTerms.length) return true;
+            const haystack = [c.title, c.descriptor1, c.descriptor2, c.teacher_name, c.expert]
+              .filter(Boolean).join(" ").toLowerCase();
+            return searchTerms.every(t => haystack.includes(t));
+          });
+
+          list.innerHTML = filtered.map(c => `
+            <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
+              <input type="checkbox" value="${c.id}" ${checkedIds.has(c.id) ? "checked" : ""} class="cert-check">
+              <span style="flex:1;font-weight:600;">${esc(c.title)}</span>
+              <span style="font-size:.75rem;color:var(--muted);">${esc(REL[c.reliability] || c.reliability)}</span>
+              ${c.is_mine ? "" : '<span style="font-size:.7rem;color:var(--accent);font-weight:700;">partagé</span>'}
+            </label>
+          `).join("");
+
+          list.querySelectorAll(".cert-check").forEach(cb => {
+            cb.addEventListener("change", () => {
+              const id = parseInt(cb.value);
+              if (cb.checked) checkedIds.add(id); else checkedIds.delete(id);
+            });
+          });
+        }
+
+        function renderChips() {
+          const box = document.getElementById("certSearchBox");
+          box.querySelectorAll(".search-chip").forEach(el => el.remove());
+          const input = document.getElementById("certSearchInput");
+          searchTerms.forEach(term => {
+            const chip = document.createElement("span");
+            chip.className = "search-chip";
+            chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 10px;border-radius:7px;background:rgba(111,92,247,.1);border:1px solid rgba(111,92,247,.25);color:var(--text);font-size:.8rem;font-weight:600;white-space:nowrap;";
+            chip.innerHTML = `${esc(term)}<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;line-height:1;padding:0 2px;border-radius:4px;">&times;</button>`;
+            chip.querySelector("button").addEventListener("click", () => {
+              searchTerms = searchTerms.filter(t => t !== term);
+              renderChips();
+              renderCertsList();
+            });
+            box.insertBefore(chip, input);
+          });
+          input.placeholder = searchTerms.length ? "Ajouter un critère..." : "Rechercher par titre, descripteur...";
+        }
+
+        document.getElementById("certSearchInput").addEventListener("keydown", (e) => {
+          const input = e.target;
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const term = input.value.trim().toLowerCase();
+            if (term && !searchTerms.includes(term)) {
+              searchTerms.push(term);
+              renderChips();
+              renderCertsList();
+            }
+            input.value = "";
+          }
+          if (e.key === "Backspace" && !input.value && searchTerms.length) {
+            searchTerms.pop();
+            renderChips();
+            renderCertsList();
+          }
+        });
+
+        document.getElementById("certSearchBox").addEventListener("click", () => {
+          document.getElementById("certSearchInput").focus();
+        });
+
+        renderCertsList();
+
         document.getElementById("saveCertsBtn")?.addEventListener("click", async () => {
-          const checked = [...panel.querySelectorAll(".cert-check:checked")].map(cb => parseInt(cb.value));
           try {
             const res = await fetch(`${API}/sessions/certs.php`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify({ session_id: sessionId, certs: checked })
+              body: JSON.stringify({ session_id: sessionId, certs: [...checkedIds] })
             });
             const result = await res.json();
             if (result.error) {
