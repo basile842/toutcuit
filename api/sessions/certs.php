@@ -33,8 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $params = [$session['id']];
 
     if (!$showAll && $visibleLinks > 0) {
-        $sql .= ' LIMIT ?';
-        $params[] = $visibleLinks;
+        $sql .= ' LIMIT ' . $visibleLinks;
     }
 
     $stmt = $db->prepare($sql);
