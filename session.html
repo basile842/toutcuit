@@ -350,9 +350,101 @@
       background: rgba(239,68,68,.18);
     }
 
+    /* Reorder panel */
+    .reorder-panel {
+      display: none;
+      margin-top: 12px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .reorder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .reorder-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--panel-2);
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      user-select: none;
+      transition: border-color .15s, box-shadow .15s, opacity .15s;
+    }
+
+    .reorder-item.is-dragging {
+      opacity: .35;
+    }
+
+    .reorder-item.drag-over-above {
+      border-top-color: var(--accent);
+      box-shadow: 0 -2px 0 0 var(--accent);
+    }
+
+    .reorder-item.drag-over-below {
+      border-bottom-color: var(--accent);
+      box-shadow: 0 2px 0 0 var(--accent);
+    }
+
+    .reorder-handle {
+      color: var(--muted);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      cursor: grab;
+      opacity: .5;
+      line-height: 1;
+      letter-spacing: 1px;
+    }
+
+    .reorder-handle:active { cursor: grabbing; }
+
+    .reorder-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .reorder-title {
+      flex: 1;
+      font-size: .88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .reorder-host {
+      font-size: .72rem;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .reorder-empty {
+      color: var(--muted);
+      font-size: .85rem;
+      padding: 8px 0;
+    }
+
     @media (max-width: 500px) {
       .console-link-desc { display: none; }
       .session-info { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .reorder-host { display: none; }
     }
   </style>
 </head>
@@ -398,6 +490,24 @@
         </a>
 
         <div class="certs-panel" id="certsPanel"></div>
+
+        <a href="#" class="console-link" id="reorderLink">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="13" y2="6"/><line x1="3" y1="12" x2="13" y2="12"/>
+              <line x1="3" y1="18" x2="13" y2="18"/>
+              <polyline points="17 4 20 1 23 4"/><line x1="20" y1="1" x2="20" y2="14"/>
+              <polyline points="17 20 20 23 23 20"/><line x1="20" y1="10" x2="20" y2="23"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Ordre des liens</div>
+            <div class="console-link-desc">Réorganiser l'ordre d'apparition par glisser-déposer</div>
+          </div>
+          <span class="console-link-arrow">&rarr;</span>
+        </a>
+
+        <div class="reorder-panel" id="reorderPanel"></div>
 
         <a href="#" class="console-link" id="liensLink">
           <div class="console-link-icon">
@@ -719,6 +829,12 @@
           manageCerts(s.id, s.code);
         });
 
+        // Reorder links
+        document.getElementById("reorderLink").addEventListener("click", (e) => {
+          e.preventDefault();
+          reorderLinks(s.id, s.code);
+        });
+
         // Feed 2 fenêtres
         document.getElementById("feed2Link").addEventListener("click", (e) => {
           e.preventDefault();
@@ -881,6 +997,177 @@
             alert("Erreur : " + err.message);
           }
         });
+      } catch (err) {
+        panel.innerHTML = `<div style='color:#b91c1c;font-size:.85rem;'>Erreur: ${esc(err.message)}</div>`;
+      }
+    }
+
+    // Reorder links (drag-and-drop)
+    async function reorderLinks(sessionId, sessionCode) {
+      const panel = document.getElementById("reorderPanel");
+
+      if (panel.style.display === "block") {
+        panel.style.display = "none";
+        return;
+      }
+
+      panel.style.display = "block";
+      panel.innerHTML = "<div class='reorder-empty'>Chargement...</div>";
+
+      try {
+        const res = await fetch(
+          `${API}/sessions/certs.php?session=${encodeURIComponent(sessionCode)}&all=1`,
+          { cache: "no-store" }
+        );
+        const certs = await res.json();
+
+        if (!Array.isArray(certs) || !certs.length) {
+          panel.innerHTML = "<div class='reorder-empty'>Aucun CERT assigné à cette séance.</div>";
+          return;
+        }
+
+        // Sort by current position
+        const items = certs
+          .map((c, i) => ({
+            certId: c.id,
+            title: c.title || "(Sans titre)",
+            url: c.url || "",
+            position: c.position ?? i
+          }))
+          .sort((a, b) => a.position - b.position);
+
+        function getHost(url) {
+          try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+        }
+
+        panel.innerHTML = `
+          <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:10px;">
+            Glissez-déposez pour réorganiser l'ordre des liens :
+          </div>
+          <div class="reorder-list" id="reorderList"></div>
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+            <button class="btn-secondary" id="saveOrderBtn">Enregistrer l'ordre</button>
+            <span id="orderStatus" style="font-size:.82rem;color:var(--muted);"></span>
+          </div>
+        `;
+
+        const listEl = document.getElementById("reorderList");
+        let dragEl = null;
+
+        function renderList() {
+          listEl.innerHTML = items.map((item, i) => `
+            <div class="reorder-item" draggable="true" data-cert-id="${item.certId}">
+              <span class="reorder-handle">⠿</span>
+              <span class="reorder-num">${i + 1}</span>
+              <span class="reorder-title">${esc(item.title)}</span>
+              <span class="reorder-host">${esc(getHost(item.url))}</span>
+            </div>
+          `).join("");
+
+          attachDragEvents();
+        }
+
+        function updateNumbers() {
+          listEl.querySelectorAll(".reorder-item").forEach((el, i) => {
+            el.querySelector(".reorder-num").textContent = i + 1;
+          });
+        }
+
+        function clearIndicators() {
+          listEl.querySelectorAll(".reorder-item").forEach(el => {
+            el.classList.remove("drag-over-above", "drag-over-below");
+          });
+        }
+
+        function attachDragEvents() {
+          listEl.querySelectorAll(".reorder-item").forEach(el => {
+
+            el.addEventListener("dragstart", (e) => {
+              dragEl = el;
+              el.classList.add("is-dragging");
+              e.dataTransfer.effectAllowed = "move";
+              // Required for Firefox
+              e.dataTransfer.setData("text/plain", "");
+            });
+
+            el.addEventListener("dragend", () => {
+              if (dragEl) dragEl.classList.remove("is-dragging");
+              clearIndicators();
+              dragEl = null;
+            });
+
+            el.addEventListener("dragover", (e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (!dragEl || dragEl === el) return;
+
+              clearIndicators();
+
+              const rect = el.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              const above = e.clientY < midY;
+
+              el.classList.add(above ? "drag-over-above" : "drag-over-below");
+            });
+
+            el.addEventListener("drop", (e) => {
+              e.preventDefault();
+              if (!dragEl || dragEl === el) return;
+
+              const rect = el.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              const above = e.clientY < midY;
+
+              if (above) {
+                listEl.insertBefore(dragEl, el);
+              } else {
+                listEl.insertBefore(dragEl, el.nextSibling);
+              }
+
+              clearIndicators();
+              updateNumbers();
+            });
+          });
+        }
+
+        renderList();
+
+        // Save button
+        document.getElementById("saveOrderBtn").addEventListener("click", async () => {
+          const domItems = listEl.querySelectorAll(".reorder-item");
+          const ordered = [];
+          domItems.forEach((el, i) => {
+            ordered.push({ cert_id: parseInt(el.dataset.certId), position: i });
+          });
+
+          const statusEl = document.getElementById("orderStatus");
+          statusEl.textContent = "Enregistrement...";
+
+          try {
+            const res = await fetch(`${API}/sessions/certs.php`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ session_id: sessionId, certs: ordered })
+            });
+            const result = await res.json();
+            if (result.error) {
+              statusEl.textContent = "";
+              alert("Erreur : " + result.error);
+            } else {
+              statusEl.textContent = "Ordre enregistré !";
+              statusEl.style.color = "#166534";
+              setTimeout(() => {
+                statusEl.textContent = "";
+                statusEl.style.color = "var(--muted)";
+                panel.style.display = "none";
+              }, 1200);
+            }
+          } catch (err) {
+            statusEl.textContent = "";
+            alert("Erreur : " + err.message);
+          }
+        });
+
       } catch (err) {
         panel.innerHTML = `<div style='color:#b91c1c;font-size:.85rem;'>Erreur: ${esc(err.message)}</div>`;
       }

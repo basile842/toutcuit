@@ -1583,8 +1583,105 @@
       updateUI();
     })();
 
+    /* ============================
+       Polling — detect new student responses
+       Interval: 10s with ±2s jitter, pauses when tab hidden
+    ============================ */
+    let _pollTimer = null;
+    let _pollInterval = 10000;
+    let _pollBackoff = 1;
+    let _lastResponseCount = null;
+    let _lastPollUpdate = null;
+    let _lastEtag = null;
+
+    async function pollForUpdates(){
+      if (!SESSION_CODE) return;
+      try {
+        const headers = {};
+        if (_lastEtag) headers["If-None-Match"] = _lastEtag;
+
+        const res = await fetch(
+          `${API_BASE}/sessions/poll.php?session=${encodeURIComponent(SESSION_CODE)}`,
+          { cache: "no-store", headers }
+        );
+
+        if (res.status === 304) {
+          _pollBackoff = 1;
+          return;
+        }
+
+        if (!res.ok) throw new Error(`Poll HTTP ${res.status}`);
+
+        _lastEtag = res.headers.get("ETag") || null;
+        const data = await res.json();
+        _pollBackoff = 1;
+
+        const newCount = data.response_count ?? null;
+        const newUpdate = data.last_update ?? null;
+
+        const changed = (_lastResponseCount !== null && newCount !== _lastResponseCount)
+                     || (_lastPollUpdate !== null && newUpdate !== _lastPollUpdate);
+
+        if (changed) {
+          console.log(`[poll] responses changed: ${_lastResponseCount} → ${newCount}`);
+          await loadAll();
+        }
+
+        _lastResponseCount = newCount;
+        _lastPollUpdate = newUpdate;
+
+      } catch(err) {
+        console.warn("[poll] error:", err.message);
+        _pollBackoff = Math.min(_pollBackoff * 2, 4);
+      }
+    }
+
+    function schedulePoll(){
+      if (_pollTimer) clearTimeout(_pollTimer);
+      const jitter = (Math.random() * 4000) - 2000;
+      const delay = (_pollInterval * _pollBackoff) + jitter;
+      _pollTimer = setTimeout(async () => {
+        await pollForUpdates();
+        schedulePoll();
+      }, Math.max(5000, delay));
+    }
+
+    function startPolling(){
+      if (_pollTimer) return;
+      schedulePoll();
+    }
+
+    function stopPolling(){
+      if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") stopPolling();
+      else startPolling();
+    });
+
+    /* ============================
+       Init
+    ============================ */
     try{
       await loadAll();
+
+      // Capture initial state and start polling
+      if (SESSION_CODE) {
+        try {
+          const initRes = await fetch(
+            `${API_BASE}/sessions/poll.php?session=${encodeURIComponent(SESSION_CODE)}`,
+            { cache: "no-store" }
+          );
+          if (initRes.ok) {
+            const initData = await initRes.json();
+            _lastResponseCount = initData.response_count ?? null;
+            _lastPollUpdate = initData.last_update ?? null;
+            _lastEtag = initRes.headers.get("ETag") || null;
+          }
+        } catch {}
+        startPolling();
+      }
     }catch(err){
       console.error(err);
       if (feedEl) {

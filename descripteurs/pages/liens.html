@@ -1354,12 +1354,97 @@
     });
 
     /* ============================
+       Polling — detect visible_links changes from teacher
+       Interval: 15s with ±2s jitter, pauses when tab hidden
+    ============================ */
+    let _pollTimer = null;
+    let _pollInterval = 15000;
+    let _pollBackoff = 1;
+    let _lastVisibleLinks = null;
+    let _lastEtag = null;
+
+    async function pollForUpdates(){
+      if (!SESSION_CODE) return;
+      try {
+        const headers = {};
+        if (_lastEtag) headers["If-None-Match"] = _lastEtag;
+
+        const res = await fetch(
+          `${API_BASE}/sessions/poll.php?session=${encodeURIComponent(SESSION_CODE)}`,
+          { cache: "no-store", headers }
+        );
+
+        if (res.status === 304) {
+          _pollBackoff = 1;
+          return; // nothing changed
+        }
+
+        if (!res.ok) throw new Error(`Poll HTTP ${res.status}`);
+
+        _lastEtag = res.headers.get("ETag") || null;
+        const data = await res.json();
+        _pollBackoff = 1;
+
+        const newVisible = data.visible_links ?? null;
+        if (_lastVisibleLinks !== null && newVisible !== _lastVisibleLinks) {
+          console.log(`[poll] visible_links changed: ${_lastVisibleLinks} → ${newVisible}`);
+          await loadFromSheet();
+        }
+        _lastVisibleLinks = newVisible;
+
+      } catch(err) {
+        console.warn("[poll] error:", err.message);
+        _pollBackoff = Math.min(_pollBackoff * 2, 4); // max 60s
+      }
+    }
+
+    function schedulePoll(){
+      if (_pollTimer) clearTimeout(_pollTimer);
+      const jitter = (Math.random() * 4000) - 2000; // ±2s
+      const delay = (_pollInterval * _pollBackoff) + jitter;
+      _pollTimer = setTimeout(async () => {
+        await pollForUpdates();
+        schedulePoll();
+      }, Math.max(5000, delay));
+    }
+
+    function startPolling(){
+      if (_pollTimer) return;
+      schedulePoll();
+    }
+
+    function stopPolling(){
+      if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") stopPolling();
+      else startPolling();
+    });
+
+    /* ============================
        Init
     ============================ */
     try{
       ensureUserId();
       await loadFromSheet();
       if (isAdmin) renderAdminInspector();
+
+      // Capture initial visible_links and start polling
+      if (SESSION_CODE) {
+        try {
+          const initRes = await fetch(
+            `${API_BASE}/sessions/poll.php?session=${encodeURIComponent(SESSION_CODE)}`,
+            { cache: "no-store" }
+          );
+          if (initRes.ok) {
+            const initData = await initRes.json();
+            _lastVisibleLinks = initData.visible_links ?? null;
+            _lastEtag = initRes.headers.get("ETag") || null;
+          }
+        } catch {}
+        startPolling();
+      }
     }catch(err){
       console.error(err);
       if (listEl) {
