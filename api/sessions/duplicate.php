@@ -53,8 +53,8 @@ $db->beginTransaction();
 try {
     // Create new session with same settings
     $stmt = $db->prepare('
-        INSERT INTO sessions (teacher_id, school_id, name, code, is_open, collector_open, max_collect)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO sessions (teacher_id, school_id, name, code, is_open, collector_open, max_collect, visible_links)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $stmt->execute([
         $teacherId,
@@ -64,6 +64,7 @@ try {
         $original['is_open'],
         $original['collector_open'],
         $original['max_collect'],
+        $original['visible_links'] ?? 0,
     ]);
 
     $newId = (int) $db->lastInsertId();

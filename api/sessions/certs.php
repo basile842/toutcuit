@@ -13,21 +13,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         jsonError('Missing session code');
     }
 
-    $stmt = $db->prepare('SELECT id FROM sessions WHERE code = ?');
+    $stmt = $db->prepare('SELECT id, visible_links FROM sessions WHERE code = ?');
     $stmt->execute([$code]);
     $session = $stmt->fetch();
     if (!$session) {
         jsonError('Session not found', 404);
     }
 
-    $stmt = $db->prepare('
+    $showAll = isset($_GET['all']) && $_GET['all'] === '1';
+    $visibleLinks = (int) ($session['visible_links'] ?? 0);
+
+    $sql = '
         SELECT c.*, sc.position
         FROM session_certs sc
         JOIN certs c ON c.id = sc.cert_id
         WHERE sc.session_id = ?
         ORDER BY sc.position
-    ');
-    $stmt->execute([$session['id']]);
+    ';
+    $params = [$session['id']];
+
+    if (!$showAll && $visibleLinks > 0) {
+        $sql .= ' LIMIT ?';
+        $params[] = $visibleLinks;
+    }
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
 
     jsonResponse($stmt->fetchAll());
 

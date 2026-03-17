@@ -38,7 +38,7 @@ if (array_key_exists('school_name', $data)) {
 }
 
 // Build dynamic update
-$allowed = ['collector_open', 'is_open', 'max_collect', 'name'];
+$allowed = ['collector_open', 'is_open', 'max_collect', 'name', 'visible_links'];
 $sets = [];
 $params = [];
 

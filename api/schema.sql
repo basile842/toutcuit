@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     is_open BOOLEAN DEFAULT TRUE,
     collector_open BOOLEAN DEFAULT FALSE,
     max_collect INT DEFAULT 2,
+    visible_links INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE

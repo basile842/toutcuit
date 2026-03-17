@@ -826,7 +826,7 @@
     async function loadCertsData(){
       if (!SESSION_CODE) return;
       try{
-        const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
+        const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}&all=1`, { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load CERTs");
 
         const certs = await res.json();

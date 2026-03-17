@@ -271,6 +271,54 @@
 
     .btn-secondary:hover { border-color: var(--accent); }
 
+    /* Visible links stepper */
+    .visible-stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .stepper-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      border: 1.5px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+
+    .stepper-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .stepper-btn:disabled {
+      opacity: .3;
+      cursor: default;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
+    .stepper-value {
+      min-width: 46px;
+      text-align: center;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: 7px;
+      background: rgba(111,92,247,.08);
+      border: 1px solid rgba(111,92,247,.2);
+    }
+
     /* Collector status badge */
     .collector-status {
       font-size: .78rem;
@@ -358,7 +406,7 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Liens</div>
+            <div class="console-link-name">Liens (vue élève)</div>
             <div class="console-link-desc">Voir les liens de la séance</div>
           </div>
           <span class="console-link-arrow">&rarr;</span>
@@ -379,6 +427,24 @@
           </div>
           <span class="console-link-arrow">&rarr;</span>
         </a>
+
+        <div class="console-link" id="visibleLinksControl">
+          <div class="console-link-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="console-link-body">
+            <div class="console-link-name">Liens visibles</div>
+            <div class="console-link-desc">Nombre de liens affichés aux élèves</div>
+          </div>
+          <div class="visible-stepper">
+            <button class="stepper-btn" id="visibleMinus" type="button">&minus;</button>
+            <span class="stepper-value" id="visibleValue">Tous</span>
+            <button class="stepper-btn" id="visiblePlus" type="button">+</button>
+          </div>
+        </div>
 
         <a href="#" class="console-link" id="feedLink">
           <div class="console-link-icon">
@@ -592,6 +658,59 @@
           } catch (err) {
             alert("Erreur : " + err.message);
           }
+        });
+
+        // Visible links stepper
+        let visibleLinks = s.visible_links ?? 0;
+        let totalCerts = 0;
+
+        function updateVisibleUI() {
+          const valEl = document.getElementById("visibleValue");
+          valEl.textContent = visibleLinks === 0 ? "Tous" : visibleLinks;
+          document.getElementById("visibleMinus").disabled = visibleLinks <= 0;
+          document.getElementById("visiblePlus").disabled = totalCerts > 0 && visibleLinks >= totalCerts;
+        }
+
+        // Fetch total cert count to cap the stepper
+        fetch(`${API}/sessions/certs.php?session=${sc}&all=1`)
+          .then(r => r.json())
+          .then(certs => {
+            totalCerts = Array.isArray(certs) ? certs.length : 0;
+            if (visibleLinks > totalCerts && totalCerts > 0) {
+              visibleLinks = 0; // reset to "all" if exceeds
+            }
+            updateVisibleUI();
+          })
+          .catch(() => {});
+
+        updateVisibleUI();
+
+        async function saveVisibleLinks(val) {
+          try {
+            const res = await fetch(`${API}/sessions/update.php`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ session_id: s.id, visible_links: val })
+            });
+            const result = await res.json();
+            if (result.error) alert("Erreur : " + result.error);
+          } catch (err) {
+            alert("Erreur : " + err.message);
+          }
+        }
+
+        document.getElementById("visibleMinus").addEventListener("click", () => {
+          if (visibleLinks <= 0) return;
+          visibleLinks = visibleLinks === 1 ? 0 : visibleLinks - 1;
+          updateVisibleUI();
+          saveVisibleLinks(visibleLinks);
+        });
+
+        document.getElementById("visiblePlus").addEventListener("click", () => {
+          if (totalCerts > 0 && visibleLinks >= totalCerts) return;
+          visibleLinks = visibleLinks === 0 ? 1 : visibleLinks + 1;
+          updateVisibleUI();
+          saveVisibleLinks(visibleLinks);
         });
 
         // CERTs toggle

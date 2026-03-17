@@ -1151,7 +1151,8 @@
         return;
       }
 
-      const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
+      const allParam = isAdmin ? "&all=1" : "";
+      const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}${allParam}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Impossible de charger les CERTs de la séance");
 
       const certs = await res.json();
