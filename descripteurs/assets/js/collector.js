@@ -103,7 +103,7 @@ async function getCollectorStatus({ user_id, session_code }){
   // Adapter la réponse au format attendu par l'UI
   return {
     ok: true,
-    enabled: data.collector_open,
+    enabled: data.is_open,
     remaining: data.remaining_collect ?? MAX_PER_USER,
     session_ok: true
   };
@@ -203,7 +203,7 @@ export function initCollector(){
 
       if (!payload.enabled){
         setRemaining(0);
-        setMsg("Collector fermé (le professeur l'a désactivé).", "err");
+        setMsg("Cette séance est fermée.", "err");
         return;
       }
 

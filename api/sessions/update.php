@@ -37,11 +37,6 @@ if (array_key_exists('school_name', $data)) {
     }
 }
 
-// Closing the session also closes the collector
-if (array_key_exists('is_open', $data) && !(int) $data['is_open']) {
-    $data['collector_open'] = 0;
-}
-
 // Build dynamic update
 $allowed = ['collector_open', 'is_open', 'max_collect', 'name', 'visible_links'];
 $sets = [];

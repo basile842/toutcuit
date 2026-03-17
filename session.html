@@ -350,27 +350,6 @@
       background: rgba(239,68,68,.18);
     }
 
-    /* Collector status badge (smaller, inline) */
-    .collector-status {
-      font-size: .72rem;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 5px;
-      flex-shrink: 0;
-    }
-
-    .collector-status.is-open {
-      background: rgba(34,197,94,.12);
-      color: #166534;
-      border: 1px solid rgba(34,197,94,.25);
-    }
-
-    .collector-status.is-closed {
-      background: rgba(239,68,68,.08);
-      color: #b91c1c;
-      border: 1px solid rgba(239,68,68,.2);
-    }
-
     @media (max-width: 500px) {
       .console-link-desc { display: none; }
       .session-info { flex-direction: column; align-items: flex-start; gap: 4px; }
@@ -519,7 +498,7 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Collector <span class="collector-status" id="collectorStatus"></span></div>
+            <div class="console-link-name">Collector</div>
             <div class="console-link-desc">Liens proposés par les élèves</div>
           </div>
           <span class="console-link-arrow">&rarr;</span>
@@ -610,11 +589,6 @@
       status.className = "session-status " + (isOpen ? "is-open" : "is-closed");
     }
 
-    function updateCollectorUI(isOpen) {
-      const status = document.getElementById("collectorStatus");
-      status.textContent = isOpen ? "ouvert" : "fermé";
-      status.className = "collector-status " + (isOpen ? "is-open" : "is-closed");
-    }
 
     // Load session info
     async function init() {
@@ -661,9 +635,7 @@
 
         // Session open/close status
         let sessionOpen = !!(s.is_open);
-        let collectorOpen = !!(s.collector_open);
         updateSessionStatusUI(sessionOpen);
-        updateCollectorUI(collectorOpen);
 
         // Click on session status badge to toggle open/close
         document.getElementById("sessionStatus").addEventListener("click", async () => {
@@ -674,23 +646,15 @@
           if (!confirm(msg)) return;
 
           try {
-            const payload = { session_id: s.id, is_open: newState ? 1 : 0 };
-            // Closing the session also closes the collector
-            if (!newState) payload.collector_open = 0;
-
             const res = await fetch(`${API}/sessions/update.php`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify(payload)
+              body: JSON.stringify({ session_id: s.id, is_open: newState ? 1 : 0 })
             });
             const result = await res.json();
             if (result.error) return alert("Erreur : " + result.error);
             sessionOpen = newState;
             updateSessionStatusUI(sessionOpen);
-            if (!newState) {
-              collectorOpen = false;
-              updateCollectorUI(false);
-            }
           } catch (err) {
             alert("Erreur : " + err.message);
           }

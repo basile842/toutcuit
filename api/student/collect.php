@@ -20,8 +20,8 @@ $session = $stmt->fetch();
 if (!$session) {
     jsonError('Session not found', 404);
 }
-if (!(int) $session['collector_open']) {
-    jsonError('Collector is closed for this session');
+if (!(int) $session['is_open']) {
+    jsonError('Session is closed');
 }
 
 $sessionId = (int) $session['id'];
