@@ -21,6 +21,21 @@
       max-width: 900px;
     }
 
+    .feed-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .feed-header h1 { margin: 0; }
+
+    .feed-header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .feed-controls{
       display: flex;
       gap: 10px;
@@ -617,7 +632,18 @@
   </header>
 
   <main>
-    <h1>Résultats</h1>
+    <div class="feed-header">
+      <h1>Résultats</h1>
+      <div class="feed-header-right">
+        <div class="visible-stepper" id="visibleLinksControl" style="display: none;">
+          <span class="stepper-label">Liens visibles</span>
+          <button class="stepper-btn" id="visibleMinus" type="button">&minus;</button>
+          <span class="stepper-value" id="visibleValue">Tous</span>
+          <button class="stepper-btn" id="visiblePlus" type="button">+</button>
+        </div>
+        <button class="btn" id="hardReloadBtn" type="button" style="padding:8px 10px;font-size:1.1rem;line-height:1;">↺</button>
+      </div>
+    </div>
 
     <section class="card">
       <div class="feed-controls">
@@ -627,13 +653,6 @@
           <button class="chip" data-rel="mid" aria-pressed="false" type="button">Indéterminé</button>
           <button class="chip" data-rel="bad" aria-pressed="false" type="button">Pas fiable</button>
         </div>
-        <div class="visible-stepper" id="visibleLinksControl" style="margin-left: auto; display: none;">
-          <span class="stepper-label">Liens visibles</span>
-          <button class="stepper-btn" id="visibleMinus" type="button">&minus;</button>
-          <span class="stepper-value" id="visibleValue">Tous</span>
-          <button class="stepper-btn" id="visiblePlus" type="button">+</button>
-        </div>
-        <button class="btn" id="hardReloadBtn" type="button">↺ Recharger</button>
       </div>
 
       <div id="loading" class="muted-note" style="margin-top: 14px;">Chargement en cours…</div>
@@ -656,8 +675,6 @@
     renderNav(location.pathname, SIDECAR_MODE ? { variant: "sidecar" } : {});
     if (SIDECAR_MODE) {
       document.documentElement.style.fontSize = "14px";
-      const reloadBtn = document.getElementById("hardReloadBtn");
-      if (reloadBtn) reloadBtn.textContent = "↺";
     }
 
     /* ============================
@@ -884,7 +901,7 @@
     async function loadCertsData(){
       if (!SESSION_CODE) return;
       try{
-        const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}&all=1`, { cache: "no-store" });
+        const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to load CERTs");
 
         const certs = await res.json();
@@ -1537,13 +1554,14 @@
         plusBtn.disabled = totalCerts > 0 && visibleLinks >= totalCerts;
       }
 
-      async function save(val) {
+      async function saveAndReload(val) {
         try {
           await fetch(`${API_BASE}/sessions/update.php`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ session_id: session.id, visible_links: val })
           });
+          await loadAll();
         } catch {}
       }
 
@@ -1551,14 +1569,14 @@
         if (visibleLinks <= 0) return;
         visibleLinks = visibleLinks === 1 ? 0 : visibleLinks - 1;
         updateUI();
-        save(visibleLinks);
+        saveAndReload(visibleLinks);
       });
 
       plusBtn.addEventListener("click", () => {
         if (totalCerts > 0 && visibleLinks >= totalCerts) return;
         visibleLinks = visibleLinks === 0 ? 1 : visibleLinks + 1;
         updateUI();
-        save(visibleLinks);
+        saveAndReload(visibleLinks);
       });
 
       control.style.display = "flex";
