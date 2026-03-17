@@ -435,6 +435,56 @@
       flex-shrink: 0;
     }
 
+    .reorder-item.is-hidden {
+      opacity: .40;
+      background: transparent;
+      border-style: dashed;
+    }
+
+    .reorder-item.is-hidden .reorder-num {
+      background: var(--muted);
+    }
+
+    .reorder-hidden-badge {
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .02em;
+      flex-shrink: 0;
+    }
+
+    .reorder-cutoff {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 0;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+    }
+
+    .reorder-cutoff-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      border-top: 1px dashed var(--muted);
+    }
+
+    .reorder-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .reorder-toolbar-label {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
     .reorder-empty {
       color: var(--muted);
       font-size: .85rem;
@@ -501,8 +551,8 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Ordre des liens</div>
-            <div class="console-link-desc">Réorganiser l'ordre d'apparition par glisser-déposer</div>
+            <div class="console-link-name">Gérer les liens</div>
+            <div class="console-link-desc">Ordre d'apparition et nombre de liens visibles</div>
           </div>
           <span class="console-link-arrow">&rarr;</span>
         </a>
@@ -517,45 +567,11 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Liens (vue élève)</div>
-            <div class="console-link-desc">Voir les liens de la séance</div>
+            <div class="console-link-name">Liens</div>
+            <div class="console-link-desc">Voir les liens de la séance (vue élève)</div>
           </div>
           <span class="console-link-arrow">&rarr;</span>
         </a>
-
-        <a href="#" class="console-link" id="liensAdminLink">
-          <div class="console-link-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              <circle cx="18" cy="18" r="4" fill="var(--panel-2)" stroke="currentColor"/>
-              <path d="M18 16.5v3M16.5 18h3"/>
-            </svg>
-          </div>
-          <div class="console-link-body">
-            <div class="console-link-name">Liens (admin)</div>
-            <div class="console-link-desc">Gérer les liens avec les droits admin</div>
-          </div>
-          <span class="console-link-arrow">&rarr;</span>
-        </a>
-
-        <div class="console-link" id="visibleLinksControl">
-          <div class="console-link-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </div>
-          <div class="console-link-body">
-            <div class="console-link-name">Liens visibles</div>
-            <div class="console-link-desc">Nombre de liens affichés aux élèves</div>
-          </div>
-          <div class="visible-stepper">
-            <button class="stepper-btn" id="visibleMinus" type="button">&minus;</button>
-            <span class="stepper-value" id="visibleValue">Tous</span>
-            <button class="stepper-btn" id="visiblePlus" type="button">+</button>
-          </div>
-        </div>
 
         <a href="#" class="console-link" id="feedLink">
           <div class="console-link-icon">
@@ -736,7 +752,6 @@
 
         // Set links
         document.getElementById("liensLink").href = `/descripteurs/pages/liens.html?session=${sc}`;
-        document.getElementById("liensAdminLink").href = `/descripteurs/pages/liens.html?session=${sc}&admin=1`;
         document.getElementById("feedLink").href = `/descripteurs/pages/feed.html?session=${sc}`;
         document.getElementById("scoresLink").href = `/descripteurs/pages/progress.html?session=${sc}`;
         document.getElementById("collectorLink").addEventListener("click", () => {
@@ -770,69 +785,16 @@
           }
         });
 
-        // Visible links stepper
-        let visibleLinks = s.visible_links ?? 0;
-        let totalCerts = 0;
-
-        function updateVisibleUI() {
-          const valEl = document.getElementById("visibleValue");
-          valEl.textContent = visibleLinks === 0 ? "Tous" : visibleLinks;
-          document.getElementById("visibleMinus").disabled = visibleLinks <= 0;
-          document.getElementById("visiblePlus").disabled = totalCerts > 0 && visibleLinks >= totalCerts;
-        }
-
-        // Fetch total cert count to cap the stepper
-        fetch(`${API}/sessions/certs.php?session=${sc}&all=1`)
-          .then(r => r.json())
-          .then(certs => {
-            totalCerts = Array.isArray(certs) ? certs.length : 0;
-            if (visibleLinks > totalCerts && totalCerts > 0) {
-              visibleLinks = 0; // reset to "all" if exceeds
-            }
-            updateVisibleUI();
-          })
-          .catch(() => {});
-
-        updateVisibleUI();
-
-        async function saveVisibleLinks(val) {
-          try {
-            const res = await fetch(`${API}/sessions/update.php`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify({ session_id: s.id, visible_links: val })
-            });
-            const result = await res.json();
-            if (result.error) alert("Erreur : " + result.error);
-          } catch (err) {
-            alert("Erreur : " + err.message);
-          }
-        }
-
-        document.getElementById("visibleMinus").addEventListener("click", () => {
-          if (visibleLinks <= 0) return;
-          visibleLinks = visibleLinks === 1 ? 0 : visibleLinks - 1;
-          updateVisibleUI();
-          saveVisibleLinks(visibleLinks);
-        });
-
-        document.getElementById("visiblePlus").addEventListener("click", () => {
-          if (totalCerts > 0 && visibleLinks >= totalCerts) return;
-          visibleLinks = visibleLinks === 0 ? 1 : visibleLinks + 1;
-          updateVisibleUI();
-          saveVisibleLinks(visibleLinks);
-        });
-
         // CERTs toggle
         document.getElementById("certsLink").addEventListener("click", (e) => {
           e.preventDefault();
           manageCerts(s.id, s.code);
         });
 
-        // Reorder links
+        // Manage links (reorder + visibility)
         document.getElementById("reorderLink").addEventListener("click", (e) => {
           e.preventDefault();
-          reorderLinks(s.id, s.code);
+          manageLinks(s);
         });
 
         // Feed 2 fenêtres
@@ -1002,8 +964,8 @@
       }
     }
 
-    // Reorder links (drag-and-drop)
-    async function reorderLinks(sessionId, sessionCode) {
+    // Manage links: reorder (drag-and-drop) + visible links stepper
+    async function manageLinks(session) {
       const panel = document.getElementById("reorderPanel");
 
       if (panel.style.display === "block") {
@@ -1016,7 +978,7 @@
 
       try {
         const res = await fetch(
-          `${API}/sessions/certs.php?session=${encodeURIComponent(sessionCode)}&all=1`,
+          `${API}/sessions/certs.php?session=${encodeURIComponent(session.code)}&all=1`,
           { cache: "no-store" }
         );
         const certs = await res.json();
@@ -1036,13 +998,22 @@
           }))
           .sort((a, b) => a.position - b.position);
 
+        const totalCerts = items.length;
+        let visibleLinks = session.visible_links ?? 0;
+
         function getHost(url) {
           try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
         }
 
         panel.innerHTML = `
-          <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:10px;">
-            Glissez-déposez pour réorganiser l'ordre des liens :
+          <div class="reorder-toolbar">
+            <span class="reorder-toolbar-label">Glissez-déposez pour réorganiser</span>
+            <div class="visible-stepper">
+              <span style="font-size:.78rem;font-weight:700;color:var(--muted);margin-right:2px;">Visibles</span>
+              <button class="stepper-btn" id="visibleMinus" type="button">&minus;</button>
+              <span class="stepper-value" id="visibleValue">Tous</span>
+              <button class="stepper-btn" id="visiblePlus" type="button">+</button>
+            </div>
           </div>
           <div class="reorder-list" id="reorderList"></div>
           <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
@@ -1053,6 +1024,72 @@
 
         const listEl = document.getElementById("reorderList");
         let dragEl = null;
+
+        // --- Visible links stepper ---
+
+        function updateVisibleUI() {
+          const valEl = document.getElementById("visibleValue");
+          valEl.textContent = visibleLinks === 0 ? "Tous" : visibleLinks;
+          document.getElementById("visibleMinus").disabled = visibleLinks <= 0;
+          document.getElementById("visiblePlus").disabled = visibleLinks >= totalCerts;
+          updateVisibility();
+        }
+
+        async function saveVisibleLinks(val) {
+          try {
+            await fetch(`${API}/sessions/update.php`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ session_id: session.id, visible_links: val })
+            });
+          } catch (err) {
+            alert("Erreur : " + err.message);
+          }
+        }
+
+        document.getElementById("visibleMinus").addEventListener("click", () => {
+          if (visibleLinks <= 0) return;
+          visibleLinks = visibleLinks === 1 ? 0 : visibleLinks - 1;
+          updateVisibleUI();
+          saveVisibleLinks(visibleLinks);
+        });
+
+        document.getElementById("visiblePlus").addEventListener("click", () => {
+          if (visibleLinks >= totalCerts) return;
+          visibleLinks = visibleLinks === 0 ? 1 : visibleLinks + 1;
+          updateVisibleUI();
+          saveVisibleLinks(visibleLinks);
+        });
+
+        // --- Reorder list ---
+
+        function updateVisibility() {
+          const allItems = listEl.querySelectorAll(".reorder-item");
+          const cutoff = visibleLinks === 0 ? totalCerts : visibleLinks;
+
+          // Remove existing cutoff marker
+          listEl.querySelector(".reorder-cutoff")?.remove();
+
+          allItems.forEach((el, i) => {
+            const hidden = i >= cutoff;
+            el.classList.toggle("is-hidden", hidden);
+            const badge = el.querySelector(".reorder-hidden-badge");
+            if (hidden && !badge) {
+              el.insertAdjacentHTML("beforeend", '<span class="reorder-hidden-badge">masqué</span>');
+            } else if (!hidden && badge) {
+              badge.remove();
+            }
+          });
+
+          // Insert cutoff line if some items are hidden
+          if (cutoff < totalCerts) {
+            const cutoffEl = document.createElement("div");
+            cutoffEl.className = "reorder-cutoff";
+            cutoffEl.innerHTML = `<span class="reorder-cutoff-line"></span><span>masqués</span><span class="reorder-cutoff-line"></span>`;
+            const firstHidden = listEl.querySelector(".reorder-item.is-hidden");
+            if (firstHidden) listEl.insertBefore(cutoffEl, firstHidden);
+          }
+        }
 
         function renderList() {
           listEl.innerHTML = items.map((item, i) => `
@@ -1065,12 +1102,14 @@
           `).join("");
 
           attachDragEvents();
+          updateVisibility();
         }
 
         function updateNumbers() {
           listEl.querySelectorAll(".reorder-item").forEach((el, i) => {
             el.querySelector(".reorder-num").textContent = i + 1;
           });
+          updateVisibility();
         }
 
         function clearIndicators() {
@@ -1086,7 +1125,6 @@
               dragEl = el;
               el.classList.add("is-dragging");
               e.dataTransfer.effectAllowed = "move";
-              // Required for Firefox
               e.dataTransfer.setData("text/plain", "");
             });
 
@@ -1114,6 +1152,9 @@
               e.preventDefault();
               if (!dragEl || dragEl === el) return;
 
+              // Remove cutoff line before reordering DOM
+              listEl.querySelector(".reorder-cutoff")?.remove();
+
               const rect = el.getBoundingClientRect();
               const midY = rect.top + rect.height / 2;
               const above = e.clientY < midY;
@@ -1131,8 +1172,9 @@
         }
 
         renderList();
+        updateVisibleUI();
 
-        // Save button
+        // Save order button
         document.getElementById("saveOrderBtn").addEventListener("click", async () => {
           const domItems = listEl.querySelectorAll(".reorder-item");
           const ordered = [];
@@ -1147,7 +1189,7 @@
             const res = await fetch(`${API}/sessions/certs.php`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify({ session_id: sessionId, certs: ordered })
+              body: JSON.stringify({ session_id: session.id, certs: ordered })
             });
             const result = await res.json();
             if (result.error) {

@@ -616,7 +616,8 @@
 
     <section class="card">
       <div class="admin-banner">⚠️ Mode admin actif — les boutons de réinitialisation sont visibles.</div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">
+        <button class="btn" id="resetAllBtn" type="button" title="Réinitialiser tous les résultats" style="padding:8px 12px;font-size:.82rem;line-height:1;font-weight:700;color:#b91c1c;border-color:rgba(239,68,68,.25);">Réinitialiser</button>
         <button class="btn" id="refreshLinksBtn" type="button" title="Recharger les liens" style="padding:8px 10px;font-size:1.1rem;line-height:1;">↺</button>
       </div>
       <div id="linksList"></div>
@@ -1347,6 +1348,23 @@
       document.getElementById("adminRefreshBtn")
         ?.addEventListener("click", renderAdminInspector);
     }
+
+    // Reset all results button
+    document.getElementById("resetAllBtn")?.addEventListener("click", async () => {
+      if (!confirm("Réinitialiser tous les résultats ?\n\nLes descripteurs choisis pour chaque lien seront effacés.")) return;
+
+      // Clear all certify_page_result_* entries from localStorage
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(STORAGE_PREFIX)) keysToRemove.push(key);
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+
+      // Re-render to show empty result boxes
+      try { await loadFromSheet(); } catch(e) { console.error(e); }
+      if (isAdmin) renderAdminInspector();
+    });
 
     // Refresh button — reloads links without losing stored results
     document.getElementById("refreshLinksBtn")?.addEventListener("click", async () => {
