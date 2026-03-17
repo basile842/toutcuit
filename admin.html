@@ -380,6 +380,26 @@
       padding: 14px;
     }
 
+    .session-status {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .session-status.is-open {
+      background: rgba(34,197,94,.12);
+      color: #166534;
+      border: 1px solid rgba(34,197,94,.25);
+    }
+
+    .session-status.is-closed {
+      background: rgba(239,68,68,.08);
+      color: #b91c1c;
+      border: 1px solid rgba(239,68,68,.2);
+    }
+
     @media (max-width: 500px) {
       .console-link-desc { display: none; }
     }
@@ -644,18 +664,21 @@
         if (!Array.isArray(sessions) || !sessions.length) {
           html += `<div class="empty-msg">Aucune séance.</div>`;
         } else {
-          html += sessions.map(s => `
+          html += sessions.map(s => {
+            const isOpen = !!(s.is_open);
+            return `
             <a href="/session.html?id=${s.id}&code=${enc(s.code)}" class="session-card">
               <div class="session-card-body">
                 <div class="session-card-header">
                   <span class="session-school">${esc(s.school_name || "")}</span>
                   <span class="session-name">${esc(s.name)}</span>
+                  <span class="session-status ${isOpen ? 'is-open' : 'is-closed'}">${isOpen ? 'ouverte' : 'fermée'}</span>
                   <button class="btn-copy-code" onclick="copyCode(event, this, '${esc(s.code)}')" title="Copier le code">${esc(s.code)}</button>
                 </div>
               </div>
               <span class="session-card-arrow">&rarr;</span>
-            </a>
-          `).join("");
+            </a>`;
+          }).join("");
         }
 
         sessionsList.innerHTML = html;

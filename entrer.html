@@ -165,7 +165,15 @@
           return;
         }
 
-        // Session exists — redirect to liens.html
+        // Check if session is open
+        if (!data.is_open) {
+          errorMsg.textContent = "Cette séance est fermée.";
+          errorMsg.style.display = "block";
+          input.select();
+          return;
+        }
+
+        // Session exists and is open — redirect to liens.html
         window.location.href = `/descripteurs/pages/liens.html?session=${encodeURIComponent(code)}`;
       } catch {
         errorMsg.textContent = "Erreur de connexion. Réessaye.";

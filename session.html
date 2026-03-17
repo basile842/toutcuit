@@ -319,8 +319,8 @@
       border: 1px solid rgba(111,92,247,.2);
     }
 
-    /* Collector status badge */
-    .collector-status {
+    /* Session status badge */
+    .session-status {
       font-size: .78rem;
       font-weight: 700;
       padding: 4px 12px;
@@ -330,24 +330,45 @@
       transition: all .15s;
     }
 
-    .collector-status.is-open {
+    .session-status.is-open {
       background: rgba(34,197,94,.15);
       color: #166534;
       border: 1px solid rgba(34,197,94,.35);
     }
 
-    .collector-status.is-open:hover {
+    .session-status.is-open:hover {
       background: rgba(34,197,94,.25);
     }
 
-    .collector-status.is-closed {
+    .session-status.is-closed {
       background: rgba(239,68,68,.1);
       color: #b91c1c;
       border: 1px solid rgba(239,68,68,.25);
     }
 
-    .collector-status.is-closed:hover {
+    .session-status.is-closed:hover {
       background: rgba(239,68,68,.18);
+    }
+
+    /* Collector status badge (smaller, inline) */
+    .collector-status {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .collector-status.is-open {
+      background: rgba(34,197,94,.12);
+      color: #166534;
+      border: 1px solid rgba(34,197,94,.25);
+    }
+
+    .collector-status.is-closed {
+      background: rgba(239,68,68,.08);
+      color: #b91c1c;
+      border: 1px solid rgba(239,68,68,.2);
     }
 
     @media (max-width: 500px) {
@@ -375,6 +396,7 @@
       <div class="session-info">
         <span class="session-info-name" id="sessionName"></span>
         <button class="session-info-code" id="sessionCode" title="Copier le code"></button>
+        <span class="session-status" id="sessionStatus" title="Cliquer pour ouvrir/fermer la séance"></span>
       </div>
     </div>
 
@@ -497,10 +519,10 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">Collector</div>
+            <div class="console-link-name">Collector <span class="collector-status" id="collectorStatus"></span></div>
             <div class="console-link-desc">Liens proposés par les élèves</div>
           </div>
-          <span class="collector-status" id="collectorStatus" title="Cliquer pour changer"></span>
+          <span class="console-link-arrow">&rarr;</span>
         </div>
 
       </div>
@@ -582,6 +604,12 @@
     }
     function enc(s) { return encodeURIComponent(s); }
 
+    function updateSessionStatusUI(isOpen) {
+      const status = document.getElementById("sessionStatus");
+      status.textContent = isOpen ? "ouverte" : "fermée";
+      status.className = "session-status " + (isOpen ? "is-open" : "is-closed");
+    }
+
     function updateCollectorUI(isOpen) {
       const status = document.getElementById("collectorStatus");
       status.textContent = isOpen ? "ouvert" : "fermé";
@@ -627,34 +655,42 @@
         document.getElementById("liensAdminLink").href = `/descripteurs/pages/liens.html?session=${sc}&admin=1`;
         document.getElementById("feedLink").href = `/descripteurs/pages/feed.html?session=${sc}`;
         document.getElementById("scoresLink").href = `/descripteurs/pages/progress.html?session=${sc}`;
-        document.getElementById("collectorLink").addEventListener("click", (e) => {
-          if (!e.target.closest(".collector-status")) {
-            window.location.href = `/collected.html?id=${s.id}&code=${enc(s.code)}`;
-          }
+        document.getElementById("collectorLink").addEventListener("click", () => {
+          window.location.href = `/collected.html?id=${s.id}&code=${enc(s.code)}`;
         });
 
-        // Collector status
+        // Session open/close status
+        let sessionOpen = !!(s.is_open);
         let collectorOpen = !!(s.collector_open);
+        updateSessionStatusUI(sessionOpen);
         updateCollectorUI(collectorOpen);
 
-        // Click on collector status badge to toggle
-        document.getElementById("collectorStatus").addEventListener("click", async () => {
-          const newState = !collectorOpen;
+        // Click on session status badge to toggle open/close
+        document.getElementById("sessionStatus").addEventListener("click", async () => {
+          const newState = !sessionOpen;
           const msg = newState
-            ? "Ouvrir le Collector ?\n\nLes élèves pourront soumettre des liens."
-            : "Fermer le Collector ?\n\nLes élèves ne pourront plus soumettre de liens.";
+            ? "Ouvrir la séance ?\n\nLes élèves pourront accéder à la séance et répondre aux CERTs."
+            : "Fermer la séance ?\n\nLes élèves ne pourront plus accéder à la séance, répondre aux CERTs, ni soumettre de liens.";
           if (!confirm(msg)) return;
 
           try {
+            const payload = { session_id: s.id, is_open: newState ? 1 : 0 };
+            // Closing the session also closes the collector
+            if (!newState) payload.collector_open = 0;
+
             const res = await fetch(`${API}/sessions/update.php`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify({ session_id: s.id, collector_open: newState ? 1 : 0 })
+              body: JSON.stringify(payload)
             });
             const result = await res.json();
             if (result.error) return alert("Erreur : " + result.error);
-            collectorOpen = newState;
-            updateCollectorUI(collectorOpen);
+            sessionOpen = newState;
+            updateSessionStatusUI(sessionOpen);
+            if (!newState) {
+              collectorOpen = false;
+              updateCollectorUI(false);
+            }
           } catch (err) {
             alert("Erreur : " + err.message);
           }
