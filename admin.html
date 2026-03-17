@@ -885,23 +885,24 @@
 
       const sc = encodeURIComponent(sessionCode);
 
+      // Window 1 (left): liens.html
       const main = window.open(
         `/descripteurs/pages/liens.html?session=${sc}`, FEED2_MAIN_NAME,
-        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},screenX=${X},screenY=${Y},resizable=yes,scrollbars=yes`
+        `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
-      try { main.moveTo(X, Y); main.resizeTo(mainW, H); main.focus(); } catch {}
+      try { main.focus(); } catch {}
 
+      // Window 2 (right): feed.html in sidecar mode
       const side = window.open(
         `/descripteurs/pages/feed.html?session=${sc}&mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
-        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},screenX=${sideLeft},screenY=${Y},resizable=yes,scrollbars=yes`
+        `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!side) {
         try { main.close(); } catch {}
         alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
         return;
       }
-      try { side.moveTo(sideLeft, Y); side.resizeTo(sideW, H); } catch {}
     }
 
     // Auto-login if token exists
