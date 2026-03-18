@@ -33,6 +33,7 @@
       line-height: 1.5;
     }
 
+    /* ── Login ── */
     .login-page {
       min-height: 100vh;
       display: flex;
@@ -40,7 +41,6 @@
       justify-content: center;
       padding: 24px 16px;
     }
-
     .login-card {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -53,30 +53,11 @@
       flex-direction: column;
       gap: 18px;
     }
+    .login-logo { font-size: 1.6rem; font-weight: 900; letter-spacing: -0.02em; color: var(--accent); }
+    .login-title { font-size: 1.1rem; font-weight: 700; }
 
-    .login-logo {
-      font-size: 1.6rem;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      color: var(--accent);
-    }
-
-    .login-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .field label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--muted);
-    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
 
     input[type="email"],
     input[type="password"],
@@ -91,7 +72,6 @@
       outline: none;
       transition: border-color .15s;
     }
-
     input:focus { border-color: var(--accent); }
 
     .btn-primary {
@@ -106,7 +86,6 @@
       cursor: pointer;
       transition: background .15s;
     }
-
     .btn-primary:hover { background: var(--accent-hover); }
 
     .error-msg {
@@ -118,8 +97,18 @@
       border-radius: 8px;
       padding: 8px 12px;
     }
+    .success-msg {
+      display: none;
+      font-size: 0.85rem;
+      color: #166534;
+      background: rgba(34,197,94,.08);
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+    }
 
-    /* Console */
+    /* ── Console ── */
     #consoleContent { display: none; }
 
     .console-header {
@@ -134,32 +123,11 @@
       top: 0;
       z-index: 10;
     }
-
-    .console-header-logo {
-      font-size: 1.2rem;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      color: var(--accent);
-    }
-
+    .console-header-logo { font-size: 1.2rem; font-weight: 900; letter-spacing: -0.02em; color: var(--accent); }
     .console-header-sep { color: var(--border); font-size: 1.2rem; }
-
-    .console-header-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--muted);
-    }
-
+    .console-header-title { font-size: 0.95rem; font-weight: 700; color: var(--muted); }
     .console-header-spacer { flex: 1; }
-
-    .console-header-logout {
-      font-size: 0.82rem;
-      color: var(--accent);
-      cursor: pointer;
-      border: none;
-      background: none;
-      font-weight: 600;
-    }
+    .console-header-logout { font-size: 0.82rem; color: var(--accent); cursor: pointer; border: none; background: none; font-weight: 600; }
 
     .console-main {
       max-width: 860px;
@@ -186,294 +154,73 @@
       padding: 20px;
       box-shadow: 0 2px 8px rgba(16,24,40,.05);
     }
-
-    .tool-card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 14px;
-    }
-
+    .tool-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
     .tool-card .field { margin-bottom: 12px; }
 
-    .success-msg {
-      display: none;
-      font-size: 0.85rem;
-      color: #166534;
-      background: rgba(34,197,94,.08);
-      border: 1px solid rgba(34,197,94,.25);
-      border-radius: 8px;
-      padding: 8px 12px;
-      margin-bottom: 10px;
+    /* ── Home cards ── */
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
     }
-
-    /* Teachers list */
-    .teachers-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 10px;
-    }
-
-    .teacher-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      font-size: 0.88rem;
-    }
-
-    .teacher-row-name {
-      font-weight: 700;
-      flex: 1;
-    }
-
-    .teacher-row-email {
-      color: var(--muted);
-      font-size: 0.82rem;
-    }
-
-    .teacher-row-date {
-      color: var(--muted);
-      font-size: 0.75rem;
-    }
-
-    .btn-delete {
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 7px;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 4px 10px;
-      transition: all .15s;
-    }
-
-    .btn-delete:hover {
-      color: #b91c1c;
-      border-color: rgba(239,68,68,.3);
-      background: rgba(239,68,68,.06);
-    }
-
-    .confirm-dialog {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,.35);
-      backdrop-filter: blur(4px);
-    }
-
-    .confirm-card {
+    .home-card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px 24px 20px;
-      max-width: 400px;
-      width: 90%;
-    }
-
-    .confirm-card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .confirm-card p {
-      font-size: 0.88rem;
-      color: var(--muted);
-      margin-bottom: 6px;
-      line-height: 1.5;
-    }
-
-    .confirm-card .warn {
-      font-size: 0.82rem;
-      color: #92400e;
-      background: rgba(245,158,11,.08);
-      border: 1px solid rgba(245,158,11,.25);
-      border-radius: 8px;
-      padding: 8px 12px;
-      margin: 10px 0 16px;
-    }
-
-    .confirm-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .btn-cancel {
-      padding: 8px 16px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: var(--panel);
-      font-size: 0.88rem;
-      font-weight: 600;
+      padding: 22px 20px;
+      box-shadow: 0 2px 8px rgba(16,24,40,.05);
       cursor: pointer;
-    }
-
-    .btn-danger {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 9px;
-      background: #dc2626;
-      color: #fff;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .15s;
-    }
-
-    .btn-danger:hover { background: #b91c1c; }
-
-    /* Cert rows */
-    .cert-row {
+      transition: border-color .15s, box-shadow .15s;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 10px 12px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      font-size: 0.85rem;
+      gap: 8px;
     }
+    .home-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(111,92,247,.12); }
+    .home-card-title { font-size: .95rem; font-weight: 800; }
+    .home-card-count { font-size: 1.6rem; font-weight: 900; color: var(--accent); }
+    .home-card-desc { font-size: .82rem; color: var(--muted); }
 
-    .cert-row-header {
+    /* ── View system ── */
+    .sa-view { display: none; }
+    .sa-view.active { display: block; }
+
+    .view-toolbar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
-
-    .cert-row-title {
+    .btn-back {
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: var(--panel);
+      font-size: .85rem;
       font-weight: 700;
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .cert-row-teacher {
-      font-size: 0.78rem;
-      color: var(--muted);
-    }
-
-    .cert-row-date {
-      color: var(--muted);
-      font-size: 0.75rem;
-      white-space: nowrap;
-    }
-
-    .cert-desc-tag {
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 1px 7px;
-      border-radius: 5px;
-    }
-
-    .cert-desc-tag.good { background: rgba(34,197,94,.30); color: #166534; border: 1px solid rgba(34,197,94,.75); }
-    .cert-desc-tag.mid  { background: rgba(249,115,22,.30); color: #9a3412; border: 1px solid rgba(249,115,22,.75); }
-    .cert-desc-tag.bad  { background: rgba(239,68,68,.32); color: #991b1b; border: 1px solid rgba(239,68,68,.80); }
-
-    .btn-edit {
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 7px;
-      color: var(--muted);
       cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 4px 10px;
+      color: var(--muted);
       transition: all .15s;
     }
+    .btn-back:hover { border-color: var(--accent); color: var(--accent); }
 
-    .btn-edit:hover {
-      color: var(--accent);
-      border-color: rgba(111,92,247,.3);
-      background: rgba(111,92,247,.06);
-    }
+    .view-title { font-size: 1.05rem; font-weight: 800; flex: 1; }
+    .view-count { font-size: .82rem; color: var(--muted); font-weight: 600; }
 
-    .cert-edit-form {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 6px;
-      padding: 10px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-
-    .cert-edit-form label {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    .cert-edit-form input,
-    .cert-edit-form textarea,
-    .cert-edit-form select {
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font-size: 0.85rem;
-      background: var(--bg);
-      color: var(--text);
-      outline: none;
-    }
-
-    .cert-edit-form textarea { resize: vertical; min-height: 40px; }
-    .cert-edit-form input:focus,
-    .cert-edit-form textarea:focus,
-    .cert-edit-form select:focus { border-color: var(--accent); }
-
-    .cert-edit-btns {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .cert-edit-btns button {
-      padding: 6px 14px;
-      border-radius: 7px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--panel);
-    }
-
-    .cert-edit-btns .btn-save {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
-    .cert-edit-btns .btn-save:hover { background: var(--accent-hover); }
-
-    /* Search chips */
+    /* ── Search box ── */
     .search-box {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       align-items: center;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border-radius: 9px;
       border: 1.5px solid var(--border);
-      background: var(--bg);
+      background: var(--panel);
       cursor: text;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       transition: border-color .15s;
     }
-
     .search-box:focus-within { border-color: var(--accent); }
-
     .search-box input {
       flex: 1 1 100px;
       border: none;
@@ -484,7 +231,6 @@
       padding: 4px 0;
       min-width: 80px;
     }
-
     .search-chip {
       display: inline-flex;
       align-items: center;
@@ -498,7 +244,6 @@
       font-weight: 600;
       white-space: nowrap;
     }
-
     .search-chip button {
       background: none;
       border: none;
@@ -510,10 +255,182 @@
       border-radius: 4px;
       transition: color .15s, background .15s;
     }
+    .search-chip button:hover { color: #b91c1c; background: rgba(239,68,68,.1); }
 
-    .search-chip button:hover {
-      color: #b91c1c;
-      background: rgba(239,68,68,.1);
+    /* ── List rows ── */
+    .list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.88rem;
+    }
+    .list-row-name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .list-row-meta { color: var(--muted); font-size: 0.82rem; }
+    .list-row-date { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
+    .list-row-code { font-size: .75rem; color: var(--muted); font-family: monospace; font-weight: 800; }
+
+    .btn-delete {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      transition: all .15s;
+    }
+    .btn-delete:hover { color: #b91c1c; border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.06); }
+
+    .btn-edit {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      transition: all .15s;
+    }
+    .btn-edit:hover { color: var(--accent); border-color: rgba(111,92,247,.3); background: rgba(111,92,247,.06); }
+
+    /* ── Cert rows ── */
+    .cert-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.85rem;
+    }
+    .cert-row-header { display: flex; align-items: center; gap: 10px; }
+    .cert-row-title { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cert-row-teacher { font-size: 0.78rem; color: var(--muted); }
+    .cert-row-date { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
+
+    .cert-desc-tag { font-size: 0.72rem; font-weight: 700; padding: 1px 7px; border-radius: 5px; }
+    .cert-desc-tag.good { background: rgba(34,197,94,.30); color: #166534; border: 1px solid rgba(34,197,94,.75); }
+    .cert-desc-tag.mid  { background: rgba(249,115,22,.30); color: #9a3412; border: 1px solid rgba(249,115,22,.75); }
+    .cert-desc-tag.bad  { background: rgba(239,68,68,.32); color: #991b1b; border: 1px solid rgba(239,68,68,.80); }
+
+    .cert-toggle {
+      flex-shrink: 0;
+      cursor: pointer;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 1.1rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      line-height: 1;
+    }
+    .cert-toggle:hover { background: rgba(111,92,247,.08); color: var(--accent); }
+
+    .cert-detail {
+      font-size: .84rem;
+      color: var(--text);
+      line-height: 1.45;
+      display: none;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .cert-row.is-expanded .cert-detail { display: block; }
+    .cert-detail p { margin: 4px 0; }
+    .cert-detail strong { font-weight: 700; }
+    .cert-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    .cert-edit-form {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .cert-edit-form label { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+    .cert-edit-form input,
+    .cert-edit-form textarea,
+    .cert-edit-form select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.85rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+    }
+    .cert-edit-form textarea { resize: vertical; min-height: 40px; }
+    .cert-edit-form input:focus,
+    .cert-edit-form textarea:focus,
+    .cert-edit-form select:focus { border-color: var(--accent); }
+    .cert-edit-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .cert-edit-btns button { padding: 6px 14px; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--panel); }
+    .cert-edit-btns .btn-save { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .cert-edit-btns .btn-save:hover { background: var(--accent-hover); }
+
+    /* ── Confirm dialog ── */
+    .confirm-dialog {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.35); backdrop-filter: blur(4px);
+    }
+    .confirm-card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 24px 24px 20px; max-width: 400px; width: 90%;
+    }
+    .confirm-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .confirm-card p { font-size: 0.88rem; color: var(--muted); margin-bottom: 6px; line-height: 1.5; }
+    .confirm-card .warn {
+      font-size: 0.82rem; color: #92400e;
+      background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25);
+      border-radius: 8px; padding: 8px 12px; margin: 10px 0 16px;
+    }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel { padding: 8px 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--panel); font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    .btn-danger { padding: 8px 16px; border: none; border-radius: 9px; background: #dc2626; color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: background .15s; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    /* ── Session row with checkbox ── */
+    .session-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .88rem;
+      padding: 8px 10px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+    }
+    .session-row input[type="checkbox"] { cursor: pointer; flex-shrink: 0; }
+
+    /* ── Feed global bar ── */
+    .feed-bar {
+      position: sticky;
+      bottom: 0;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
     }
   </style>
 </head>
@@ -524,7 +441,6 @@
     <div class="login-card">
       <div class="login-logo">toutcuit</div>
       <div class="login-title">Superadmin</div>
-
       <form id="loginForm">
         <div class="field" style="margin-bottom:12px;">
           <label for="pwInput">Mot de passe</label>
@@ -543,85 +459,118 @@
     <header class="console-header">
       <span class="console-header-logo">toutcuit</span>
       <span class="console-header-sep">/</span>
-      <span class="console-header-title">Superadmin</span>
+      <span class="console-header-title" id="headerTitle">Superadmin</span>
       <span class="console-header-spacer"></span>
       <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
     </header>
 
-    <main class="console-main">
+    <!-- ════ HOME VIEW ════ -->
+    <div class="sa-view active" id="viewHome">
+      <main class="console-main">
 
-      <!-- Create teacher -->
-      <div>
-        <div class="console-group-title">Créer un compte enseignant-e</div>
-        <div class="tool-card">
-          <div id="createSuccess" class="success-msg"></div>
-          <div id="createError" class="error-msg"></div>
-
-          <form id="createForm">
-            <div class="field">
-              <label for="teacherName">Nom</label>
-              <input type="text" id="teacherName" placeholder="Prénom Nom" required>
-            </div>
-            <div class="field">
-              <label for="teacherEmail">Email</label>
-              <input type="email" id="teacherEmail" placeholder="enseignant-e@ecole.ch" required>
-            </div>
-            <div class="field">
-              <label for="teacherPassword">Mot de passe initial</label>
-              <input type="text" id="teacherPassword" placeholder="Min. 6 caractères" required>
-            </div>
-            <div style="margin-top:14px;">
-              <button class="btn-primary" type="submit">Créer le compte</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Teachers list -->
-      <div>
-        <div class="console-group-title">Enseignant-es inscrit-es</div>
-        <div class="tool-card">
-          <div id="deleteSuccess" class="success-msg"></div>
-          <div id="deleteError" class="error-msg"></div>
-          <div id="teachersList" class="teachers-list">
-            <div style="color:var(--muted);font-size:.85rem;">Chargement...</div>
+        <!-- Create teacher -->
+        <div>
+          <div class="console-group-title">Créer un compte enseignant-e</div>
+          <div class="tool-card">
+            <div id="createSuccess" class="success-msg"></div>
+            <div id="createError" class="error-msg"></div>
+            <form id="createForm">
+              <div class="field">
+                <label for="teacherName">Nom</label>
+                <input type="text" id="teacherName" placeholder="Prénom Nom" required>
+              </div>
+              <div class="field">
+                <label for="teacherEmail">Email</label>
+                <input type="email" id="teacherEmail" placeholder="enseignant-e@ecole.ch" required>
+              </div>
+              <div class="field">
+                <label for="teacherPassword">Mot de passe initial</label>
+                <input type="text" id="teacherPassword" placeholder="Min. 6 caractères" required>
+              </div>
+              <div style="margin-top:14px;">
+                <button class="btn-primary" type="submit">Créer le compte</button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
 
-      <!-- Feed global -->
-      <div>
-        <div class="console-group-title">Feed global</div>
-        <div class="tool-card">
-          <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">
-            Sélectionnez les séances à inclure dans le feed, puis ouvrez-le en 2 fenêtres.
-          </p>
-          <div id="globalFeedSessions" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-            <div style="color:var(--muted);font-size:.85rem;">Chargement des séances...</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn-primary" id="openGlobalFeedBtn" style="width:auto;padding:10px 20px;" disabled>Ouvrir le Feed global</button>
-            <span id="globalFeedCount" style="font-size:.82rem;color:var(--muted);"></span>
+        <!-- Navigation cards -->
+        <div>
+          <div class="console-group-title">Gérer</div>
+          <div class="home-grid">
+            <div class="home-card" onclick="showView('teachers')">
+              <div class="home-card-title">Enseignant-es</div>
+              <div class="home-card-count" id="homeTeacherCount">—</div>
+              <div class="home-card-desc">Comptes, suppression</div>
+            </div>
+            <div class="home-card" onclick="showView('sessions')">
+              <div class="home-card-title">Séances</div>
+              <div class="home-card-count" id="homeSessionCount">—</div>
+              <div class="home-card-desc">Feed global, suppression</div>
+            </div>
+            <div class="home-card" onclick="showView('certs')">
+              <div class="home-card-title">Dépôt de CERTs</div>
+              <div class="home-card-count" id="homeCertCount">—</div>
+              <div class="home-card-desc">Consulter, modifier, supprimer</div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
+    </div>
 
-      <!-- CERTs depot -->
-      <div>
-        <div class="console-group-title">Dépôt de CERTs</div>
-        <div class="tool-card">
-          <div class="search-box" id="certSearchBox">
-            <input type="text" id="certSearchInput" placeholder="Rechercher par titre, descripteur, enseignant-e..." />
-          </div>
-          <div id="certSuccess" class="success-msg"></div>
-          <div id="certError" class="error-msg"></div>
-          <div id="certsList" class="teachers-list">
-            <div style="color:var(--muted);font-size:.85rem;">Chargement...</div>
-          </div>
+    <!-- ════ TEACHERS VIEW ════ -->
+    <div class="sa-view" id="viewTeachers">
+      <main class="console-main">
+        <div class="view-toolbar">
+          <button class="btn-back" onclick="showView('home')">← Retour</button>
+          <span class="view-title">Enseignant-es</span>
+          <span class="view-count" id="teachersCount"></span>
         </div>
-      </div>
+        <div class="search-box" id="teacherSearchBox">
+          <input type="text" id="teacherSearchInput" placeholder="Rechercher par nom ou email..." />
+        </div>
+        <div id="deleteSuccess" class="success-msg"></div>
+        <div id="deleteError" class="error-msg"></div>
+        <div class="list-container" id="teachersList"></div>
+      </main>
+    </div>
 
-    </main>
+    <!-- ════ SESSIONS VIEW ════ -->
+    <div class="sa-view" id="viewSessions">
+      <main class="console-main" style="padding-bottom:80px;">
+        <div class="view-toolbar">
+          <button class="btn-back" onclick="showView('home')">← Retour</button>
+          <span class="view-title">Séances</span>
+          <span class="view-count" id="sessionsCount"></span>
+        </div>
+        <div class="search-box" id="sessionSearchBox">
+          <input type="text" id="sessionSearchInput" placeholder="Rechercher par nom, code ou enseignant-e..." />
+        </div>
+        <div class="list-container" id="sessionsList"></div>
+      </main>
+      <div class="feed-bar" id="feedBar">
+        <button class="btn-primary" id="openGlobalFeedBtn" style="width:auto;padding:10px 20px;" disabled>Ouvrir le Feed global</button>
+        <span id="globalFeedCount" style="font-size:.82rem;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <!-- ════ CERTS VIEW ════ -->
+    <div class="sa-view" id="viewCerts">
+      <main class="console-main">
+        <div class="view-toolbar">
+          <button class="btn-back" onclick="showView('home')">← Retour</button>
+          <span class="view-title">Dépôt de CERTs</span>
+          <span class="view-count" id="certsCount"></span>
+        </div>
+        <div class="search-box" id="certSearchBox">
+          <input type="text" id="certSearchInput" placeholder="Rechercher par titre, descripteur, enseignant-e..." />
+        </div>
+        <div id="certSuccess" class="success-msg"></div>
+        <div id="certError" class="error-msg"></div>
+        <div class="list-container" id="certsList"></div>
+      </main>
+    </div>
+
   </div>
 
   <script>
@@ -629,59 +578,66 @@
     const SA_KEY = "tc_superadmin";
     const PASSWORD = "certify2026!";
 
+    // ── View system ──
+
+    function showView(name) {
+      document.querySelectorAll(".sa-view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view" + name.charAt(0).toUpperCase() + name.slice(1)).classList.add("active");
+      document.getElementById("headerTitle").textContent =
+        name === "home" ? "Superadmin" :
+        name === "teachers" ? "Enseignant-es" :
+        name === "sessions" ? "Séances" :
+        name === "certs" ? "Dépôt de CERTs" : "Superadmin";
+      window.scrollTo(0, 0);
+    }
+
+    // ── Login ──
+
     const loginPage = document.getElementById("loginPage");
     const consoleContent = document.getElementById("consoleContent");
-    const loginForm = document.getElementById("loginForm");
-    const loginError = document.getElementById("loginError");
-    const pwInput = document.getElementById("pwInput");
-    const logoutBtn = document.getElementById("logoutBtn");
 
-    const createForm = document.getElementById("createForm");
-    const createSuccess = document.getElementById("createSuccess");
-    const createError = document.getElementById("createError");
-    const deleteSuccess = document.getElementById("deleteSuccess");
-    const deleteError = document.getElementById("deleteError");
-    const teachersList = document.getElementById("teachersList");
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pw = document.getElementById("pwInput");
+      if (pw.value === PASSWORD) {
+        sessionStorage.setItem(SA_KEY, "true");
+        unlock();
+      } else {
+        document.getElementById("loginError").style.display = "block";
+        pw.value = "";
+        pw.focus();
+      }
+    });
 
-    const certSuccess = document.getElementById("certSuccess");
-    const certError = document.getElementById("certError");
-    const certsList = document.getElementById("certsList");
-    const certSearchBox = document.getElementById("certSearchBox");
-    const certSearchInput = document.getElementById("certSearchInput");
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.removeItem(SA_KEY);
+      location.reload();
+    });
 
+    let allTeachersData = [];
+    let allSessionsData = [];
     let allCertsData = [];
+    let teacherSearchTerm = "";
+    let sessionSearchTerm = "";
     let certSearchTerms = [];
+    let globalFeedSelectedCodes = new Set();
 
     function unlock() {
       loginPage.style.display = "none";
       consoleContent.style.display = "block";
       loadTeachers();
+      loadSessions();
       loadCerts();
-      loadGlobalFeedSessions();
     }
-
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (pwInput.value === PASSWORD) {
-        sessionStorage.setItem(SA_KEY, "true");
-        unlock();
-      } else {
-        loginError.style.display = "block";
-        pwInput.value = "";
-        pwInput.focus();
-      }
-    });
-
-    logoutBtn.addEventListener("click", () => {
-      sessionStorage.removeItem(SA_KEY);
-      location.reload();
-    });
 
     if (sessionStorage.getItem(SA_KEY) === "true") unlock();
 
-    // Create teacher account
-    createForm.addEventListener("submit", async (e) => {
+    // ── Create teacher ──
+
+    document.getElementById("createForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      const createSuccess = document.getElementById("createSuccess");
+      const createError = document.getElementById("createError");
       createSuccess.style.display = "none";
       createError.style.display = "none";
 
@@ -709,7 +665,7 @@
         } else {
           createSuccess.textContent = `Compte créé pour ${name} (${email}).`;
           createSuccess.style.display = "block";
-          createForm.reset();
+          document.getElementById("createForm").reset();
           loadTeachers();
         }
       } catch (err) {
@@ -718,123 +674,137 @@
       }
     });
 
-    // Load teachers
+    // ── Teachers ──
+
     async function loadTeachers() {
       try {
         const res = await fetch(`${API}/admin/teachers.php`);
-        const teachers = await res.json();
-
-        if (!Array.isArray(teachers) || !teachers.length) {
-          teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucun-e enseignant-e inscrit-e.</div>';
-          return;
-        }
-
-        teachersList.innerHTML = teachers.map(t => `
-          <div class="teacher-row">
-            <span class="teacher-row-name">${esc(t.name)}</span>
-            <span class="teacher-row-email">${esc(t.email)}</span>
-            <span class="teacher-row-date">${esc(t.created_at?.substring(0, 10) || "")}</span>
-            <button class="btn-delete" onclick="confirmDelete(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}', '${esc(t.email).replace(/'/g, "\\'")}')">Supprimer</button>
-          </div>
-        `).join("");
-      } catch {
-        teachersList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
-      }
+        allTeachersData = await res.json();
+        if (!Array.isArray(allTeachersData)) allTeachersData = [];
+      } catch { allTeachersData = []; }
+      document.getElementById("homeTeacherCount").textContent = allTeachersData.length;
+      renderTeachers();
     }
 
-    // Delete teacher — confirmation dialog
-    function confirmDelete(id, name, email) {
-      deleteSuccess.style.display = "none";
-      deleteError.style.display = "none";
+    function renderTeachers() {
+      const list = document.getElementById("teachersList");
+      const q = teacherSearchTerm.toLowerCase();
+      const filtered = allTeachersData.filter(t => {
+        if (!q) return true;
+        return [t.name, t.email].filter(Boolean).join(" ").toLowerCase().includes(q);
+      });
+      document.getElementById("teachersCount").textContent = `${filtered.length} / ${allTeachersData.length}`;
 
+      if (!filtered.length) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:12px;">Aucun-e enseignant-e.</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => `
+        <div class="list-row">
+          <span class="list-row-name">${esc(t.name)}</span>
+          <span class="list-row-meta">${esc(t.email)}</span>
+          <span class="list-row-date">${esc(t.created_at?.substring(0, 10) || "")}</span>
+          <button class="btn-delete" onclick="confirmDelete(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}', '${esc(t.email).replace(/'/g, "\\'")}')">Supprimer</button>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("teacherSearchInput").addEventListener("input", (e) => {
+      teacherSearchTerm = e.target.value;
+      renderTeachers();
+    });
+
+    function confirmDelete(id, name, email) {
       const overlay = document.createElement("div");
       overlay.className = "confirm-dialog";
       overlay.innerHTML = `
         <div class="confirm-card">
           <h3>Supprimer ce compte ?</h3>
           <p><strong>${name}</strong> (${email})</p>
-          <div class="warn">
-            Le login et les séances seront supprimés.<br>
-            Les résultats d'élèves et les CERTs déposées dans le dépôt seront conservés.
-          </div>
+          <div class="warn">Le login et les séances seront supprimés.<br>Les résultats d'élèves et les CERTs déposées seront conservés.</div>
           <div class="confirm-actions">
-            <button class="btn-cancel" id="cancelDelete">Annuler</button>
-            <button class="btn-danger" id="confirmDeleteBtn">Supprimer</button>
+            <button class="btn-cancel" id="cancelDel">Annuler</button>
+            <button class="btn-danger" id="confirmDel">Supprimer</button>
           </div>
         </div>
       `;
       document.body.appendChild(overlay);
-
-      overlay.querySelector("#cancelDelete").addEventListener("click", () => overlay.remove());
+      overlay.querySelector("#cancelDel").addEventListener("click", () => overlay.remove());
       overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
-
-      overlay.querySelector("#confirmDeleteBtn").addEventListener("click", async () => {
+      overlay.querySelector("#confirmDel").addEventListener("click", async () => {
         overlay.remove();
-        await deleteTeacher(id, name);
+        const deleteSuccess = document.getElementById("deleteSuccess");
+        const deleteError = document.getElementById("deleteError");
+        deleteSuccess.style.display = "none";
+        deleteError.style.display = "none";
+        try {
+          const res = await fetch(`${API}/admin/delete-teacher.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ teacher_id: id })
+          });
+          const data = await res.json();
+          if (data.error) { deleteError.textContent = data.error; deleteError.style.display = "block"; }
+          else {
+            deleteSuccess.textContent = `Compte de ${name} supprimé (${data.sessions_deleted} séance(s)).`;
+            deleteSuccess.style.display = "block";
+            loadTeachers();
+            loadSessions();
+          }
+        } catch (err) { deleteError.textContent = "Erreur : " + err.message; deleteError.style.display = "block"; }
       });
     }
 
-    async function deleteTeacher(id, name) {
-      deleteSuccess.style.display = "none";
-      deleteError.style.display = "none";
+    // ── Sessions ──
 
-      try {
-        const res = await fetch(`${API}/admin/delete-teacher.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ teacher_id: id })
-        });
-        const data = await res.json();
-
-        if (data.error) {
-          deleteError.textContent = data.error;
-          deleteError.style.display = "block";
-        } else {
-          deleteSuccess.textContent = `Compte de ${name} supprimé (${data.sessions_deleted} séance(s) supprimée(s)).`;
-          deleteSuccess.style.display = "block";
-          loadTeachers();
-        }
-      } catch (err) {
-        deleteError.textContent = "Erreur réseau : " + err.message;
-        deleteError.style.display = "block";
-      }
-    }
-
-    // ── Global Feed ──
-
-    let globalFeedSelectedCodes = new Set();
-
-    async function loadGlobalFeedSessions() {
-      const container = document.getElementById("globalFeedSessions");
+    async function loadSessions() {
       try {
         const res = await fetch(`${API}/admin/sessions.php`);
-        const sessions = await res.json();
-
-        if (!Array.isArray(sessions) || !sessions.length) {
-          container.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucune séance.</div>';
-          return;
-        }
-
-        container.innerHTML = sessions.map(s => `
-          <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
-            <input type="checkbox" value="${esc(s.code)}" class="gf-session-check">
-            <span style="flex:1;font-weight:600;">${esc(s.school_name || "")} — ${esc(s.name)}</span>
-            <span style="font-size:.75rem;color:var(--muted);font-family:monospace;font-weight:800;">${esc(s.code)}</span>
-            <span style="font-size:.72rem;color:var(--muted);">${esc(s.teacher_name || "—")}</span>
-          </label>
-        `).join("");
-
-        container.querySelectorAll(".gf-session-check").forEach(cb => {
-          cb.addEventListener("change", () => {
-            if (cb.checked) globalFeedSelectedCodes.add(cb.value);
-            else globalFeedSelectedCodes.delete(cb.value);
-            updateGlobalFeedBtn();
-          });
-        });
-      } catch {
-        container.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
-      }
+        allSessionsData = await res.json();
+        if (!Array.isArray(allSessionsData)) allSessionsData = [];
+      } catch { allSessionsData = []; }
+      document.getElementById("homeSessionCount").textContent = allSessionsData.length;
+      renderSessions();
     }
+
+    function renderSessions() {
+      const list = document.getElementById("sessionsList");
+      const q = sessionSearchTerm.toLowerCase();
+      const filtered = allSessionsData.filter(s => {
+        if (!q) return true;
+        return [s.name, s.code, s.teacher_name, s.school_name].filter(Boolean).join(" ").toLowerCase().includes(q);
+      });
+      document.getElementById("sessionsCount").textContent = `${filtered.length} / ${allSessionsData.length}`;
+
+      if (!filtered.length) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:12px;">Aucune séance.</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(s => `
+        <div class="session-row">
+          <input type="checkbox" value="${esc(s.code)}" class="gf-check" ${globalFeedSelectedCodes.has(s.code) ? "checked" : ""}>
+          <span class="list-row-name">${esc(s.school_name || "")} — ${esc(s.name)}</span>
+          <span class="list-row-code">${esc(s.code)}</span>
+          <span class="list-row-meta" style="font-size:.72rem;">${esc(s.teacher_name || "—")}</span>
+          <button class="btn-delete" onclick="confirmDeleteSession(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.code)}')">Supprimer</button>
+        </div>
+      `).join("");
+
+      list.querySelectorAll(".gf-check").forEach(cb => {
+        cb.addEventListener("change", () => {
+          if (cb.checked) globalFeedSelectedCodes.add(cb.value);
+          else globalFeedSelectedCodes.delete(cb.value);
+          updateGlobalFeedBtn();
+        });
+      });
+    }
+
+    document.getElementById("sessionSearchInput").addEventListener("input", (e) => {
+      sessionSearchTerm = e.target.value;
+      renderSessions();
+    });
 
     function updateGlobalFeedBtn() {
       const btn = document.getElementById("openGlobalFeedBtn");
@@ -844,9 +814,44 @@
       count.textContent = n ? `${n} séance(s) sélectionnée(s)` : "";
     }
 
+    function confirmDeleteSession(id, name, code) {
+      const overlay = document.createElement("div");
+      overlay.className = "confirm-dialog";
+      overlay.innerHTML = `
+        <div class="confirm-card">
+          <h3>Supprimer cette séance ?</h3>
+          <p><strong>${name}</strong> (${code})</p>
+          <div class="warn">La séance, ses liens, les résultats d'élèves et les liens collectés seront supprimés.<br>Cette action est irréversible.</div>
+          <div class="confirm-actions">
+            <button class="btn-cancel" id="cancelDelS">Annuler</button>
+            <button class="btn-danger" id="confirmDelS">Supprimer</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector("#cancelDelS").addEventListener("click", () => overlay.remove());
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+      overlay.querySelector("#confirmDelS").addEventListener("click", async () => {
+        overlay.remove();
+        try {
+          const res = await fetch(`${API}/admin/delete-session.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: id })
+          });
+          const data = await res.json();
+          if (data.error) { alert("Erreur : " + data.error); }
+          else {
+            globalFeedSelectedCodes.delete(code);
+            updateGlobalFeedBtn();
+            loadSessions();
+          }
+        } catch (err) { alert("Erreur réseau : " + err.message); }
+      });
+    }
+
     document.getElementById("openGlobalFeedBtn").addEventListener("click", () => {
       if (!globalFeedSelectedCodes.size) return;
-
       const codes = [...globalFeedSelectedCodes].join(",");
 
       const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
@@ -858,60 +863,50 @@
       const FEED2_MAIN_NAME = "gfeed_main";
       const FEED2_SIDE_NAME = "gfeed_sidecar";
       const FEED2_SIDE_W = 520;
-
       const W = Math.max(800, window.screen?.availWidth || window.innerWidth || 1200);
       const H = Math.max(600, window.screen?.availHeight || window.innerHeight || 900);
       const X = window.screen?.availLeft ?? 0;
       const Y = window.screen?.availTop ?? 0;
-
       const sideW = Math.min(FEED2_SIDE_W, Math.floor(W * 0.45));
       const gap = 10;
       const mainW = W - sideW - gap;
       const sideLeft = X + W - sideW;
-
       const sc = encodeURIComponent(codes);
 
-      // Main window: empty "Feed Tout Cuit" page
       const main = window.open("about:blank", FEED2_MAIN_NAME,
         `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
-      if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
-
+      if (!main) { alert("Pop-ups bloquées."); return; }
       main.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Feed Tout Cuit</title>
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-        <style>
-          *{box-sizing:border-box;margin:0;padding:0;}
-          html,body{min-height:100vh;background:#f6f7fb;display:flex;align-items:center;justify-content:center;font-family:'Inter var','Inter',system-ui,sans-serif;}
-          .brand{text-align:center;}
-          .brand h1{font-size:3rem;font-weight:900;letter-spacing:-0.03em;color:#6f5cf7;}
-          .brand p{font-size:1rem;color:#5e6673;margin-top:8px;}
-        </style></head><body>
+        <style>*{box-sizing:border-box;margin:0;padding:0;}html,body{min-height:100vh;background:#f6f7fb;display:flex;align-items:center;justify-content:center;font-family:'Inter var','Inter',system-ui,sans-serif;}.brand{text-align:center;}.brand h1{font-size:3rem;font-weight:900;letter-spacing:-0.03em;color:#6f5cf7;}.brand p{font-size:1rem;color:#5e6673;margin-top:8px;}</style></head><body>
         <div class="brand"><h1>Feed Tout Cuit</h1><p>Cliquez sur un lien dans le feed pour l'afficher ici.</p></div>
       </body></html>`);
       main.document.close();
 
-      // Sidecar: global feed
       const side = window.open(
         `/global-feed.html?sessions=${sc}&mode=sidecar&mainwin=${FEED2_MAIN_NAME}`, FEED2_SIDE_NAME,
         `popup=yes,width=${sideW},height=${H},left=${sideLeft},top=${Y},resizable=yes,scrollbars=yes`
       );
-      if (!side) {
-        try { main.close(); } catch {}
-        alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site.");
-      }
+      if (!side) { try { main.close(); } catch {} alert("Pop-ups bloquées."); }
     });
 
-    // ── CERTs management ──
+    // ── CERTs ──
+
+    const certSuccess = document.getElementById("certSuccess");
+    const certError = document.getElementById("certError");
+    const certsList = document.getElementById("certsList");
+    const certSearchBox = document.getElementById("certSearchBox");
+    const certSearchInput = document.getElementById("certSearchInput");
 
     async function loadCerts() {
       try {
         const res = await fetch(`${API}/admin/certs.php`);
         allCertsData = await res.json();
         if (!Array.isArray(allCertsData)) allCertsData = [];
-        renderCerts();
-      } catch {
-        certsList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Erreur de chargement.</div>';
-      }
+      } catch { allCertsData = []; }
+      document.getElementById("homeCertCount").textContent = allCertsData.length;
+      renderCerts();
     }
 
     function renderCerts() {
@@ -921,9 +916,10 @@
           .filter(Boolean).join(" ").toLowerCase();
         return certSearchTerms.every(t => haystack.includes(t));
       });
+      document.getElementById("certsCount").textContent = `${filtered.length} / ${allCertsData.length}`;
 
       if (!filtered.length) {
-        certsList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Aucune CERT trouvée.</div>';
+        certsList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:12px;">Aucune CERT trouvée.</div>';
         return;
       }
 
@@ -935,12 +931,32 @@
             ${c.descriptor2 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor2)}</span>` : ""}
             ${c.cert_date ? `<span class="cert-row-date">${esc(c.cert_date.substring(0, 10))}</span>` : ""}
             <span class="cert-row-teacher">${esc(c.teacher_name || "—")}</span>
-            <button class="btn-edit" onclick="toggleCertEdit(${c.id})">Modifier</button>
-            <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>
+            <button class="cert-toggle" title="Détails">&#9662;</button>
           </div>
-          <div class="cert-edit-form" id="cert-edit-${c.id}"></div>
+          <div class="cert-detail">
+            ${c.expert || c.cert_date ? `<p>${c.expert ? `<strong>${esc(c.expert)}</strong>` : ""}${c.expert && c.cert_date ? " — " : ""}${c.cert_date ? esc(c.cert_date) : ""}</p>` : ""}
+            ${c.url ? `<p><a href="${esc(c.url)}" target="_blank" rel="noopener" style="color:var(--accent);word-break:break-all;">${esc(c.url)}</a></p>` : ""}
+            ${c.three_phrases ? `<ul style="margin:6px 0;padding-left:18px;">${esc(c.three_phrases).split(/[\n;]+/).filter(s => s.trim()).map(s => '<li>' + s.trim() + '</li>').join("")}</ul>` : ""}
+            ${c.context ? `<p>${esc(c.context)}</p>` : ""}
+            ${c.content ? `<p>${esc(c.content)}</p>` : ""}
+            ${c.reliability_text ? `<p>${esc(c.reliability_text)}</p>` : ""}
+            ${c.references_text ? `<ol style="margin:6px 0;padding-left:22px;">${esc(c.references_text).split(/[\n;]+/).filter(s => s.trim()).map(s => '<li>' + s.trim() + '</li>').join("")}</ol>` : ""}
+            <div class="cert-actions">
+              <button class="btn-edit" onclick="toggleCertEdit(${c.id})">Modifier</button>
+              <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>
+            </div>
+            <div class="cert-edit-form" id="cert-edit-${c.id}"></div>
+          </div>
         </div>
       `).join("");
+
+      certsList.querySelectorAll(".cert-toggle").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".cert-row");
+          row.classList.toggle("is-expanded");
+          btn.textContent = row.classList.contains("is-expanded") ? "\u25B4" : "\u25BE";
+        });
+      });
     }
 
     function addCertSearchTerm(term) {
@@ -970,11 +986,7 @@
     }
 
     certSearchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addCertSearchTerm(certSearchInput.value);
-        certSearchInput.value = "";
-      }
+      if (e.key === "Enter") { e.preventDefault(); addCertSearchTerm(certSearchInput.value); certSearchInput.value = ""; }
       if (e.key === "Backspace" && !certSearchInput.value && certSearchTerms.length) {
         removeCertSearchTerm(certSearchTerms[certSearchTerms.length - 1]);
       }
@@ -986,10 +998,8 @@
       const form = document.getElementById(`cert-edit-${id}`);
       if (!form) return;
       if (form.style.display === "flex") { form.style.display = "none"; return; }
-
       const c = allCertsData.find(x => x.id === id);
       if (!c) return;
-
       form.style.display = "flex";
       form.innerHTML = `
         <label>Titre</label>
@@ -1028,15 +1038,10 @@
     async function saveCertAdmin(id) {
       certSuccess.style.display = "none";
       certError.style.display = "none";
-
       const form = document.getElementById(`cert-edit-${id}`);
       if (!form) return;
-
       const payload = { action: "update", id };
-      form.querySelectorAll("[data-field]").forEach(el => {
-        payload[el.dataset.field] = el.value;
-      });
-
+      form.querySelectorAll("[data-field]").forEach(el => { payload[el.dataset.field] = el.value; });
       try {
         const res = await fetch(`${API}/admin/certs.php`, {
           method: "POST",
@@ -1044,28 +1049,15 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-
-        if (data.error) {
-          certError.textContent = data.error;
-          certError.style.display = "block";
-        } else {
-          certSuccess.textContent = "CERT mise à jour.";
-          certSuccess.style.display = "block";
-          form.style.display = "none";
-          loadCerts();
-        }
-      } catch (err) {
-        certError.textContent = "Erreur réseau : " + err.message;
-        certError.style.display = "block";
-      }
+        if (data.error) { certError.textContent = data.error; certError.style.display = "block"; }
+        else { certSuccess.textContent = "CERT mise à jour."; certSuccess.style.display = "block"; form.style.display = "none"; loadCerts(); }
+      } catch (err) { certError.textContent = "Erreur : " + err.message; certError.style.display = "block"; }
     }
 
     async function deleteCertAdmin(id, title) {
       if (!confirm(`Supprimer la CERT « ${title} » ?\n\nCette action est irréversible.`)) return;
-
       certSuccess.style.display = "none";
       certError.style.display = "none";
-
       try {
         const res = await fetch(`${API}/admin/certs.php`, {
           method: "POST",
@@ -1073,19 +1065,9 @@
           body: JSON.stringify({ action: "delete", id })
         });
         const data = await res.json();
-
-        if (data.error) {
-          certError.textContent = data.error;
-          certError.style.display = "block";
-        } else {
-          certSuccess.textContent = `CERT « ${title} » supprimée.`;
-          certSuccess.style.display = "block";
-          loadCerts();
-        }
-      } catch (err) {
-        certError.textContent = "Erreur réseau : " + err.message;
-        certError.style.display = "block";
-      }
+        if (data.error) { certError.textContent = data.error; certError.style.display = "block"; }
+        else { certSuccess.textContent = `CERT « ${title} » supprimée.`; certSuccess.style.display = "block"; loadCerts(); }
+      } catch (err) { certError.textContent = "Erreur : " + err.message; certError.style.display = "block"; }
     }
 
     function esc(s) {
