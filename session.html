@@ -462,6 +462,7 @@
       font-size: .72rem;
       font-weight: 700;
       letter-spacing: .03em;
+      pointer-events: none;
     }
 
     .reorder-cutoff-line {
@@ -1126,12 +1127,14 @@
               el.classList.add("is-dragging");
               e.dataTransfer.effectAllowed = "move";
               e.dataTransfer.setData("text/plain", "");
+              listEl.querySelector(".reorder-cutoff")?.remove();
             });
 
             el.addEventListener("dragend", () => {
               if (dragEl) dragEl.classList.remove("is-dragging");
               clearIndicators();
               dragEl = null;
+              updateVisibility();
             });
 
             el.addEventListener("dragover", (e) => {

@@ -1351,7 +1351,7 @@
 
     // Reset all results button
     document.getElementById("resetAllBtn")?.addEventListener("click", async () => {
-      if (!confirm("Réinitialiser tous les résultats ?\n\nLes descripteurs choisis pour chaque lien seront effacés.")) return;
+      if (!confirm("Réinitialiser tous les résultats ?\n\nLes descripteurs choisis pour chaque lien et leur commentaire seront effacés.")) return;
 
       // Clear all certify_page_result_* entries from localStorage
       const keysToRemove = [];

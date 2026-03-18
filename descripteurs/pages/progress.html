@@ -7,155 +7,203 @@
   <title>Résultats — toutcuit.ch</title>
 
   <link rel="stylesheet" href="../assets/css/main.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 
   <style>
-    main { max-width: 960px !important; }
+    main { max-width: 860px !important; }
     header { display: flex; align-items: center; gap: 6px; }
 
-    .progress-lead {
-      margin: 8px 0 20px 0;
+    /* ── Summary strip ── */
+    .summary-strip {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: baseline;
+      margin: 12px 0 20px 0;
+    }
+    .summary-stat {
+      font-size: .88rem;
       color: var(--muted);
     }
+    .summary-stat strong {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--text);
+      margin-right: 3px;
+    }
 
-    .chart-wrap {
+    /* ── View toggle ── */
+    .view-toggle {
+      display: inline-flex;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .view-toggle button {
+      padding: 7px 18px;
+      font-size: .82rem;
+      font-weight: 700;
+      border: none;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .view-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Cards ── */
+    .cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      padding: 16px 18px;
       box-shadow: var(--shadow);
-      padding: 24px 20px;
-      margin-bottom: 24px;
     }
 
-    .chart-container {
-      position: relative;
-      width: 100%;
-      max-height: 420px;
+    .card-top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .card-num {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-weight: 700;
+      font-size: .92rem;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-score {
+      font-weight: 800;
+      font-size: .88rem;
+      flex-shrink: 0;
+      color: var(--text);
     }
 
-    .legend-custom {
+    /* ── Progress bar ── */
+    .bar-wrap {
+      height: 7px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .3s;
+    }
+    .bar-good { background: var(--good); }
+    .bar-mid  { background: var(--mid); }
+    .bar-bad  { background: var(--bad); }
+
+    .bar-label {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    /* ── Dot grid (students per link / links per student) ── */
+    .dot-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px 16px;
-      margin-top: 16px;
-      font-size: 0.82rem;
-      color: var(--muted);
+      gap: 8px 14px;
+      font-size: .8rem;
     }
-
-    .legend-custom span {
+    .dot-entry {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
+      cursor: pointer;
+      transition: opacity .15s;
     }
-
-    .legend-dot {
-      width: 10px;
-      height: 10px;
+    .dot-entry:hover { opacity: .7; }
+    .dot-name {
+      font-weight: 600;
+      color: var(--text);
+      margin-right: 1px;
+    }
+    .dot {
+      width: 9px; height: 9px;
       border-radius: 50%;
       display: inline-block;
     }
+    .dot-ok   { background: var(--good); }
+    .dot-fail { background: var(--bad); opacity: .35; }
+    .dot-none { background: var(--border); }
 
-    .score-table {
+    /* ── Inline detail (expanded) ── */
+    .detail-inline {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .detail-inline.open { display: block; }
+
+    .detail-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 8px;
+      font-size: .82rem;
     }
-
-    .score-table th,
-    .score-table td {
-      padding: 8px 10px;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .score-table th {
+    .detail-table th {
+      text-align: left;
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: .75rem;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      background: var(--panel-2);
+      letter-spacing: .03em;
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(0,0,0,.04);
+    }
+    .detail-match { color: var(--good); font-weight: 700; }
+    .detail-miss  { color: var(--bad); font-weight: 700; }
+
+    /* ── Excluded notice ── */
+    .excluded-notice {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: rgba(0,0,0,.02);
+      border-radius: 8px;
     }
 
-    .score-table th:first-child,
-    .score-table td:first-child {
-      text-align: left;
-    }
-
-    .score-table tr:last-child td { border-bottom: none; }
-
-    .score-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
-    .score-0 { color: var(--bad); }
-    .score-1 { color: var(--bad); }
-    .score-2 { color: var(--mid); }
-    .score-3 { color: var(--good); }
-
-    .info-box {
-      background: rgba(111,92,247,.06);
-      border: 1px solid rgba(111,92,247,.20);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 0.85rem;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-
-    .info-box strong { font-weight: 700; }
-
+    /* ── States ── */
     .no-data {
       text-align: center;
       padding: 48px 20px;
       color: var(--muted);
-      font-size: 1rem;
     }
-
     #loading {
       text-align: center;
       padding: 48px 20px;
       color: var(--muted);
     }
-
-    .student-name {
-      cursor: pointer;
-      transition: color .15s;
-    }
-    .student-name:hover {
-      color: var(--accent);
-      text-decoration: underline;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 8px;
-    }
-
-    .detail-card {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 0.8rem;
-    }
-
-    .detail-card-title {
-      font-weight: 700;
-      font-size: 0.78rem;
-      margin-bottom: 6px;
-      color: var(--muted);
-    }
-
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 2px 0;
-    }
-
-    .detail-match { color: var(--good); font-weight: 700; }
-    .detail-miss { color: var(--bad); font-weight: 700; }
-
     .error-box {
       background: rgba(239,68,68,.08);
       border: 1px solid rgba(239,68,68,.25);
@@ -163,6 +211,12 @@
       padding: 14px 16px;
       color: #b91c1c;
       font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      .card { padding: 12px 14px; }
+      .dot-grid { gap: 6px 10px; }
+      .summary-strip { gap: 14px; }
     }
   </style>
 </head>
@@ -174,93 +228,16 @@
     <span style="font-weight:700; color:var(--muted); font-size:0.95rem;">Résultats des élèves</span>
     <span style="flex:1;"></span>
     <span id="userName" style="font-size:.82rem;color:var(--muted);"></span>
-    <button id="logoutBtn" style="font-size:.82rem;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600;margin-right:12px;">Déconnexion</button>
-    <select id="tabSelect" style="
-      padding:6px 12px; border:1.5px solid var(--border); border-radius:7px;
-      font-size:0.82rem; font-weight:600; background:var(--bg); color:var(--text);
-      cursor:pointer; min-width:180px;
-    ">
-      <option value="">Chargement des onglets…</option>
-    </select>
+    <button id="logoutBtn" style="font-size:.82rem;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600;">Déconnexion</button>
   </header>
 
   <main>
-    <p class="progress-lead">
-      Résultats de similarité entre les réponses des élèves et la réponse experte (CERT).
-      Couleur identique = 1 pt, 1<sup>er</sup> descripteur identique = 1 pt, 2<sup>e</sup> descripteur identique = 1 pt.
-      Maximum : 3 points par lien.
-    </p>
-
     <div id="loading">Chargement des données…</div>
-    <div id="content" style="display:none;">
-
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
-        <span style="font-size:0.85rem; font-weight:700; color:var(--muted);">Liens :</span>
-        <label style="font-size:0.82rem; color:var(--muted);">de
-          <input id="linkFrom" type="number" min="1" value="1" style="
-            width:52px; padding:5px 8px; border:1.5px solid var(--border); border-radius:7px;
-            font-size:0.85rem; font-weight:600; text-align:center; background:var(--bg); color:var(--text);
-          "/>
-        </label>
-        <label style="font-size:0.82rem; color:var(--muted);">à
-          <input id="linkTo" type="number" min="1" value="99" style="
-            width:52px; padding:5px 8px; border:1.5px solid var(--border); border-radius:7px;
-            font-size:0.85rem; font-weight:600; text-align:center; background:var(--bg); color:var(--text);
-          "/>
-        </label>
-        <button id="linkFilterBtn" style="
-          padding:6px 14px; border:1.5px solid var(--accent); border-radius:7px;
-          background:rgba(111,92,247,.08); color:var(--accent); font-size:0.82rem;
-          font-weight:700; cursor:pointer;
-        ">Appliquer</button>
-        <button id="linkResetBtn" style="
-          padding:6px 10px; border:1.5px solid var(--border); border-radius:7px;
-          background:none; color:var(--muted); font-size:0.82rem;
-          font-weight:600; cursor:pointer;
-        ">Tous</button>
-      </div>
-
-      <div class="info-box" id="statsBox"></div>
-
-      <div class="chart-wrap">
-        <div class="chart-container">
-          <canvas id="progressChart"></canvas>
-        </div>
-        <div class="legend-custom" id="legendCustom"></div>
-      </div>
-
-      <div class="chart-wrap" id="studentPanel" style="display:none;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-          <h3 style="font-size:0.95rem; font-weight:800; margin:0;" id="studentPanelTitle"></h3>
-          <button id="studentPanelClose" style="
-            margin-left:auto; background:none; border:1.5px solid var(--border); border-radius:7px;
-            padding:4px 10px; font-size:0.8rem; font-weight:700; color:var(--muted); cursor:pointer;
-          ">Fermer</button>
-        </div>
-        <div class="chart-container" style="max-height:280px;">
-          <canvas id="studentChart"></canvas>
-        </div>
-        <div id="studentDetailTable" style="margin-top:16px; overflow-x:auto;"></div>
-      </div>
-
-      <div class="chart-wrap">
-        <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:12px;">Détail par élève</h3>
-        <div style="overflow-x:auto;">
-          <table class="score-table" id="scoreTable">
-            <thead id="scoreHead"></thead>
-            <tbody id="scoreBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
+    <div id="content" style="display:none;"></div>
   </main>
 
   <script type="module">
 
-    /* ============================
-       Config — API PHP backend
-    ============================ */
     const API_BASE = "/api";
     const PAGE_PARAMS = new URLSearchParams(location.search);
     const SESSION_CODE = PAGE_PARAMS.get("session") || "";
@@ -275,13 +252,7 @@
       window.location.href = "/admin.html";
     });
 
-    const tabSelect = document.getElementById("tabSelect");
-    // Tab selector not used with API backend — hide it
-    if (tabSelect) tabSelect.style.display = "none";
-
-    /* ============================
-       Helpers (reused from feed.html)
-    ============================ */
+    /* ── Helpers ── */
     function fnv1aHex(str) {
       let h = 0x811c9dc5;
       for (let i = 0; i < str.length; i++) {
@@ -291,9 +262,7 @@
       return ("0000000" + h.toString(16)).slice(-8);
     }
 
-    function urlToLinkId(url) {
-      return `link_${fnv1aHex(url)}`;
-    }
+    function urlToLinkId(url) { return `link_${fnv1aHex(url)}`; }
 
     function normalizeUrl(raw) {
       let u = String(raw || "").trim();
@@ -306,53 +275,37 @@
       } catch { return null; }
     }
 
-    function parseCSV(text) {
-      const rows = [];
-      let row = [];
-      let cur = "";
-      let inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        const next = text[i + 1];
-        if (ch === '"') {
-          if (inQuotes && next === '"') { cur += '"'; i++; }
-          else { inQuotes = !inQuotes; }
-          continue;
-        }
-        if (!inQuotes && ch === ",") { row.push(cur); cur = ""; continue; }
-        if (!inQuotes && (ch === "\n" || ch === "\r")) {
-          if (ch === "\r" && next === "\n") i++;
-          row.push(cur);
-          rows.push(row);
-          row = [];
-          cur = "";
-          continue;
-        }
-        cur += ch;
-      }
-      if (cur.length || row.length) { row.push(cur); rows.push(row); }
-      return rows;
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
     }
 
-    /* ============================
-       Load CERTs data from API
-    ============================ */
+    function barClass(ratio) {
+      return ratio >= 0.66 ? "bar-good" : ratio >= 0.33 ? "bar-mid" : "bar-bad";
+    }
+
+    function pct(n, d) { return d ? Math.round(n / d * 100) : 0; }
+
+    function icon(ok) {
+      return ok
+        ? '<span class="detail-match">&#10003;</span>'
+        : '<span class="detail-miss">&#10007;</span>';
+    }
+
+    /* ── Load CERTs ── */
     async function loadCerts() {
       if (!SESSION_CODE) throw new Error("no_session");
-
       const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load CERTs");
-      const certsArr = await res.json();
+      const arr = await res.json();
 
       const certs = new Map();
-      for (const cert of certsArr) {
+      for (const cert of arr) {
         const url = normalizeUrl(cert.url || "");
         if (!url) continue;
-
         const linkId = urlToLinkId(url);
-        const hasCertsContent = !!(cert.descriptor1 || cert.descriptor2 || cert.reliability);
-
-        if (hasCertsContent) {
+        if (cert.descriptor1 || cert.descriptor2 || cert.reliability) {
           certs.set(linkId, {
             linkNumber: (cert.position || 0) + 1,
             certId: cert.id,
@@ -363,537 +316,283 @@
           });
         }
       }
-
       return certs;
     }
 
-    /* ============================
-       Load student results from API
-    ============================ */
+    /* ── Load student results ── */
     async function loadFeed() {
       if (!SESSION_CODE) return [];
-
       const res = await fetch(`${API_BASE}/student/feed.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load student results");
       const rows = await res.json();
-
       return rows.map(r => ({
-        timestamp: r.created_at || "",
         user_id: r.user_id || "",
         cert_id: r.cert_id,
         link_id: "",
-        link_title: "",
         link_url: "",
         first_label: r.first_label || "",
         last_label: r.last_label || "",
         reliability: r.reliability || "",
-        comment: r.comment || "",
       }));
     }
 
-    /* ============================
-       Scoring
-    ============================ */
-    function scoreResult(studentRow, certData) {
-      const studentRel = String(studentRow.reliability || "").toLowerCase();
-      const studentFirst = String(studentRow.first_label || "").trim().toLowerCase();
-      const studentLast = String(studentRow.last_label || "").trim().toLowerCase();
-      const certFirst = certData.descriptor1.trim().toLowerCase();
-      const certLast = certData.descriptor2.trim().toLowerCase();
+    /* ── Scoring ── */
+    function scoreResult(row, cert) {
+      const sRel = String(row.reliability || "").toLowerCase();
+      const sFirst = String(row.first_label || "").trim().toLowerCase();
+      const sLast = String(row.last_label || "").trim().toLowerCase();
+      const cFirst = cert.descriptor1.trim().toLowerCase();
+      const cLast = cert.descriptor2.trim().toLowerCase();
 
-      const relOk = !!(studentRel && studentRel === certData.reliability);
-      const firstOk = !!(studentFirst && studentFirst === certFirst);
-      const lastOk = !!(studentLast && studentLast === certLast);
+      const relOk = !!(sRel && sRel === cert.reliability);
+      const firstOk = !!(sFirst && sFirst === cFirst);
+      const lastOk = !!(sLast && sLast === cLast);
 
       return {
         score: (relOk ? 1 : 0) + (firstOk ? 1 : 0) + (lastOk ? 1 : 0),
         relOk, firstOk, lastOk,
-        studentRel, studentFirst, studentLast,
-        certRel: certData.reliability, certFirst, certLast,
+        studentRel: sRel, studentFirst: sFirst, studentLast: sLast,
+        certRel: cert.reliability, certFirst: cFirst, certLast: cLast,
       };
     }
 
-    /* ============================
-       Main
-    ============================ */
+    /* ── Main ── */
     try {
       const [certs, feedRows] = await Promise.all([loadCerts(), loadFeed()]);
 
-      // Build certId → linkId mapping from certs
       const certIdToLinkId = new Map();
       for (const [linkId, cert] of certs) {
         if (cert.certId) certIdToLinkId.set(String(cert.certId), linkId);
       }
 
-      // Normalize feed link IDs using cert_id mapping
       const rows = feedRows.map(r => {
         let linkId = r.link_id;
-        if (!linkId && r.cert_id) {
-          linkId = certIdToLinkId.get(String(r.cert_id)) || "";
-        }
+        if (!linkId && r.cert_id) linkId = certIdToLinkId.get(String(r.cert_id)) || "";
         if (!linkId) {
-          const rawUrl = String(r.link_url || "").trim();
-          const normUrl = rawUrl ? (normalizeUrl(rawUrl) || rawUrl) : "";
+          const normUrl = r.link_url ? (normalizeUrl(r.link_url) || r.link_url) : "";
           linkId = normUrl ? urlToLinkId(normUrl) : "";
         }
         return { ...r, link_id: linkId };
       });
 
-      // Only keep rows that have a CERT and valid descriptors
-      const scoredRows = rows.filter(r => {
-        const hasDesc = r.first_label || r.last_label;
-        return hasDesc && certs.has(r.link_id);
-      });
+      const scoredRows = rows.filter(r => (r.first_label || r.last_label) && certs.has(r.link_id));
 
       if (!scoredRows.length) {
         document.getElementById("loading").style.display = "none";
-        document.getElementById("content").style.display = "block";
-        document.getElementById("content").innerHTML = `
-          <div class="no-data">Aucune donnée à afficher.<br>
-          Il faut des résultats d'élèves <em>et</em> des réponses CERT pour les mêmes liens.</div>`;
+        const c = document.getElementById("content");
+        c.style.display = "block";
+        c.innerHTML = '<div class="no-data">Aucune donnée à afficher.<br>Il faut des résultats d\'élèves <em>et</em> des réponses CERT pour les mêmes liens.</div>';
         throw new Error("stop");
       }
 
-      // Build per-student, per-link scores (before filtering)
-      // allStudentScores: Map<userId, Map<linkId, score>>
-      // allStudentDetails: Map<userId, Map<linkId, {score, relOk, firstOk, lastOk, ...}>>
-      const allStudentDetails = new Map();
+      // Per-student, per-link details
+      const allDetails = new Map();
       for (const r of scoredRows) {
         const userId = String(r.user_id || "Anonyme").trim();
         const linkId = r.link_id;
-        const cert = certs.get(linkId);
-        const detail = scoreResult(r, cert);
-
-        if (!allStudentDetails.has(userId)) allStudentDetails.set(userId, new Map());
-        const existing = allStudentDetails.get(userId).get(linkId);
-        if (!existing || detail.score > existing.score) {
-          allStudentDetails.get(userId).set(linkId, detail);
-        }
+        const d = scoreResult(r, certs.get(linkId));
+        if (!allDetails.has(userId)) allDetails.set(userId, new Map());
+        const prev = allDetails.get(userId).get(linkId);
+        if (!prev || d.score > prev.score) allDetails.get(userId).set(linkId, d);
       }
 
-      // Legacy compat: allStudentScores maps userId -> Map<linkId, score (number)>
-      const allStudentScores = new Map();
-      for (const [userId, links] of allStudentDetails) {
-        const m = new Map();
-        for (const [linkId, d] of links) m.set(linkId, d.score);
-        allStudentScores.set(userId, m);
+      // All link IDs sorted by position
+      const allLinkIds = [...new Set(scoredRows.map(r => r.link_id))];
+      allLinkIds.sort((a, b) => (certs.get(a)?.linkNumber ?? 999) - (certs.get(b)?.linkNumber ?? 999));
+
+      // 30% exclusion rule
+      const maxAnswered = Math.max(...[...allDetails.values()].map(m => m.size), 0);
+      const minRequired = Math.ceil(maxAnswered * 0.3);
+      const students = new Map();
+      const excluded = [];
+      for (const [userId, links] of allDetails) {
+        if (links.size >= minRequired) students.set(userId, links);
+        else excluded.push(userId);
       }
 
-      // All link IDs sorted by linkNumber
-      const everyLinkId = [...new Set(scoredRows.map(r => r.link_id))];
-      everyLinkId.sort((a, b) => (certs.get(a)?.linkNumber ?? 999) - (certs.get(b)?.linkNumber ?? 999));
+      const studentIds = [...students.keys()].sort((a, b) => a.localeCompare(b));
+      const totalStudents = studentIds.length;
+      const totalLinks = allLinkIds.length;
 
-      // Colors for individual students
-      const STUDENT_COLORS = [
-        "#6f5cf7", "#e8425c", "#1a9a6e", "#f59e0b", "#3b82f6",
-        "#ec4899", "#14b8a6", "#8b5cf6", "#f97316", "#06b6d4",
-        "#84cc16", "#ef4444", "#6366f1", "#10b981", "#a855f7",
-      ];
-
-      // Set range inputs to actual min/max link numbers
-      const allLinkNumbers = everyLinkId.map(id => certs.get(id)?.linkNumber ?? 0).filter(n => n > 0);
-      const minLinkNum = Math.min(...allLinkNumbers);
-      const maxLinkNum = Math.max(...allLinkNumbers);
-      document.getElementById("linkFrom").value = minLinkNum;
-      document.getElementById("linkFrom").min = minLinkNum;
-      document.getElementById("linkFrom").max = maxLinkNum;
-      document.getElementById("linkTo").value = maxLinkNum;
-      document.getElementById("linkTo").min = minLinkNum;
-      document.getElementById("linkTo").max = maxLinkNum;
-
-      let mainChart = null;
-      let allLinkIds = everyLinkId;
-      let studentScores, studentDetails, tableLinkLabels;
-
-      function renderAll(fromNum, toNum) {
-        // Filter links by number range
-        allLinkIds = everyLinkId.filter(id => {
-          const n = certs.get(id)?.linkNumber ?? 0;
-          return n >= fromNum && n <= toNum;
-        });
-
-        // Filter students (30% rule based on filtered links only)
-        const filteredStudentScores = new Map();
-        for (const [userId, links] of allStudentScores) {
-          const m = new Map();
-          for (const [linkId, score] of links) {
-            if (allLinkIds.includes(linkId)) m.set(linkId, score);
-          }
-          if (m.size > 0) filteredStudentScores.set(userId, m);
-        }
-
-        const maxAnswered = Math.max(...[...filteredStudentScores.values()].map(m => m.size), 0);
-        const minRequired = Math.ceil(maxAnswered * 0.3);
-        const excluded = [];
-        studentScores = new Map();
-        studentDetails = new Map();
-        for (const [userId, links] of filteredStudentScores) {
-          if (links.size >= minRequired) {
-            studentScores.set(userId, links);
-            // Build filtered details too
-            const dMap = new Map();
-            const fullDetails = allStudentDetails.get(userId);
-            if (fullDetails) {
-              for (const [linkId, d] of fullDetails) {
-                if (allLinkIds.includes(linkId)) dMap.set(linkId, d);
-              }
-            }
-            studentDetails.set(userId, dMap);
-          } else {
-            excluded.push(userId);
-          }
-        }
-
-        // Respondents per link
-        const respondentsPerLink = allLinkIds.map(linkId => {
-          let count = 0;
-          for (const [, links] of studentScores) {
-            if (links.has(linkId)) count++;
-          }
-          return count;
-        });
-
-        // Total points per link
-        const totalPerLink = allLinkIds.map(linkId => {
-          let sum = 0;
-          for (const [, links] of studentScores) {
-            if (links.has(linkId)) sum += links.get(linkId);
-          }
-          return sum;
-        });
-
-        // Labels
-        const linkLabels = allLinkIds.map((id, i) => {
-          const c = certs.get(id);
-          const n = respondentsPerLink[i];
-          return [`Lien ${c?.linkNumber ?? "?"}`, `(${n} élève${n > 1 ? "s" : ""})`];
-        });
-
-        tableLinkLabels = allLinkIds.map(id => `Lien ${certs.get(id)?.linkNumber ?? "?"}`);
-
-        const maxPerLink = respondentsPerLink.map(n => n * 3);
-        const maxTotal = respondentsPerLink.reduce((acc, n) => acc + n * 3, 0);
-        const grandTotal = totalPerLink.reduce((a, b) => a + b, 0);
-        const totalStudents = studentScores.size;
-        const totalLinks = allLinkIds.length;
-
-        // Stats
-        const excludedInfo = excluded.length
-          ? `<br><span style="font-size:0.8rem; color:var(--muted);">Exclus (moins de ${minRequired} lien${minRequired > 1 ? "s" : ""} analysé${minRequired > 1 ? "s" : ""}, seuil 30%) : ${excluded.join(", ")}</span>`
-          : "";
-        const rangeInfo = (fromNum > minLinkNum || toNum < maxLinkNum)
-          ? ` · Liens ${fromNum} à ${toNum}`
-          : "";
-
-        document.getElementById("statsBox").innerHTML = `
-          <strong>${totalStudents}</strong> élève${totalStudents > 1 ? "s" : ""} ·
-          <strong>${totalLinks}</strong> lien${totalLinks > 1 ? "s" : ""} analysé${totalLinks > 1 ? "s" : ""}${rangeInfo} ·
-          Total : <strong>${grandTotal}</strong> / ${maxTotal} pts
-          ${excludedInfo}
-        `;
-
-        // Chart datasets
-        const datasets = [];
-
-        datasets.push({
-          label: "Total points",
-          data: totalPerLink,
-          backgroundColor: "rgba(111,92,247,.25)",
-          borderColor: "rgba(111,92,247,.6)",
-          borderWidth: 2, borderRadius: 6, order: 1, type: "bar",
-        });
-
-        datasets.push({
-          label: "Maximum possible",
-          data: maxPerLink,
-          borderColor: "rgba(31,35,40,.25)",
-          borderWidth: 2, borderDash: [6, 4], pointRadius: 0,
-          tension: 0, fill: false, order: 0, type: "line",
-        });
-
-        const studentEntries = [...studentScores.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-        studentEntries.forEach(([userId, links], i) => {
-          const data = allLinkIds.map(linkId => links.get(linkId) ?? null);
-          const color = STUDENT_COLORS[i % STUDENT_COLORS.length];
-          datasets.push({
-            label: userId, data,
-            borderColor: color + "88", backgroundColor: color + "22",
-            borderWidth: 1.5, pointRadius: 4, pointBackgroundColor: color,
-            tension: 0.3, fill: false, order: 0, borderDash: [4, 3], type: "line",
-          });
-        });
-
-        // Destroy previous chart
-        if (mainChart) { mainChart.destroy(); mainChart = null; }
-
-        const ctx = document.getElementById("progressChart").getContext("2d");
-        const yMax = Math.max(...maxPerLink, ...totalPerLink, 3);
-
-        mainChart = new Chart(ctx, {
-          type: "bar",
-          data: { labels: linkLabels, datasets },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: (tipCtx) => {
-                    const v = tipCtx.parsed.y;
-                    if (v === null) return null;
-                    if (tipCtx.dataset.label === "Maximum possible") return null;
-                    const suffix = tipCtx.dataset.type === "line" ? " / 3" : " pts";
-                    return `${tipCtx.dataset.label}: ${Number.isInteger(v) ? v : v.toFixed(1)}${suffix}`;
-                  }
-                }
-              }
-            },
-            scales: {
-              y: {
-                min: 0, max: yMax,
-                ticks: { stepSize: yMax <= 12 ? 1 : undefined, callback: v => v + " pt" + (v > 1 ? "s" : "") },
-                grid: { color: "rgba(0,0,0,.06)" },
-              },
-              x: { grid: { display: false } }
-            }
-          }
-        });
-
-        // Legend
-        const legendEl = document.getElementById("legendCustom");
-        legendEl.innerHTML = datasets.map((ds, i) => {
-          const color = i === 0 ? "#1f2328" : ds.pointBackgroundColor;
-          if (i >= 2) {
-            return `<span class="student-name" data-student="${ds.label}" style="cursor:pointer;"><span class="legend-dot" style="background:${color};"></span>${ds.label}</span>`;
-          }
-          const style = i === 0 ? "font-weight:700;" : "";
-          return `<span style="${style}"><span class="legend-dot" style="background:${color};"></span>${ds.label}</span>`;
-        }).join("");
-
-        // Table
-        const headEl = document.getElementById("scoreHead");
-        const bodyEl = document.getElementById("scoreBody");
-
-        headEl.innerHTML = `<tr>
-          <th>Élève</th>
-          ${tableLinkLabels.map(l => `<th>${l}</th>`).join("")}
-          <th>Total</th>
-        </tr>`;
-
-        bodyEl.innerHTML = studentEntries.map(([userId, links]) => {
-          const scores = allLinkIds.map(linkId => links.get(linkId) ?? null);
-          const valid = scores.filter(s => s !== null);
-          const total = valid.reduce((a, b) => a + b, 0);
-          const maxForStudent = valid.length * 3;
-          const cells = scores.map(s => {
-            if (s === null) return `<td class="score-cell" style="color:var(--border);">—</td>`;
-            return `<td class="score-cell score-${s}">${s}</td>`;
-          }).join("");
-          return `<tr><td class="student-name" data-student="${userId}" style="font-weight:600;">${userId}</td>${cells}<td class="score-cell" style="font-weight:800;">${total}/${maxForStudent}</td></tr>`;
-        }).join("");
-
-        const respCells = respondentsPerLink.map(n =>
-          `<td class="score-cell" style="font-weight:600; color:var(--muted);">${n}</td>`
-        ).join("");
-        bodyEl.innerHTML += `<tr style="background:var(--panel-2);">
-          <td style="font-weight:700; color:var(--muted);">Réponses</td>${respCells}
-          <td class="score-cell" style="font-weight:600; color:var(--muted);">${totalStudents}</td>
-        </tr>`;
-
-        const totalCells = totalPerLink.map((v, i) => {
-          const max = maxPerLink[i];
-          const ratio = max ? v / max : 0;
-          const cls = ratio >= 0.8 ? "score-3" : ratio >= 0.5 ? "score-2" : "score-1";
-          return `<td class="score-cell ${cls}" style="font-weight:800;">${v}/${max}</td>`;
-        }).join("");
-        bodyEl.innerHTML += `<tr style="background:var(--panel-2);">
-          <td style="font-weight:800;">Total</td>${totalCells}
-          <td class="score-cell" style="font-weight:800;">${grandTotal}/${maxTotal}</td>
-        </tr>`;
-
-        // Close student panel if open
-        document.getElementById("studentPanel").style.display = "none";
+      // Global score
+      let grandTotal = 0, grandMax = 0;
+      for (const links of students.values()) {
+        for (const d of links.values()) { grandTotal += d.score; grandMax += 3; }
       }
 
+      /* ── Render ── */
       document.getElementById("loading").style.display = "none";
-      document.getElementById("content").style.display = "block";
+      const content = document.getElementById("content");
+      content.style.display = "block";
 
-      // Initial render with all links
-      renderAll(minLinkNum, maxLinkNum);
+      content.innerHTML = `
+        <div class="summary-strip">
+          <div class="summary-stat"><strong>${totalStudents}</strong> élève${totalStudents > 1 ? "s" : ""}</div>
+          <div class="summary-stat"><strong>${totalLinks}</strong> lien${totalLinks > 1 ? "s" : ""}</div>
+          <div class="summary-stat"><strong>${pct(grandTotal, grandMax)}%</strong> score global</div>
+          <div class="summary-stat" style="font-size:.78rem;">(${grandTotal} / ${grandMax} pts)</div>
+        </div>
+        <div class="view-toggle">
+          <button class="active" data-view="links">Par lien</button>
+          <button data-view="students">Par élève</button>
+        </div>
+        <div id="viewLinks" class="cards"></div>
+        <div id="viewStudents" class="cards" style="display:none;"></div>
+        ${excluded.length ? `<div class="excluded-notice">Exclu${excluded.length > 1 ? "s" : ""} (moins de ${minRequired} lien${minRequired > 1 ? "s" : ""} analysé${minRequired > 1 ? "s" : ""}) : ${excluded.map(esc).join(", ")}</div>` : ""}
+      `;
 
-      // Filter buttons
-      document.getElementById("linkFilterBtn").addEventListener("click", () => {
-        const from = parseInt(document.getElementById("linkFrom").value) || minLinkNum;
-        const to = parseInt(document.getElementById("linkTo").value) || maxLinkNum;
-        renderAll(Math.max(from, minLinkNum), Math.min(to, maxLinkNum));
-      });
-
-      document.getElementById("linkResetBtn").addEventListener("click", () => {
-        document.getElementById("linkFrom").value = minLinkNum;
-        document.getElementById("linkTo").value = maxLinkNum;
-        renderAll(minLinkNum, maxLinkNum);
-      });
-
-      /* ============================
-         Individual student detail
-      ============================ */
-      let studentChart = null;
-
-      function showStudentDetail(userId) {
-        const details = studentDetails.get(userId);
-        if (!details) return;
-
-        const panel = document.getElementById("studentPanel");
-        const titleEl = document.getElementById("studentPanelTitle");
-        const chartCanvas = document.getElementById("studentChart");
-        const detailDiv = document.getElementById("studentDetailTable");
-
-        titleEl.textContent = userId;
-        panel.style.display = "block";
-
-        // Build data arrays
-        const scores = allLinkIds.map(id => details.has(id) ? details.get(id).score : null);
-        const relData = allLinkIds.map(id => details.has(id) && details.get(id).relOk ? 1 : null);
-        const firstData = allLinkIds.map(id => details.has(id) && details.get(id).firstOk ? 1 : null);
-        const lastData = allLinkIds.map(id => details.has(id) && details.get(id).lastOk ? 1 : null);
-
-        // Destroy previous chart
-        if (studentChart) { studentChart.destroy(); studentChart = null; }
-
-        studentChart = new Chart(chartCanvas.getContext("2d"), {
-          type: "bar",
-          data: {
-            labels: tableLinkLabels,
-            datasets: [
-              {
-                label: "Couleur",
-                data: allLinkIds.map(id => details.has(id) ? (details.get(id).relOk ? 1 : 0) : null),
-                backgroundColor: allLinkIds.map(id => {
-                  if (!details.has(id)) return "transparent";
-                  return details.get(id).relOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.2)";
-                }),
-                borderColor: allLinkIds.map(id => {
-                  if (!details.has(id)) return "transparent";
-                  return details.get(id).relOk ? "rgba(34,197,94,.8)" : "rgba(239,68,68,.4)";
-                }),
-                borderWidth: 1.5,
-                borderRadius: 4,
-              },
-              {
-                label: "1er descripteur",
-                data: allLinkIds.map(id => details.has(id) ? (details.get(id).firstOk ? 1 : 0) : null),
-                backgroundColor: allLinkIds.map(id => {
-                  if (!details.has(id)) return "transparent";
-                  return details.get(id).firstOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.2)";
-                }),
-                borderColor: allLinkIds.map(id => {
-                  if (!details.has(id)) return "transparent";
-                  return details.get(id).firstOk ? "rgba(34,197,94,.8)" : "rgba(239,68,68,.4)";
-                }),
-                borderWidth: 1.5,
-                borderRadius: 4,
-              },
-              {
-                label: "2e descripteur",
-                data: allLinkIds.map(id => details.has(id) ? (details.get(id).lastOk ? 1 : 0) : null),
-                backgroundColor: allLinkIds.map(id => {
-                  if (!details.has(id)) return "transparent";
-                  return details.get(id).lastOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.2)";
-                }),
-                borderColor: allLinkIds.map(id => {
-                  if (!details.has(id)) return "transparent";
-                  return details.get(id).lastOk ? "rgba(34,197,94,.8)" : "rgba(239,68,68,.4)";
-                }),
-                borderWidth: 1.5,
-                borderRadius: 4,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: true,
-                position: "top",
-                labels: { boxWidth: 14, font: { size: 12, weight: 600 } },
-              },
-              tooltip: {
-                callbacks: {
-                  label: (tipCtx) => {
-                    const v = tipCtx.parsed.y;
-                    return `${tipCtx.dataset.label}: ${v === 1 ? "correct" : "incorrect"}`;
-                  }
-                }
-              },
-            },
-            scales: {
-              x: { stacked: true, grid: { display: false } },
-              y: {
-                stacked: true,
-                min: 0,
-                max: 3,
-                ticks: { stepSize: 1, callback: v => v + " pt" + (v > 1 ? "s" : "") },
-                grid: { color: "rgba(0,0,0,.06)" },
-              },
-            },
-          },
+      /* ── View toggle ── */
+      content.querySelectorAll(".view-toggle button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          content.querySelectorAll(".view-toggle button").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById("viewLinks").style.display = btn.dataset.view === "links" ? "flex" : "none";
+          document.getElementById("viewStudents").style.display = btn.dataset.view === "students" ? "flex" : "none";
         });
+      });
 
-        // Detail cards per link
-        let cardsHtml = '<div class="detail-grid">';
-        for (let i = 0; i < allLinkIds.length; i++) {
-          const linkId = allLinkIds[i];
-          const d = details.get(linkId);
-          if (!d) continue;
+      /* ── View: Par lien ── */
+      const linksContainer = document.getElementById("viewLinks");
+
+      for (const linkId of allLinkIds) {
+        const cert = certs.get(linkId);
+        const num = cert?.linkNumber ?? "?";
+
+        // Gather student scores for this link
+        let linkTotal = 0, linkResponses = 0;
+        const linkStudents = [];
+        for (const userId of studentIds) {
+          const d = students.get(userId).get(linkId);
+          if (d) {
+            linkTotal += d.score;
+            linkResponses++;
+            linkStudents.push({ userId, d });
+          }
+        }
+        const linkMax = linkResponses * 3;
+        const ratio = linkMax ? linkTotal / linkMax : 0;
+
+        // Dots for each student
+        const dotsHtml = linkStudents.map(({ userId, d }) => `
+          <span class="dot-entry" data-detail="link-${num}-${esc(userId)}">
+            <span class="dot-name">${esc(userId)}</span>
+            <span class="dot ${d.relOk ? "dot-ok" : "dot-fail"}"></span>
+            <span class="dot ${d.firstOk ? "dot-ok" : "dot-fail"}"></span>
+            <span class="dot ${d.lastOk ? "dot-ok" : "dot-fail"}"></span>
+          </span>
+        `).join("");
+
+        // Detail table (expanded)
+        const detailRows = linkStudents.map(({ userId, d }) => `
+          <tr>
+            <td style="font-weight:600;">${esc(userId)}</td>
+            <td>${icon(d.relOk)} ${esc(d.studentRel || "—")} <span style="color:var(--muted);">/ ${esc(d.certRel || "—")}</span></td>
+            <td>${icon(d.firstOk)} ${esc(d.studentFirst || "—")} <span style="color:var(--muted);">/ ${esc(d.certFirst || "—")}</span></td>
+            <td>${icon(d.lastOk)} ${esc(d.studentLast || "—")} <span style="color:var(--muted);">/ ${esc(d.certLast || "—")}</span></td>
+            <td style="font-weight:800;">${d.score}/3</td>
+          </tr>
+        `).join("");
+
+        linksContainer.insertAdjacentHTML("beforeend", `
+          <div class="card">
+            <div class="card-top">
+              <span class="card-num">${num}</span>
+              <span class="card-title">${esc(cert?.title || "Sans titre")}</span>
+              <span class="card-score">${linkTotal}/${linkMax}</span>
+            </div>
+            <div class="bar-label">${pct(linkTotal, linkMax)}% · ${linkResponses} élève${linkResponses > 1 ? "s" : ""}</div>
+            <div class="bar-wrap"><div class="bar-fill ${barClass(ratio)}" style="width:${pct(linkTotal, linkMax)}%;"></div></div>
+            <div class="dot-grid">${dotsHtml}</div>
+            <div class="detail-inline" id="detail-link-${num}">
+              <table class="detail-table">
+                <thead><tr><th>Élève</th><th>Couleur</th><th>1er desc.</th><th>2e desc.</th><th>Score</th></tr></thead>
+                <tbody>${detailRows}</tbody>
+              </table>
+            </div>
+          </div>
+        `);
+      }
+
+      /* ── View: Par élève ── */
+      const studentsContainer = document.getElementById("viewStudents");
+
+      for (const userId of studentIds) {
+        const links = students.get(userId);
+        let sTotal = 0, sMax = 0;
+        for (const d of links.values()) { sTotal += d.score; sMax += 3; }
+        const ratio = sMax ? sTotal / sMax : 0;
+
+        // Dots for each link
+        const dotsHtml = allLinkIds.map(linkId => {
           const cert = certs.get(linkId);
           const num = cert?.linkNumber ?? "?";
-
-          const icon = (ok) => ok
-            ? '<span class="detail-match">&#10003;</span>'
-            : '<span class="detail-miss">&#10007;</span>';
-
-          cardsHtml += `
-            <div class="detail-card">
-              <div class="detail-card-title">Lien ${num} — ${d.score}/3</div>
-              <div class="detail-row">
-                <span>Couleur</span>
-                <span>${icon(d.relOk)} ${d.studentRel || "—"} <span style="color:var(--muted);">/ ${d.certRel || "—"}</span></span>
-              </div>
-              <div class="detail-row">
-                <span>1er desc.</span>
-                <span>${icon(d.firstOk)} ${d.studentFirst || "—"} <span style="color:var(--muted);">/ ${d.certFirst || "—"}</span></span>
-              </div>
-              <div class="detail-row">
-                <span>2e desc.</span>
-                <span>${icon(d.lastOk)} ${d.studentLast || "—"} <span style="color:var(--muted);">/ ${d.certLast || "—"}</span></span>
-              </div>
-            </div>
+          const d = links.get(linkId);
+          if (!d) return `<span class="dot-entry" style="cursor:default;"><span class="dot-name" style="color:var(--muted);">L${num}</span><span class="dot dot-none"></span><span class="dot dot-none"></span><span class="dot dot-none"></span></span>`;
+          return `
+            <span class="dot-entry" data-detail="student-${esc(userId)}-${num}">
+              <span class="dot-name">L${num}</span>
+              <span class="dot ${d.relOk ? "dot-ok" : "dot-fail"}"></span>
+              <span class="dot ${d.firstOk ? "dot-ok" : "dot-fail"}"></span>
+              <span class="dot ${d.lastOk ? "dot-ok" : "dot-fail"}"></span>
+            </span>
           `;
-        }
-        cardsHtml += '</div>';
-        detailDiv.innerHTML = cardsHtml;
+        }).join("");
+
+        // Detail table
+        const detailRows = allLinkIds.map(linkId => {
+          const cert = certs.get(linkId);
+          const num = cert?.linkNumber ?? "?";
+          const d = links.get(linkId);
+          if (!d) return `<tr><td style="color:var(--muted);">Lien ${num}</td><td colspan="4" style="color:var(--muted);">—</td></tr>`;
+          return `
+            <tr>
+              <td style="font-weight:600;">Lien ${num}</td>
+              <td>${icon(d.relOk)} ${esc(d.studentRel || "—")} <span style="color:var(--muted);">/ ${esc(d.certRel || "—")}</span></td>
+              <td>${icon(d.firstOk)} ${esc(d.studentFirst || "—")} <span style="color:var(--muted);">/ ${esc(d.certFirst || "—")}</span></td>
+              <td>${icon(d.lastOk)} ${esc(d.studentLast || "—")} <span style="color:var(--muted);">/ ${esc(d.certLast || "—")}</span></td>
+              <td style="font-weight:800;">${d.score}/3</td>
+            </tr>
+          `;
+        }).join("");
+
+        studentsContainer.insertAdjacentHTML("beforeend", `
+          <div class="card">
+            <div class="card-top">
+              <span class="card-title">${esc(userId)}</span>
+              <span class="card-score">${sTotal}/${sMax} pts</span>
+            </div>
+            <div class="bar-label">${pct(sTotal, sMax)}% · ${links.size} lien${links.size > 1 ? "s" : ""}</div>
+            <div class="bar-wrap"><div class="bar-fill ${barClass(ratio)}" style="width:${pct(sTotal, sMax)}%;"></div></div>
+            <div class="dot-grid">${dotsHtml}</div>
+            <div class="detail-inline" id="detail-student-${esc(userId)}">
+              <table class="detail-table">
+                <thead><tr><th>Lien</th><th>Couleur</th><th>1er desc.</th><th>2e desc.</th><th>Score</th></tr></thead>
+                <tbody>${detailRows}</tbody>
+              </table>
+            </div>
+          </div>
+        `);
       }
 
-      // Wire up click handlers
-      document.addEventListener("click", (e) => {
-        const el = e.target.closest(".student-name[data-student]");
-        if (el) {
-          showStudentDetail(el.dataset.student);
-        }
-      });
+      /* ── Toggle detail on dot click ── */
+      content.addEventListener("click", (e) => {
+        const card = e.target.closest(".card");
+        if (!card) return;
 
-      document.getElementById("studentPanelClose").addEventListener("click", () => {
-        document.getElementById("studentPanel").style.display = "none";
-        if (studentChart) { studentChart.destroy(); studentChart = null; }
+        const entry = e.target.closest(".dot-entry[data-detail]");
+        if (entry) {
+          // Clicking a specific student/link dot does nothing special — toggle whole card detail
+        }
+
+        const detail = card.querySelector(".detail-inline");
+        if (detail) detail.classList.toggle("open");
       });
 
     } catch (err) {
-      if (err.message === "stop") { /* handled above */ }
+      if (err.message === "stop") { /* handled */ }
       else {
         console.error(err);
-        document.getElementById("loading").innerHTML = `<div class="error-box">Impossible de charger les données.</div>`;
+        document.getElementById("loading").innerHTML = '<div class="error-box">Impossible de charger les données.</div>';
       }
     }
 
