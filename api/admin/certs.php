@@ -29,6 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         jsonError('CERT introuvable', 404);
     }
 
+    if ($data['action'] === 'check_delete') {
+        $stmt = $db->prepare('SELECT COUNT(*) FROM student_responses WHERE cert_id = ?');
+        $stmt->execute([$certId]);
+        $count = (int) $stmt->fetchColumn();
+        jsonResponse(['id' => $certId, 'student_responses' => $count]);
+    }
+
     if ($data['action'] === 'delete') {
         $db->prepare('DELETE FROM certs WHERE id = ?')->execute([$certId]);
         jsonResponse(['deleted' => true, 'id' => $certId]);

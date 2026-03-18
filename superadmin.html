@@ -157,28 +157,32 @@
     .tool-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
     .tool-card .field { margin-bottom: 12px; }
 
-    /* ── Home cards ── */
-    .home-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 14px;
+    /* ── Home links ── */
+    .home-links {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    .home-card {
+    .home-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 22px 20px;
       box-shadow: 0 2px 8px rgba(16,24,40,.05);
-      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
       transition: border-color .15s, box-shadow .15s;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
-    .home-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(111,92,247,.12); }
-    .home-card-title { font-size: .95rem; font-weight: 800; }
-    .home-card-count { font-size: 1.6rem; font-weight: 900; color: var(--accent); }
-    .home-card-desc { font-size: .82rem; color: var(--muted); }
+    .home-link:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(111,92,247,.12); }
+    .home-link-body { flex: 1; min-width: 0; }
+    .home-link-name { font-size: .95rem; font-weight: 800; }
+    .home-link-count { font-size: .82rem; font-weight: 700; color: var(--accent); margin-left: 4px; }
+    .home-link-desc { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+    .home-link-arrow { font-size: 1.1rem; color: var(--border); transition: color .15s; flex-shrink: 0; }
+    .home-link:hover .home-link-arrow { color: var(--accent); }
 
     /* ── View system ── */
     .sa-view { display: none; }
@@ -467,53 +471,29 @@
     <!-- ════ HOME VIEW ════ -->
     <div class="sa-view active" id="viewHome">
       <main class="console-main">
-
-        <!-- Create teacher -->
-        <div>
-          <div class="console-group-title">Créer un compte enseignant-e</div>
-          <div class="tool-card">
-            <div id="createSuccess" class="success-msg"></div>
-            <div id="createError" class="error-msg"></div>
-            <form id="createForm">
-              <div class="field">
-                <label for="teacherName">Nom</label>
-                <input type="text" id="teacherName" placeholder="Prénom Nom" required>
-              </div>
-              <div class="field">
-                <label for="teacherEmail">Email</label>
-                <input type="email" id="teacherEmail" placeholder="enseignant-e@ecole.ch" required>
-              </div>
-              <div class="field">
-                <label for="teacherPassword">Mot de passe initial</label>
-                <input type="text" id="teacherPassword" placeholder="Min. 6 caractères" required>
-              </div>
-              <div style="margin-top:14px;">
-                <button class="btn-primary" type="submit">Créer le compte</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Navigation cards -->
-        <div>
-          <div class="console-group-title">Gérer</div>
-          <div class="home-grid">
-            <div class="home-card" onclick="showView('teachers')">
-              <div class="home-card-title">Enseignant-es</div>
-              <div class="home-card-count" id="homeTeacherCount">—</div>
-              <div class="home-card-desc">Comptes, suppression</div>
+        <div class="console-group-title">Gérer</div>
+        <div class="home-links">
+          <a class="home-link" href="#" onclick="showView('teachers');return false;">
+            <div class="home-link-body">
+              <div class="home-link-name">Enseignant-es <span class="home-link-count" id="homeTeacherCount"></span></div>
+              <div class="home-link-desc">Créer, consulter, supprimer des comptes</div>
             </div>
-            <div class="home-card" onclick="showView('sessions')">
-              <div class="home-card-title">Séances</div>
-              <div class="home-card-count" id="homeSessionCount">—</div>
-              <div class="home-card-desc">Feed global, suppression</div>
+            <span class="home-link-arrow">&rarr;</span>
+          </a>
+          <a class="home-link" href="#" onclick="showView('sessions');return false;">
+            <div class="home-link-body">
+              <div class="home-link-name">Séances <span class="home-link-count" id="homeSessionCount"></span></div>
+              <div class="home-link-desc">Feed global, ouvrir/fermer, supprimer</div>
             </div>
-            <div class="home-card" onclick="showView('certs')">
-              <div class="home-card-title">Dépôt de CERTs</div>
-              <div class="home-card-count" id="homeCertCount">—</div>
-              <div class="home-card-desc">Consulter, modifier, supprimer</div>
+            <span class="home-link-arrow">&rarr;</span>
+          </a>
+          <a class="home-link" href="#" onclick="showView('certs');return false;">
+            <div class="home-link-body">
+              <div class="home-link-name">Dépôt de CERTs <span class="home-link-count" id="homeCertCount"></span></div>
+              <div class="home-link-desc">Consulter, modifier, supprimer</div>
             </div>
-          </div>
+            <span class="home-link-arrow">&rarr;</span>
+          </a>
         </div>
       </main>
     </div>
@@ -526,6 +506,30 @@
           <span class="view-title">Enseignant-es</span>
           <span class="view-count" id="teachersCount"></span>
         </div>
+
+        <div class="tool-card" style="margin-bottom:16px;">
+          <h3 style="font-size:.95rem;font-weight:800;margin-bottom:12px;">Créer un compte</h3>
+          <div id="createSuccess" class="success-msg"></div>
+          <div id="createError" class="error-msg"></div>
+          <form id="createForm">
+            <div class="field">
+              <label for="teacherName">Nom</label>
+              <input type="text" id="teacherName" placeholder="Prénom Nom" required>
+            </div>
+            <div class="field">
+              <label for="teacherEmail">Email</label>
+              <input type="email" id="teacherEmail" placeholder="enseignant-e@ecole.ch" required>
+            </div>
+            <div class="field">
+              <label for="teacherPassword">Mot de passe initial</label>
+              <input type="text" id="teacherPassword" placeholder="Min. 6 caractères" required>
+            </div>
+            <div style="margin-top:14px;">
+              <button class="btn-primary" type="submit">Créer le compte</button>
+            </div>
+          </form>
+        </div>
+
         <div class="search-box" id="teacherSearchBox">
           <input type="text" id="teacherSearchInput" placeholder="Rechercher par nom ou email..." />
         </div>
@@ -683,7 +687,7 @@
         allTeachersData = await res.json();
         if (!Array.isArray(allTeachersData)) allTeachersData = [];
       } catch { allTeachersData = []; }
-      document.getElementById("homeTeacherCount").textContent = allTeachersData.length;
+      document.getElementById("homeTeacherCount").textContent = `(${allTeachersData.length})`;
       renderTeachers();
     }
 
@@ -765,7 +769,7 @@
         allSessionsData = await res.json();
         if (!Array.isArray(allSessionsData)) allSessionsData = [];
       } catch { allSessionsData = []; }
-      document.getElementById("homeSessionCount").textContent = allSessionsData.length;
+      document.getElementById("homeSessionCount").textContent = `(${allSessionsData.length})`;
       renderSessions();
     }
 
@@ -946,7 +950,7 @@
         allCertsData = await res.json();
         if (!Array.isArray(allCertsData)) allCertsData = [];
       } catch { allCertsData = []; }
-      document.getElementById("homeCertCount").textContent = allCertsData.length;
+      document.getElementById("homeCertCount").textContent = `(${allCertsData.length})`;
       renderCerts();
     }
 
@@ -1096,10 +1100,24 @@
     }
 
     async function deleteCertAdmin(id, title) {
-      if (!confirm(`Supprimer la CERT « ${title} » ?\n\nCette action est irréversible.`)) return;
       certSuccess.style.display = "none";
       certError.style.display = "none";
       try {
+        // Check for student responses first
+        const checkRes = await fetch(`${API}/admin/certs.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "check_delete", id })
+        });
+        const checkData = await checkRes.json();
+        const count = checkData.student_responses || 0;
+
+        let msg = `Supprimer la CERT « ${title} » ?\n\nCette action est irréversible.`;
+        if (count > 0) {
+          msg = `Supprimer la CERT « ${title} » ?\n\nAttention : il y a ${count} résultat${count > 1 ? "s" : ""} d'élèves associé${count > 1 ? "s" : ""} à cette CERT, ils seront effacés.\n\nCette action est irréversible.`;
+        }
+        if (!confirm(msg)) return;
+
         const res = await fetch(`${API}/admin/certs.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

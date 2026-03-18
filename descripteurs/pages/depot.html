@@ -790,9 +790,22 @@
 
     // Delete CERT
     window.deleteCert = async function(id) {
-      if (!confirm("Supprimer cette CERT ? Cette action est irréversible.")) return;
-
       try {
+        // Check for student responses first
+        const checkRes = await fetch(`${API}/certs/check-delete.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ id })
+        });
+        const checkData = await checkRes.json();
+        const count = checkData.student_responses || 0;
+
+        let msg = "Supprimer cette CERT ? Cette action est irréversible.";
+        if (count > 0) {
+          msg = `Attention : il y a ${count} résultat${count > 1 ? "s" : ""} d'élèves associé${count > 1 ? "s" : ""} à cette CERT, ils seront effacés.\n\nSupprimer cette CERT ? Cette action est irréversible.`;
+        }
+        if (!confirm(msg)) return;
+
         const res = await fetch(`${API}/certs/delete.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
