@@ -1495,7 +1495,10 @@
         }
       }
 
-      allRows = [...feedRows, ...syntheticRows];
+      // Filter out results for invisible links (no matching visible cert)
+      const visibleFeedRows = feedRows.filter(r => r.link_id);
+
+      allRows = [...visibleFeedRows, ...syntheticRows];
       render(true);
     }
 

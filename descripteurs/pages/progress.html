@@ -54,6 +54,21 @@
       color: #fff;
     }
 
+    .sort-btn {
+      padding: 7px 14px;
+      font-size: .82rem;
+      font-weight: 700;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      margin-left: 8px;
+      transition: border-color .15s, color .15s;
+    }
+    .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sort-btn.active { border-color: var(--accent); color: var(--accent); }
+
     /* ── Cards ── */
     .cards { display: flex; flex-direction: column; gap: 10px; }
 
@@ -431,9 +446,12 @@
           <div class="summary-stat"><strong>${pct(grandTotal, grandMax)}%</strong> score global</div>
           <div class="summary-stat" style="font-size:.78rem;">(${grandTotal} / ${grandMax} pts)</div>
         </div>
-        <div class="view-toggle">
-          <button class="active" data-view="links">Par lien</button>
-          <button data-view="students">Par élève</button>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+          <div class="view-toggle" style="margin-bottom:0;">
+            <button class="active" data-view="links">Par lien</button>
+            <button data-view="students">Par élève</button>
+          </div>
+          <button class="sort-btn" id="sortBtn" data-sort="none">Trier ↕</button>
         </div>
         <div id="viewLinks" class="cards"></div>
         <div id="viewStudents" class="cards" style="display:none;"></div>
@@ -491,7 +509,7 @@
         `).join("");
 
         linksContainer.insertAdjacentHTML("beforeend", `
-          <div class="card">
+          <div class="card" data-ratio="${ratio.toFixed(4)}">
             <div class="card-top">
               <span class="card-num">${num}</span>
               <span class="card-title">${esc(cert?.title || "Sans titre")}</span>
@@ -551,7 +569,7 @@
         }).join("");
 
         studentsContainer.insertAdjacentHTML("beforeend", `
-          <div class="card">
+          <div class="card" data-ratio="${ratio.toFixed(4)}">
             <div class="card-top">
               <span class="card-title">${esc(userId)}</span>
               <span class="card-score">${sTotal}/${sMax} pts</span>
@@ -568,6 +586,35 @@
           </div>
         `);
       }
+
+      /* ── Sort button ── */
+      const sortBtn = document.getElementById("sortBtn");
+      sortBtn.addEventListener("click", () => {
+        const states = ["none", "desc", "asc"];
+        const labels = { none: "Trier ↕", desc: "Meilleur ↓", asc: "Meilleur ↑" };
+        const cur = states.indexOf(sortBtn.dataset.sort);
+        const next = states[(cur + 1) % states.length];
+        sortBtn.dataset.sort = next;
+        sortBtn.textContent = labels[next];
+        sortBtn.classList.toggle("active", next !== "none");
+
+        [linksContainer, studentsContainer].forEach(container => {
+          const cards = [...container.querySelectorAll(".card")];
+          if (next === "none") {
+            // Restore original DOM order via data-idx
+            cards.sort((a, b) => parseInt(a.dataset.idx) - parseInt(b.dataset.idx));
+          } else {
+            const dir = next === "desc" ? -1 : 1;
+            cards.sort((a, b) => dir * (parseFloat(a.dataset.ratio) - parseFloat(b.dataset.ratio)));
+          }
+          cards.forEach(c => container.appendChild(c));
+        });
+      });
+
+      // Store original order index on each card
+      [linksContainer, studentsContainer].forEach(container => {
+        container.querySelectorAll(".card").forEach((c, i) => c.dataset.idx = i);
+      });
 
       /* ── Toggle detail on dot click ── */
       content.addEventListener("click", (e) => {

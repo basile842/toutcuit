@@ -1142,22 +1142,51 @@
           listEl.addEventListener("dragover", (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
+            if (!dragEl) return;
+
             const target = e.target.closest(".reorder-item");
-            if (!target || !dragEl || dragEl === target) return;
-
-            clearIndicators();
-
-            const rect = target.getBoundingClientRect();
-            const midY = rect.top + rect.height / 2;
-            target.classList.add(e.clientY < midY ? "drag-over-above" : "drag-over-below");
+            if (target && dragEl !== target) {
+              clearIndicators();
+              const rect = target.getBoundingClientRect();
+              target.classList.add(e.clientY < rect.top + rect.height / 2 ? "drag-over-above" : "drag-over-below");
+            } else if (!target) {
+              // Cursor is above first or below last item — show edge indicator
+              clearIndicators();
+              const items = listEl.querySelectorAll(".reorder-item");
+              if (!items.length) return;
+              const firstRect = items[0].getBoundingClientRect();
+              if (e.clientY < firstRect.top + firstRect.height / 2) {
+                items[0].classList.add("drag-over-above");
+              } else {
+                items[items.length - 1].classList.add("drag-over-below");
+              }
+            }
           });
 
           listEl.addEventListener("drop", (e) => {
             e.preventDefault();
-            const target = e.target.closest(".reorder-item");
-            if (!target || !dragEl || dragEl === target) return;
+            if (!dragEl) return;
 
             listEl.querySelector(".reorder-cutoff")?.remove();
+
+            let target = e.target.closest(".reorder-item");
+
+            // If dropped on the container (not on an item), pick first or last
+            if (!target) {
+              const items = listEl.querySelectorAll(".reorder-item");
+              if (!items.length) return;
+              const firstRect = items[0].getBoundingClientRect();
+              if (e.clientY < firstRect.top + firstRect.height / 2) {
+                listEl.insertBefore(dragEl, items[0]);
+              } else {
+                listEl.appendChild(dragEl);
+              }
+              clearIndicators();
+              updateNumbers();
+              return;
+            }
+
+            if (dragEl === target) return;
 
             const rect = target.getBoundingClientRect();
             const above = e.clientY < rect.top + rect.height / 2;
