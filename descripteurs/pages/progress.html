@@ -110,11 +110,9 @@
     .bar-fill {
       height: 100%;
       border-radius: 4px;
+      background: var(--accent);
       transition: width .3s;
     }
-    .bar-good { background: var(--good); }
-    .bar-mid  { background: var(--mid); }
-    .bar-bad  { background: var(--bad); }
 
     .bar-label {
       font-size: .75rem;
@@ -123,34 +121,33 @@
       margin-bottom: 2px;
     }
 
-    /* ── Dot grid (students per link / links per student) ── */
-    .dot-grid {
+    /* ── Pebble grid (students per link / links per student) ── */
+    .pebble-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 8px 14px;
       font-size: .8rem;
     }
-    .dot-entry {
+    .pebble-entry {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       cursor: pointer;
       transition: opacity .15s;
     }
-    .dot-entry:hover { opacity: .7; }
-    .dot-name {
+    .pebble-entry:hover { opacity: .7; }
+    .pebble-name {
       font-weight: 600;
       color: var(--text);
-      margin-right: 1px;
+      margin-right: 2px;
     }
-    .dot {
-      width: 9px; height: 9px;
-      border-radius: 50%;
-      display: inline-block;
+    .pebble {
+      font-size: .7rem;
+      line-height: 1;
     }
-    .dot-ok   { background: var(--good); }
-    .dot-fail { background: var(--bad); opacity: .35; }
-    .dot-none { background: var(--border); }
+    .pebble-ok   { color: var(--text); }
+    .pebble-fail { color: var(--border); }
+    .pebble-none { color: var(--border); }
 
     /* ── Inline detail (expanded) ── */
     .detail-inline {
@@ -180,8 +177,8 @@
       padding: 6px 8px;
       border-bottom: 1px solid rgba(0,0,0,.04);
     }
-    .detail-match { color: var(--good); font-weight: 700; }
-    .detail-miss  { color: var(--bad); font-weight: 700; }
+    .detail-match { font-weight: 800; color: var(--text); }
+    .detail-miss  { font-weight: 400; color: var(--border); }
 
     /* ── Excluded notice ── */
     .excluded-notice {
@@ -215,7 +212,7 @@
 
     @media (max-width: 600px) {
       .card { padding: 12px 14px; }
-      .dot-grid { gap: 6px 10px; }
+      .pebble-grid { gap: 6px 10px; }
       .summary-strip { gap: 14px; }
     }
   </style>
@@ -281,11 +278,13 @@
       return d.innerHTML;
     }
 
-    function barClass(ratio) {
-      return ratio >= 0.66 ? "bar-good" : ratio >= 0.33 ? "bar-mid" : "bar-bad";
-    }
-
     function pct(n, d) { return d ? Math.round(n / d * 100) : 0; }
+
+    function pebble(ok) {
+      return ok
+        ? '<span class="pebble pebble-ok">&#9679;</span>'
+        : '<span class="pebble pebble-fail">&#9679;</span>';
+    }
 
     function icon(ok) {
       return ok
@@ -472,13 +471,11 @@
         const linkMax = linkResponses * 3;
         const ratio = linkMax ? linkTotal / linkMax : 0;
 
-        // Dots for each student
+        // Pebbles for each student
         const dotsHtml = linkStudents.map(({ userId, d }) => `
-          <span class="dot-entry" data-detail="link-${num}-${esc(userId)}">
-            <span class="dot-name">${esc(userId)}</span>
-            <span class="dot ${d.relOk ? "dot-ok" : "dot-fail"}"></span>
-            <span class="dot ${d.firstOk ? "dot-ok" : "dot-fail"}"></span>
-            <span class="dot ${d.lastOk ? "dot-ok" : "dot-fail"}"></span>
+          <span class="pebble-entry" data-detail="link-${num}-${esc(userId)}">
+            <span class="pebble-name">${esc(userId)}</span>
+            ${pebble(d.relOk)}${pebble(d.firstOk)}${pebble(d.lastOk)}
           </span>
         `).join("");
 
@@ -501,8 +498,8 @@
               <span class="card-score">${linkTotal}/${linkMax}</span>
             </div>
             <div class="bar-label">${pct(linkTotal, linkMax)}% · ${linkResponses} élève${linkResponses > 1 ? "s" : ""}</div>
-            <div class="bar-wrap"><div class="bar-fill ${barClass(ratio)}" style="width:${pct(linkTotal, linkMax)}%;"></div></div>
-            <div class="dot-grid">${dotsHtml}</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct(linkTotal, linkMax)}%;"></div></div>
+            <div class="pebble-grid">${dotsHtml}</div>
             <div class="detail-inline" id="detail-link-${num}">
               <table class="detail-table">
                 <thead><tr><th>Élève</th><th>Couleur</th><th>1er desc.</th><th>2e desc.</th><th>Score</th></tr></thead>
@@ -522,18 +519,16 @@
         for (const d of links.values()) { sTotal += d.score; sMax += 3; }
         const ratio = sMax ? sTotal / sMax : 0;
 
-        // Dots for each link
+        // Pebbles for each link
         const dotsHtml = allLinkIds.map(linkId => {
           const cert = certs.get(linkId);
           const num = cert?.linkNumber ?? "?";
           const d = links.get(linkId);
-          if (!d) return `<span class="dot-entry" style="cursor:default;"><span class="dot-name" style="color:var(--muted);">L${num}</span><span class="dot dot-none"></span><span class="dot dot-none"></span><span class="dot dot-none"></span></span>`;
+          if (!d) return `<span class="pebble-entry" style="cursor:default;"><span class="pebble-name" style="color:var(--muted);">L${num}</span><span class="pebble pebble-none">&#9679;</span><span class="pebble pebble-none">&#9679;</span><span class="pebble pebble-none">&#9679;</span></span>`;
           return `
-            <span class="dot-entry" data-detail="student-${esc(userId)}-${num}">
-              <span class="dot-name">L${num}</span>
-              <span class="dot ${d.relOk ? "dot-ok" : "dot-fail"}"></span>
-              <span class="dot ${d.firstOk ? "dot-ok" : "dot-fail"}"></span>
-              <span class="dot ${d.lastOk ? "dot-ok" : "dot-fail"}"></span>
+            <span class="pebble-entry" data-detail="student-${esc(userId)}-${num}">
+              <span class="pebble-name">L${num}</span>
+              ${pebble(d.relOk)}${pebble(d.firstOk)}${pebble(d.lastOk)}
             </span>
           `;
         }).join("");
@@ -562,8 +557,8 @@
               <span class="card-score">${sTotal}/${sMax} pts</span>
             </div>
             <div class="bar-label">${pct(sTotal, sMax)}% · ${links.size} lien${links.size > 1 ? "s" : ""}</div>
-            <div class="bar-wrap"><div class="bar-fill ${barClass(ratio)}" style="width:${pct(sTotal, sMax)}%;"></div></div>
-            <div class="dot-grid">${dotsHtml}</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct(sTotal, sMax)}%;"></div></div>
+            <div class="pebble-grid">${dotsHtml}</div>
             <div class="detail-inline" id="detail-student-${esc(userId)}">
               <table class="detail-table">
                 <thead><tr><th>Lien</th><th>Couleur</th><th>1er desc.</th><th>2e desc.</th><th>Score</th></tr></thead>
@@ -579,7 +574,7 @@
         const card = e.target.closest(".card");
         if (!card) return;
 
-        const entry = e.target.closest(".dot-entry[data-detail]");
+        const entry = e.target.closest(".pebble-entry[data-detail]");
         if (entry) {
           // Clicking a specific student/link dot does nothing special — toggle whole card detail
         }
