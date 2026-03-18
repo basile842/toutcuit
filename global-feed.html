@@ -180,19 +180,38 @@
     .preview-pill{
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      font-size: .82rem;
-      font-weight: 700;
+      gap: 6px;
+      font-weight: 850;
+      font-size: 15px;
+      line-height: 1.2;
+      color: var(--text);
+      white-space: nowrap;
     }
 
     .preview-pill img{
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      display: block;
+      filter: brightness(0);
+      opacity: .85;
+    }
+
+    /* Neutraliser le fond coloré des pills injecté par main.css (.rel-* .preview-pill) */
+    .desc-card .desc-card-header .preview-pill,
+    .rel-good .desc-card-header .preview-pill,
+    .rel-mid  .desc-card-header .preview-pill,
+    .rel-bad  .desc-card-header .preview-pill{
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0;
     }
 
     .desc-sep{
-      color: var(--border);
-      font-weight: 700;
+      font-size: 13px;
+      opacity: .35;
+      flex-shrink: 0;
     }
 
     .who-list{
