@@ -142,45 +142,45 @@
     }
 
     /* ===== Mode admin ===== */
-    .admin-banner{
+    .admin-bar{
       display: none;
-      background: rgba(239,68,68,.10);
-      border: 1px solid rgba(239,68,68,.30);
-      border-radius: 10px;
-      padding: 8px 12px;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 12px;
-      font-size: 0.85rem;
-      font-weight: 850;
-      color: rgba(185,28,28,1);
-      letter-spacing: 0.01em;
-    }
-    body.admin-mode .admin-banner{ display: block; }
-
-    .admin-reset-btn{
-      display: none;
-      margin-top: 10px;
-      width: 100%;
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(239,68,68,.35);
-      background: rgba(239,68,68,.08);
-      color: rgba(185,28,28,1);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2, #f1f3f9);
       font-size: 0.82rem;
-      font-weight: 850;
-      cursor: pointer;
-      text-align: center;
-      transition: background .15s ease;
     }
-    .admin-reset-btn:hover{ background: rgba(239,68,68,.16); }
-    body.admin-mode .admin-reset-btn{ display: block; }
+    body.admin-mode .admin-bar{ display: flex; }
+    .admin-bar-session{
+      font-family: monospace;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: var(--accent, #6f5cf7);
+    }
+    .admin-bar-reset{
+      margin-left: auto;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--panel, #fff);
+      color: var(--muted, #5e6673);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .admin-bar-reset:hover{ border-color: var(--accent); color: var(--accent); }
 
     /* ===== Admin inspector ===== */
     .admin-inspector{
       display: none;
       margin-top: 14px;
-      border: 1px solid rgba(239,68,68,.25);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      background: rgba(239,68,68,.03);
+      background: var(--panel-2, #f1f3f9);
       padding: 14px 16px;
     }
     body.admin-mode .admin-inspector{ display: block; }
@@ -194,7 +194,7 @@
     .admin-inspector-title{
       font-size: 0.78rem;
       font-weight: 850;
-      color: rgba(185,28,28,1);
+      color: var(--muted);
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
@@ -203,16 +203,16 @@
       font-weight: 700;
       padding: 3px 10px;
       border-radius: 6px;
-      border: 1px solid rgba(239,68,68,.30);
-      background: rgba(239,68,68,.07);
-      color: rgba(185,28,28,1);
+      border: 1px solid var(--border);
+      background: var(--panel, #fff);
+      color: var(--muted);
       cursor: pointer;
     }
-    .admin-inspector-refresh:hover{ background: rgba(239,68,68,.14); }
+    .admin-inspector-refresh:hover{ background: rgba(111,92,247,.08); color: var(--accent); border-color: var(--accent); }
 
     .admin-userid{
       font-size: 0.80rem;
-      color: rgba(185,28,28,.75);
+      color: var(--muted);
       margin-bottom: 12px;
     }
 
@@ -615,9 +615,12 @@
     </p>
 
     <section class="card">
-      <div class="admin-banner">⚠️ Mode admin actif — les boutons de réinitialisation sont visibles.</div>
+      <div class="admin-bar" id="adminBar">
+        <span style="color:var(--muted);">Séance</span>
+        <span class="admin-bar-session" id="adminSessionCode"></span>
+        <button class="admin-bar-reset" id="resetAllBtn" type="button">Réinitialiser</button>
+      </div>
       <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">
-        <button class="btn admin-reset-btn" id="resetAllBtn" type="button" title="Réinitialiser tous les résultats" style="padding:8px 12px;font-size:.82rem;line-height:1;font-weight:700;color:#b91c1c;border-color:rgba(239,68,68,.25);">Réinitialiser</button>
         <button class="btn" id="refreshLinksBtn" type="button" title="Recharger les liens" style="padding:8px 10px;font-size:1.1rem;line-height:1;">↺</button>
       </div>
       <div id="linksList"></div>
@@ -1065,7 +1068,6 @@
               ${comment ? `<div class="result-comment">${escapeHtml(comment)}</div>` : ``}
             `
           }
-          <button class="admin-reset-btn" data-reset-id="${escapeHtml(id)}" type="button">↺ Réinitialiser ce résultat</button>
         </div>
       `;
     }
@@ -1273,18 +1275,11 @@
        Mode admin
     ============================ */
     const isAdmin = new URLSearchParams(location.search).get("admin") === "1";
-    if (isAdmin) document.body.classList.add("admin-mode");
-
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest(".admin-reset-btn");
-      if (!btn) return;
-      const id = btn.getAttribute("data-reset-id");
-      if (!id) return;
-      if (!confirm("Réinitialiser le résultat pour ce lien ?")) return;
-      clearResult(id);
-      const slot = document.getElementById(`result_${id}`);
-      if (slot) slot.innerHTML = renderResultBox(id, null);
-    });
+    if (isAdmin) {
+      document.body.classList.add("admin-mode");
+      const codeEl = document.getElementById("adminSessionCode");
+      if (codeEl) codeEl.textContent = SESSION_CODE || "—";
+    }
 
     /* ============================
        Admin inspector
