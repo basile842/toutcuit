@@ -549,8 +549,9 @@
         <div class="list-container" id="sessionsList"></div>
       </main>
       <div class="feed-bar" id="feedBar">
-        <button class="btn-primary" id="openGlobalFeedBtn" style="width:auto;padding:10px 20px;" disabled>Ouvrir le Feed global</button>
+        <button class="btn-primary" id="openGlobalFeedBtn" style="width:auto;padding:10px 20px;">Ouvrir le Feed global</button>
         <span id="globalFeedCount" style="font-size:.82rem;color:var(--muted);"></span>
+        <span id="globalFeedError" style="font-size:.82rem;color:#b91c1c;font-weight:600;display:none;"></span>
       </div>
     </div>
 
@@ -841,11 +842,11 @@
     });
 
     function updateGlobalFeedBtn() {
-      const btn = document.getElementById("openGlobalFeedBtn");
       const count = document.getElementById("globalFeedCount");
+      const errEl = document.getElementById("globalFeedError");
       const n = globalFeedSelectedCodes.size;
-      btn.disabled = n === 0;
       count.textContent = n ? `${n} séance(s) sélectionnée(s)` : "";
+      if (n > 0 && errEl) errEl.style.display = "none";
     }
 
     function confirmDeleteSession(id, name, code) {
@@ -885,7 +886,13 @@
     }
 
     document.getElementById("openGlobalFeedBtn").addEventListener("click", () => {
-      if (!globalFeedSelectedCodes.size) return;
+      const errEl = document.getElementById("globalFeedError");
+      if (!globalFeedSelectedCodes.size) {
+        errEl.textContent = "Vous devez sélectionner au minimum 1 séance";
+        errEl.style.display = "inline";
+        return;
+      }
+      errEl.style.display = "none";
       const codes = [...globalFeedSelectedCodes].join(",");
 
       const isMobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;

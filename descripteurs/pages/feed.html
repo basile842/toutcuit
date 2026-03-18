@@ -628,7 +628,13 @@
 
 <body>
   <header>
-    <nav></nav>
+    <nav style="display:flex;align-items:center;gap:6px;">
+      <a href="/admin.html" style="font-size:1.1rem;font-weight:900;letter-spacing:-0.02em;color:var(--accent);text-decoration:none;">toutcuit</a>
+      <span style="color:var(--border);">/</span>
+      <a id="consoleLink" href="/admin.html" style="color:var(--muted);text-decoration:none;font-weight:600;font-size:.95rem;">Console</a>
+      <span style="color:var(--border);">/</span>
+      <span style="font-weight:700;color:var(--text);font-size:.95rem;">Feed</span>
+    </nav>
   </header>
 
   <main>
@@ -719,6 +725,11 @@
     ============================ */
     const API_BASE = "/api";
     const SESSION_CODE = _qp.get("session") || "";
+
+    if (SESSION_CODE) {
+      const cl = document.getElementById("consoleLink");
+      if (cl) cl.href = `/session.html?session=${encodeURIComponent(SESSION_CODE)}`;
+    }
 
     const MAX_LIMIT = 200;
     const DEFAULT_LINKS_LIMIT = MAX_LIMIT;

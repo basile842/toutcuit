@@ -1276,12 +1276,17 @@
 
       const sc = encodeURIComponent(sessionCode);
 
-      // Window 1 (left): liens.html
-      const main = window.open(
-        `/descripteurs/pages/liens.html?session=${sc}&admin=1`, FEED2_MAIN_NAME,
+      // Window 1 (left): blank landing page
+      const main = window.open("about:blank", FEED2_MAIN_NAME,
         `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
+      main.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Feed Tout Cuit</title>
+        <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+        <style>*{box-sizing:border-box;margin:0;padding:0;}html,body{min-height:100vh;background:#f6f7fb;display:flex;align-items:center;justify-content:center;font-family:'Inter var','Inter',system-ui,sans-serif;}.brand{text-align:center;}.brand h1{font-size:3rem;font-weight:900;letter-spacing:-0.03em;color:#6f5cf7;}.brand p{font-size:1rem;color:#5e6673;margin-top:8px;}</style></head><body>
+        <div class="brand"><h1>Feed Tout Cuit</h1><p>Cliquez sur un lien dans le feed pour l'afficher ici.</p></div>
+      </body></html>`);
+      main.document.close();
       try { main.focus(); } catch {}
 
       // Window 2 (right): feed.html in sidecar mode
