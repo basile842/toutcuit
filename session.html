@@ -364,6 +364,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+      padding-bottom: 32px;
     }
 
     .reorder-item {
@@ -752,7 +753,7 @@
         const sc = enc(s.code);
 
         // Set links
-        document.getElementById("liensLink").href = `/descripteurs/pages/liens.html?session=${sc}`;
+        document.getElementById("liensLink").href = `/descripteurs/pages/liens.html?session=${sc}&admin=1`;
         document.getElementById("feedLink").href = `/descripteurs/pages/feed.html?session=${sc}`;
         document.getElementById("scoresLink").href = `/descripteurs/pages/progress.html?session=${sc}`;
         document.getElementById("collectorLink").addEventListener("click", () => {
@@ -1134,7 +1135,7 @@
               if (dragEl) dragEl.classList.remove("is-dragging");
               clearIndicators();
               dragEl = null;
-              updateVisibility();
+              setTimeout(() => updateVisibility(), 0);
             });
           });
 
@@ -1277,7 +1278,7 @@
 
       // Window 1 (left): liens.html
       const main = window.open(
-        `/descripteurs/pages/liens.html?session=${sc}`, FEED2_MAIN_NAME,
+        `/descripteurs/pages/liens.html?session=${sc}&admin=1`, FEED2_MAIN_NAME,
         `popup=yes,width=${mainW},height=${H},left=${X},top=${Y},resizable=yes,scrollbars=yes`
       );
       if (!main) { alert("Pop-ups bloquées. Autorisez les pop-ups pour ce site."); return; }
