@@ -1136,41 +1136,45 @@
               dragEl = null;
               updateVisibility();
             });
+          });
 
-            el.addEventListener("dragover", (e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
-              if (!dragEl || dragEl === el) return;
+          // Delegated dragover + drop on the container for robustness
+          listEl.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            const target = e.target.closest(".reorder-item");
+            if (!target || !dragEl || dragEl === target) return;
 
-              clearIndicators();
+            clearIndicators();
 
-              const rect = el.getBoundingClientRect();
-              const midY = rect.top + rect.height / 2;
-              const above = e.clientY < midY;
+            const rect = target.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            target.classList.add(e.clientY < midY ? "drag-over-above" : "drag-over-below");
+          });
 
-              el.classList.add(above ? "drag-over-above" : "drag-over-below");
-            });
+          listEl.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const target = e.target.closest(".reorder-item");
+            if (!target || !dragEl || dragEl === target) return;
 
-            el.addEventListener("drop", (e) => {
-              e.preventDefault();
-              if (!dragEl || dragEl === el) return;
+            listEl.querySelector(".reorder-cutoff")?.remove();
 
-              // Remove cutoff line before reordering DOM
-              listEl.querySelector(".reorder-cutoff")?.remove();
+            const rect = target.getBoundingClientRect();
+            const above = e.clientY < rect.top + rect.height / 2;
 
-              const rect = el.getBoundingClientRect();
-              const midY = rect.top + rect.height / 2;
-              const above = e.clientY < midY;
-
-              if (above) {
-                listEl.insertBefore(dragEl, el);
+            if (above) {
+              listEl.insertBefore(dragEl, target);
+            } else {
+              const next = target.nextElementSibling;
+              if (next && next !== dragEl) {
+                listEl.insertBefore(dragEl, next);
               } else {
-                listEl.insertBefore(dragEl, el.nextSibling);
+                listEl.appendChild(dragEl);
               }
+            }
 
-              clearIndicators();
-              updateNumbers();
-            });
+            clearIndicators();
+            updateNumbers();
           });
         }
 
