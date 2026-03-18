@@ -519,18 +519,6 @@
 </head>
 
 <body>
-  <header>
-    <nav style="display:flex;align-items:center;gap:6px;">
-      <span style="font-weight:900;letter-spacing:-0.02em;color:var(--accent);">toutcuit</span>
-      <span style="color:var(--border);">/</span>
-      <a href="/superadmin.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Superadmin</a>
-      <span style="color:var(--border);">/</span>
-      <span style="font-weight:700;color:var(--text);">Feed global</span>
-      <span style="flex:1;"></span>
-      <button class="btn" id="hardReloadBtn" type="button">↺ Recharger</button>
-    </nav>
-  </header>
-
   <main>
     <section class="card">
       <div class="feed-controls">
@@ -540,6 +528,8 @@
           <button class="chip" data-rel="mid" aria-pressed="false" type="button">Indéterminé</button>
           <button class="chip" data-rel="bad" aria-pressed="false" type="button">Pas fiable</button>
         </div>
+        <span style="flex:1;"></span>
+        <button class="btn" id="hardReloadBtn" type="button" style="flex-shrink:0;">↺</button>
       </div>
 
       <div id="loading" class="muted-note" style="margin-top: 14px;">Chargement en cours…</div>
@@ -555,8 +545,6 @@
 
     if (SIDECAR_MODE) {
       document.documentElement.style.fontSize = "14px";
-      const reloadBtn = document.getElementById("hardReloadBtn");
-      if (reloadBtn) reloadBtn.textContent = "↺";
     }
 
     const ICON_BASE = "/descripteurs/assets/icons/";

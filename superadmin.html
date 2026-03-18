@@ -782,15 +782,24 @@
         return;
       }
 
-      list.innerHTML = filtered.map(s => `
+      list.innerHTML = filtered.map(s => {
+        const isOpen = s.is_open === 1 || s.is_open === "1" || s.is_open === true;
+        return `
         <div class="session-row">
           <input type="checkbox" value="${esc(s.code)}" class="gf-check" ${globalFeedSelectedCodes.has(s.code) ? "checked" : ""}>
           <span class="list-row-name">${esc(s.school_name || "")} — ${esc(s.name)}</span>
           <span class="list-row-code">${esc(s.code)}</span>
           <span class="list-row-meta" style="font-size:.72rem;">${esc(s.teacher_name || "—")}</span>
+          <button class="btn-toggle-open" data-id="${s.id}" data-open="${isOpen ? "1" : "0"}" style="
+            padding:4px 10px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;
+            border:1px solid ${isOpen ? "rgba(34,197,94,.4)" : "var(--border)"};
+            background:${isOpen ? "rgba(34,197,94,.08)" : "var(--panel-2)"};
+            color:${isOpen ? "#166534" : "var(--muted)"};
+            transition:all .15s;
+          ">${isOpen ? "Ouverte" : "Fermée"}</button>
           <button class="btn-delete" onclick="confirmDeleteSession(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.code)}')">Supprimer</button>
-        </div>
-      `).join("");
+        </div>`;
+      }).join("");
 
       list.querySelectorAll(".gf-check").forEach(cb => {
         cb.addEventListener("change", () => {
@@ -799,6 +808,31 @@
           updateGlobalFeedBtn();
         });
       });
+
+      list.querySelectorAll(".btn-toggle-open").forEach(btn => {
+        btn.addEventListener("click", () => toggleSessionOpen(btn));
+      });
+    }
+
+    async function toggleSessionOpen(btn) {
+      const id = parseInt(btn.dataset.id);
+      const currentlyOpen = btn.dataset.open === "1";
+      const newVal = currentlyOpen ? 0 : 1;
+      btn.disabled = true;
+      btn.textContent = "...";
+      try {
+        const res = await fetch(`${API}/admin/update-session.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: id, is_open: newVal })
+        });
+        const data = await res.json();
+        if (data.error) { alert("Erreur : " + data.error); btn.disabled = false; btn.textContent = currentlyOpen ? "Ouverte" : "Fermée"; return; }
+        // Update local data and re-render
+        const s = allSessionsData.find(x => x.id === id);
+        if (s) s.is_open = newVal;
+        renderSessions();
+      } catch (err) { alert("Erreur réseau : " + err.message); btn.disabled = false; btn.textContent = currentlyOpen ? "Ouverte" : "Fermée"; }
     }
 
     document.getElementById("sessionSearchInput").addEventListener("input", (e) => {
