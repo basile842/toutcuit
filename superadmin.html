@@ -125,9 +125,14 @@
     }
     .console-header-logo { font-size: 1.2rem; font-weight: 900; letter-spacing: -0.02em; color: var(--accent); }
     .console-header-sep { color: var(--border); font-size: 1.2rem; }
-    .console-header-title { font-size: 0.95rem; font-weight: 700; color: var(--muted); }
+    .console-header-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
     .console-header-spacer { flex: 1; }
     .console-header-logout { font-size: 0.82rem; color: var(--accent); cursor: pointer; border: none; background: none; font-weight: 600; }
+
+    .breadcrumb { display: flex; align-items: center; gap: 12px; }
+    .breadcrumb-link { cursor: pointer; transition: color .15s; }
+    .breadcrumb-link:not(.console-header-logo) { font-size: 0.95rem; font-weight: 700; color: var(--muted); }
+    .breadcrumb-link:hover { color: var(--accent); }
 
     .console-main {
       max-width: 860px;
@@ -194,19 +199,6 @@
       gap: 12px;
       margin-bottom: 16px;
     }
-    .btn-back {
-      padding: 7px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 9px;
-      background: var(--panel);
-      font-size: .85rem;
-      font-weight: 700;
-      cursor: pointer;
-      color: var(--muted);
-      transition: all .15s;
-    }
-    .btn-back:hover { border-color: var(--accent); color: var(--accent); }
-
     .view-title { font-size: 1.05rem; font-weight: 800; flex: 1; }
     .view-count { font-size: .82rem; color: var(--muted); font-weight: 600; }
 
@@ -461,9 +453,13 @@
   <!-- Console -->
   <div id="consoleContent">
     <header class="console-header">
-      <span class="console-header-logo">toutcuit</span>
-      <span class="console-header-sep">/</span>
-      <span class="console-header-title" id="headerTitle">Superadmin</span>
+      <nav class="breadcrumb" id="breadcrumb">
+        <span class="console-header-logo breadcrumb-link" onclick="showView('home')">toutcuit</span>
+        <span class="console-header-sep">/</span>
+        <span class="breadcrumb-link" onclick="showView('home')">Superadmin</span>
+        <span class="console-header-sep breadcrumb-sep" id="breadcrumbSep" style="display:none">/</span>
+        <span class="console-header-title" id="breadcrumbLeaf" style="display:none"></span>
+      </nav>
       <span class="console-header-spacer"></span>
       <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
     </header>
@@ -502,7 +498,6 @@
     <div class="sa-view" id="viewTeachers">
       <main class="console-main">
         <div class="view-toolbar">
-          <button class="btn-back" onclick="showView('home')">← Retour</button>
           <span class="view-title">Enseignant-es</span>
           <span class="view-count" id="teachersCount"></span>
         </div>
@@ -543,7 +538,6 @@
     <div class="sa-view" id="viewSessions">
       <main class="console-main" style="padding-bottom:80px;">
         <div class="view-toolbar">
-          <button class="btn-back" onclick="showView('home')">← Retour</button>
           <span class="view-title">Séances</span>
           <span class="view-count" id="sessionsCount"></span>
         </div>
@@ -563,7 +557,6 @@
     <div class="sa-view" id="viewCerts">
       <main class="console-main">
         <div class="view-toolbar">
-          <button class="btn-back" onclick="showView('home')">← Retour</button>
           <span class="view-title">Dépôt de CERTs</span>
           <span class="view-count" id="certsCount"></span>
         </div>
@@ -588,11 +581,19 @@
     function showView(name) {
       document.querySelectorAll(".sa-view").forEach(v => v.classList.remove("active"));
       document.getElementById("view" + name.charAt(0).toUpperCase() + name.slice(1)).classList.add("active");
-      document.getElementById("headerTitle").textContent =
-        name === "home" ? "Superadmin" :
-        name === "teachers" ? "Enseignant-es" :
-        name === "sessions" ? "Séances" :
-        name === "certs" ? "Dépôt de CERTs" : "Superadmin";
+      const sep = document.getElementById("breadcrumbSep");
+      const leaf = document.getElementById("breadcrumbLeaf");
+      if (name === "home") {
+        sep.style.display = "none";
+        leaf.style.display = "none";
+      } else {
+        const label = name === "teachers" ? "Enseignant-es" :
+                      name === "sessions" ? "Séances" :
+                      name === "certs" ? "Dépôt de CERTs" : "";
+        leaf.textContent = label;
+        sep.style.display = "";
+        leaf.style.display = "";
+      }
       window.scrollTo(0, 0);
     }
 
@@ -1133,5 +1134,8 @@
       return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
   </script>
+<footer style="text-align:center;padding:18px 12px;font-size:.7rem;color:rgba(111,92,247,.45);letter-spacing:.01em;">
+  © 2026 CERTIFY Community SA · CHE-241.821.797 · Rue de la Coulouvrenière 8, 1204 Genève
+</footer>
 </body>
 </html>
