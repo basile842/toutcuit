@@ -626,7 +626,9 @@
         <span class="admin-bar-session" id="adminSessionCode"></span>
         <button class="admin-bar-reset" id="resetAllBtn" type="button">Réinitialiser</button>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <span id="userPseudo" style="font-size:.88rem;font-weight:700;color:var(--muted);"></span>
+        <span style="flex:1;"></span>
         <button class="btn" id="refreshLinksBtn" type="button" title="Recharger les liens" style="padding:8px 10px;font-size:1.1rem;line-height:1;">↺</button>
       </div>
       <div id="linksList"></div>
@@ -1451,7 +1453,9 @@
        Init
     ============================ */
     try{
-      ensureUserId();
+      const _uid = ensureUserId();
+      const _pseudoEl = document.getElementById("userPseudo");
+      if (_pseudoEl) _pseudoEl.textContent = _uid;
       await loadFromSheet();
       if (isAdmin) renderAdminInspector();
 
