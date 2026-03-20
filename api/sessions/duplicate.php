@@ -29,9 +29,28 @@ if (!$original) {
     jsonError('Séance introuvable', 404);
 }
 
-// Check name is different
-if ($newName === $original['name']) {
-    jsonError('Le nom doit être différent de la séance originale');
+// Resolve school_id: use a different school if school_name is provided
+$schoolId = $original['school_id'];
+if (!empty($data['school_name'])) {
+    $schoolName = trim($data['school_name']);
+    // Look for existing school with this name
+    $stmt = $db->prepare('SELECT id FROM schools WHERE name = ?');
+    $stmt->execute([$schoolName]);
+    $existing = $stmt->fetch();
+    if ($existing) {
+        $schoolId = (int) $existing['id'];
+    } else {
+        // Create the school
+        $stmt = $db->prepare('INSERT INTO schools (name) VALUES (?)');
+        $stmt->execute([$schoolName]);
+        $schoolId = (int) $db->lastInsertId();
+    }
+}
+
+// Check at least name or school is different
+$originalSchoolId = (int) $original['school_id'];
+if ($newName === $original['name'] && $schoolId === $originalSchoolId) {
+    jsonError('Le nom de la séance ou de l\'école doit être différent de l\'original');
 }
 
 // Generate unique session code
@@ -58,7 +77,7 @@ try {
     ');
     $stmt->execute([
         $teacherId,
-        $original['school_id'],
+        $schoolId,
         $newName,
         $code,
         $original['is_open'],

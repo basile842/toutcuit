@@ -814,7 +814,7 @@
         // Duplicate
         document.getElementById("duplicateLink").addEventListener("click", (e) => {
           e.preventDefault();
-          duplicateSession(s.id, s.name);
+          duplicateSession(s.id, s.name, s.school_name || "");
         });
 
         // Delete
@@ -1002,6 +1002,8 @@
 
         const totalCerts = items.length;
         let visibleLinks = session.visible_links ?? 0;
+        const initialOrder = items.map(it => ({ ...it }));
+        const initialVisibleLinks = visibleLinks;
 
         function getHost(url) {
           try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
@@ -1020,6 +1022,7 @@
           <div class="reorder-list" id="reorderList"></div>
           <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
             <button class="btn-secondary" id="saveOrderBtn">Enregistrer l'ordre</button>
+            <button class="btn-secondary" id="cancelOrderBtn" style="background:transparent;color:var(--muted);border-color:var(--muted);">Annuler</button>
             <span id="orderStatus" style="font-size:.82rem;color:var(--muted);"></span>
           </div>
         `;
@@ -1211,6 +1214,19 @@
         renderList();
         updateVisibleUI();
 
+        // Cancel button — restore initial order
+        document.getElementById("cancelOrderBtn").addEventListener("click", () => {
+          items.length = 0;
+          initialOrder.forEach(it => items.push({ ...it }));
+          visibleLinks = initialVisibleLinks;
+          renderList();
+          updateVisibleUI();
+          const statusEl = document.getElementById("orderStatus");
+          statusEl.textContent = "Ordre réinitialisé";
+          statusEl.style.color = "var(--muted)";
+          setTimeout(() => { statusEl.textContent = ""; }, 1200);
+        });
+
         // Save order button
         document.getElementById("saveOrderBtn").addEventListener("click", async () => {
           const domItems = listEl.querySelectorAll(".reorder-item");
@@ -1345,20 +1361,28 @@
     }
 
     // Duplicate session
-    async function duplicateSession(sessionId, originalName) {
-      const newName = prompt(`Nom de la nouvelle séance :`, `${originalName} (copie)`);
+    async function duplicateSession(sessionId, originalName, originalSchool) {
+      const newSchool = prompt("Nom de l'école :", originalSchool);
+      if (newSchool === null) return;
+
+      const newName = prompt("Nom de la nouvelle séance :", `${originalName} (copie)`);
       if (!newName || !newName.trim()) return;
 
-      if (newName.trim() === originalName) {
-        alert("Le nom doit être différent de la séance originale.");
+      if (newName.trim() === originalName && newSchool.trim() === originalSchool) {
+        alert("Le nom de la séance ou de l'école doit être différent de l'original.");
         return;
+      }
+
+      const payload = { session_id: sessionId, name: newName.trim() };
+      if (newSchool.trim() && newSchool.trim() !== originalSchool) {
+        payload.school_name = newSchool.trim();
       }
 
       try {
         const res = await fetch(`${API}/sessions/duplicate.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          body: JSON.stringify({ session_id: sessionId, name: newName.trim() })
+          body: JSON.stringify(payload)
         });
         const result = await res.json();
         if (result.error) {

@@ -722,7 +722,7 @@
     }
 
     function dedupKeyFor(userId, linkId){
-      return fnv1aHex(`${userId}||${linkId}`);
+      return fnv1aHex(`${SESSION_CODE}||${userId}||${linkId}`);
     }
 
     function buildArchiveId(data){
@@ -815,7 +815,7 @@
        ⚠️ IMPORTANT: on ne stocke que les résultats publiés
     ============================ */
     const STORAGE_PREFIX = "certify_page_result_";
-    const storageKeyForId = (id) => STORAGE_PREFIX + id;
+    const storageKeyForId = (id) => STORAGE_PREFIX + (SESSION_CODE ? SESSION_CODE + "_" : "") + id;
 
     function saveResult(id, payload){
       try{ localStorage.setItem(storageKeyForId(id), JSON.stringify(payload)); }catch{}
