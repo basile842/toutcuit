@@ -44,3 +44,13 @@ function requireFields(array $data, array $fields): void {
         }
     }
 }
+
+function cleanOrphanedSchools(?PDO $db = null): int {
+    $db = $db ?? getDB();
+    $stmt = $db->prepare('
+        DELETE FROM schools
+        WHERE id NOT IN (SELECT DISTINCT school_id FROM sessions WHERE school_id IS NOT NULL)
+    ');
+    $stmt->execute();
+    return $stmt->rowCount();
+}

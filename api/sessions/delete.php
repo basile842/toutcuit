@@ -26,4 +26,6 @@ if (!$stmt->fetch()) {
 $stmt = $db->prepare('DELETE FROM sessions WHERE id = ?');
 $stmt->execute([$sessionId]);
 
+cleanOrphanedSchools($db);
+
 jsonResponse(['deleted' => true, 'session_id' => $sessionId]);

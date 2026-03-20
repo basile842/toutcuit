@@ -32,6 +32,10 @@ try {
     $db->prepare('DELETE FROM sessions WHERE id = ?')->execute([$sessionId]);
 
     $db->exec('SET FOREIGN_KEY_CHECKS = 1');
+
+    // Clean up schools no longer referenced by any session
+    cleanOrphanedSchools($db);
+
     $db->commit();
 } catch (\Exception $e) {
     $db->exec('SET FOREIGN_KEY_CHECKS = 1');
