@@ -876,7 +876,7 @@
           return `<div class="certs-ref-label">Références</div><ol class="certs-ref-list">${items.map((item, i) => `<li><span class="certs-ref-num">${i+1}.</span> ${esc(item)}</li>`).join("")}</ol>`;
         })();
 
-        const textParts = [certs.context, certs.content, certs.reliabilityText].filter(Boolean).map(t => esc(stripBullets(t)));
+        const textParts = [certs.context, certs.content].filter(Boolean).map(t => esc(stripBullets(t)));
         const textBlockHtml = (textParts.length || referencesHtml) ? `
           <div class="certs-block certs-block--purple">
             ${textParts.length ? `<div class="certs-section-content">${textParts.join("<br/><br/>")}</div>` : ""}

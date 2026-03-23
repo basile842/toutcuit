@@ -1296,11 +1296,10 @@
           return `<div class="certs-ref-label">Références</div><ol class="certs-ref-list">${listHtml}</ol>`;
         })();
 
-        // Bloc texte : Contexte + Contenu + Fiabilité (texte simple, sans puces)
+        // Bloc texte : Contexte + Contenu (fiabilité déjà incluse en fin de contenu)
         const textParts = [
           certs.context,
           certs.content,
-          certs.reliabilityText,
         ].filter(Boolean).map(t => escapeHtml(stripBullets(t)));
 
         const textBlockHtml = (textParts.length || referencesHtml) ? `
