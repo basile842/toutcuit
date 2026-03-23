@@ -1296,15 +1296,12 @@
           return `<div class="certs-ref-label">Références</div><ol class="certs-ref-list">${listHtml}</ol>`;
         })();
 
-        // Bloc texte : Contexte + Contenu (fiabilité déjà incluse en fin de contenu)
-        const textParts = [
-          certs.context,
-          certs.content,
-        ].filter(Boolean).map(t => escapeHtml(stripBullets(t)));
-
-        const textBlockHtml = (textParts.length || referencesHtml) ? `
+        // Bloc texte : le champ content contient le CCR complet (contexte + contenu + fiabilité)
+        // On sépare par paragraphe pour afficher avec des sauts de ligne entre chaque partie
+        const contentParas = (certs.content || "").split(/\n+/).map(s => stripBullets(s)).filter(Boolean);
+        const textBlockHtml = (contentParas.length || referencesHtml) ? `
           <div class="certs-block certs-block--purple">
-            ${textParts.length ? `<div class="certs-section-content">${textParts.join("<br/><br/>")}</div>` : ""}
+            ${contentParas.length ? `<div class="certs-section-content">${contentParas.map(p => escapeHtml(p)).join("<br/><br/>")}</div>` : ""}
             ${referencesHtml}
           </div>
         ` : "";
