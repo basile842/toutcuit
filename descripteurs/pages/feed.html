@@ -281,12 +281,45 @@
     .certs-content{
       display: none;
       padding: 0;
-      margin-bottom: 12px;
-      display: none;
+      margin-bottom: 4px;
       flex-direction: column;
       gap: 8px;
     }
     .certs-content.is-open{
+      display: flex;
+    }
+
+    /* Second toggle for detailed content */
+    .certs-toggle-detail{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      margin: 0 0 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s ease;
+      border-radius: 8px;
+    }
+    .certs-toggle-detail:hover{
+      background: rgba(111,92,247,.06);
+    }
+    .certs-toggle-detail .certs-toggle-icon{
+      width: 20px;
+      height: 20px;
+      font-size: 14px;
+    }
+    .certs-toggle-detail.is-open .certs-toggle-icon{
+      transform: rotate(180deg);
+    }
+    .certs-detail-content{
+      display: none;
+      padding: 0;
+      margin-bottom: 12px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .certs-detail-content.is-open{
       display: flex;
     }
 
@@ -1277,6 +1310,17 @@
           </div>
         ` : "";
 
+        const hasDetail = !!(textBlockHtml);
+        const detailToggleHtml = hasDetail ? `
+          <div class="certs-toggle-detail" data-link-id="${escapeHtml(g.link_id)}">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.03em; opacity:.45; margin-right:5px;">Détail</span>
+            <span class="certs-toggle-icon">▼</span>
+          </div>
+          <div class="certs-detail-content" data-link-id="${escapeHtml(g.link_id)}">
+            ${textBlockHtml}
+          </div>
+        ` : "";
+
         certsHtml = `
           <div class="certs-toggle" data-link-id="${escapeHtml(g.link_id)}">
             <span style="font-size:12px; font-weight:850; letter-spacing:0.05em; opacity:.6; margin-right:6px;">CERT</span>
@@ -1285,8 +1329,8 @@
           <div class="certs-content" data-link-id="${escapeHtml(g.link_id)}">
             ${descriptorsHtml}
             ${threePhrasesHtml}
-            ${textBlockHtml}
           </div>
+          ${detailToggleHtml}
         `;
       }
 
@@ -1390,12 +1434,25 @@
         });
       });
 
-      // ✅ Ajouter les event listeners pour les toggles CERTs
+      // ✅ Ajouter les event listeners pour les toggles CERTs (partie haute)
       document.querySelectorAll(".certs-toggle").forEach(toggle => {
         toggle.addEventListener("click", () => {
           const linkId = toggle.getAttribute("data-link-id");
           const content = document.querySelector(`.certs-content[data-link-id="${linkId}"]`);
-          
+
+          if (content) {
+            const isOpen = content.classList.contains("is-open");
+            content.classList.toggle("is-open", !isOpen);
+            toggle.classList.toggle("is-open", !isOpen);
+          }
+        });
+      });
+
+      // Toggle détail (partie basse : contexte, contenu, fiabilité, références)
+      document.querySelectorAll(".certs-toggle-detail").forEach(toggle => {
+        toggle.addEventListener("click", () => {
+          const linkId = toggle.getAttribute("data-link-id");
+          const content = document.querySelector(`.certs-detail-content[data-link-id="${linkId}"]`);
           if (content) {
             const isOpen = content.classList.contains("is-open");
             content.classList.toggle("is-open", !isOpen);

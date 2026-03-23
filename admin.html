@@ -553,6 +553,22 @@
       try { return JSON.parse(localStorage.getItem("tc_teacher")); } catch { return null; }
     }
 
+    // Wrapper fetch authentifié — redirige vers login si token expiré (401)
+    async function authFetch(url, options = {}) {
+      const token = getToken();
+      if (!token) { forceLogout(); throw new Error("Non connecté"); }
+      options.headers = { ...options.headers, "Authorization": `Bearer ${token}` };
+      const res = await fetch(url, options);
+      if (res.status === 401) { forceLogout(); throw new Error("Session expirée"); }
+      return res;
+    }
+
+    function forceLogout() {
+      localStorage.removeItem("tc_token");
+      localStorage.removeItem("tc_teacher");
+      location.reload();
+    }
+
     function showError(msg) {
       loginError.textContent = msg;
       loginError.style.display = "block";
@@ -648,11 +664,8 @@
 
     // Load sessions
     async function loadSessions() {
-      const token = getToken();
       try {
-        const res = await fetch(`${API}/sessions/list.php`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        const res = await authFetch(`${API}/sessions/list.php`);
         const sessions = await res.json();
 
         // Add "create session" button at the top
@@ -710,12 +723,11 @@
             const sessionName = document.getElementById("newSessionName").value.trim();
             if (!schoolName || !sessionName) return alert("Les deux champs sont requis.");
 
-            const token = getToken();
             try {
               // Create or find school
-              const schoolRes = await fetch(`${API}/schools/save.php`, {
+              const schoolRes = await authFetch(`${API}/schools/save.php`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: schoolName })
               });
               const schoolText = await schoolRes.text();
@@ -724,9 +736,9 @@
               if (school.error) return alert("Erreur école : " + school.error);
 
               // Create session
-              const sessRes = await fetch(`${API}/sessions/create.php`, {
+              const sessRes = await authFetch(`${API}/sessions/create.php`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: sessionName, school_id: school.id })
               });
               const sessText = await sessRes.text();
@@ -775,13 +787,9 @@
       panel.style.display = "block";
       panel.innerHTML = "<div style='color:var(--muted);font-size:.85rem;'>Chargement...</div>";
 
-      const token = getToken();
-
       try {
         // Load all my CERTs + shared
-        const certsRes = await fetch(`${API}/certs/list.php`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        const certsRes = await authFetch(`${API}/certs/list.php`);
         const allCerts = await certsRes.json();
 
         // Load currently assigned CERTs
@@ -818,9 +826,9 @@
         document.getElementById(`saveCerts-${sessionId}`)?.addEventListener("click", async () => {
           const checked = [...panel.querySelectorAll(`.cert-check-${sessionId}:checked`)].map(cb => parseInt(cb.value));
           try {
-            const res = await fetch(`${API}/sessions/certs.php`, {
+            const res = await authFetch(`${API}/sessions/certs.php`, {
               method: "POST",
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ session_id: sessionId, certs: checked })
             });
             const result = await res.json();
@@ -843,11 +851,10 @@
     async function deleteSession(sessionId, code, name) {
       if (!confirm(`Supprimer la séance « ${name} » (${code}) ?\n\nToutes les données associées (CERTs assignés, réponses élèves, liens collectés) seront définitivement supprimées.`)) return;
 
-      const token = getToken();
       try {
-        const res = await fetch(`${API}/sessions/delete.php`, {
+        const res = await authFetch(`${API}/sessions/delete.php`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_id: sessionId })
         });
         const result = await res.json();
