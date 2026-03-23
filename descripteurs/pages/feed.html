@@ -1301,7 +1301,7 @@
         const contentParas = (certs.content || "").split(/\n+/).map(s => stripBullets(s)).filter(Boolean);
         const textBlockHtml = (contentParas.length || referencesHtml) ? `
           <div class="certs-block certs-block--purple">
-            ${contentParas.length ? `<div class="certs-section-content">${contentParas.map(p => escapeHtml(p)).join("<br/><br/>")}</div>` : ""}
+            ${contentParas.length ? `<div class="certs-section-content">${contentParas.map(p => escapeHtml(p)).join("<br/>")}</div>` : ""}
             ${referencesHtml}
           </div>
         ` : "";
