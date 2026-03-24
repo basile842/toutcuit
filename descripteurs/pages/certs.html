@@ -454,11 +454,15 @@
       for (const p of paragraphs) {
         const runs = p.getElementsByTagNameNS(ns, "r");
         let text = "";
-        let isBoldGray = false;
+        let isSectionHeading = false;
+        let isTitle = false;
         let isBlue = false;
         let hasRed = false;
         let hasGreen = false;
         let hasOrange = false;
+        let hasShdGreen = false;
+        let hasShdRed = false;
+        let hasShdOrange = false;
 
         for (const r of runs) {
           const tNodes = r.getElementsByTagNameNS(ns, "t");
@@ -466,34 +470,49 @@
           for (const t of tNodes) runText += t.textContent || "";
           text += runText;
 
-          // Check formatting only if run has visible text
           const rPr = r.getElementsByTagNameNS(ns, "rPr")[0];
           if (rPr && runText.trim()) {
             const color = rPr.getElementsByTagNameNS(ns, "color")[0];
             const bold = rPr.getElementsByTagNameNS(ns, "b")[0];
+            const sz = rPr.getElementsByTagNameNS(ns, "sz")[0];
+            const shd = rPr.getElementsByTagNameNS(ns, "shd")[0];
             const colorVal = color?.getAttribute("w:val")?.toUpperCase() || "";
+            const szVal = parseInt(sz?.getAttribute("w:val") || "0", 10);
+            const shdFill = shd?.getAttribute("w:fill")?.toUpperCase() || "";
 
-            if (colorVal === "A5A5A5" && bold) isBoldGray = true;
-            if (colorVal === "0096FF" || colorVal === "2E74B5") isBlue = true;
+            // Old format: bold gray section headings
+            if (colorVal === "A5A5A5" && bold) isSectionHeading = true;
+            // New format: bold dark-blue section headings (sz ~26)
+            if (colorVal === "1F4E79" && bold && szVal >= 24 && szVal <= 28) isSectionHeading = true;
+            // New format: title (dark-blue, bold, sz ≥ 30)
+            if (colorVal === "1F4E79" && bold && szVal >= 30) isTitle = true;
+
+            // Text colors
+            if (colorVal === "0096FF" || colorVal === "2E74B5" || colorVal === "0563C1") isBlue = true;
             if (colorVal === "FF0000" || colorVal === "EF596F") hasRed = true;
             if (colorVal === "00B050") hasGreen = true;
             if (colorVal === "F79646") hasOrange = true;
+
+            // Background shading for reliability badge (new format)
+            if (shdFill === "009444" || shdFill === "00B050") hasShdGreen = true;
+            if (shdFill === "FF0000" || shdFill === "EF596F" || shdFill === "C00000") hasShdRed = true;
+            if (shdFill === "F79646" || shdFill === "ED7D31" || shdFill === "FFC000") hasShdOrange = true;
           }
         }
 
         text = text.replace(/\s+/g, " ").trim();
-        if (text || isBoldGray) {
-          paras.push({ text, isBoldGray, isBlue, hasRed, hasGreen, hasOrange });
+        if (text || isSectionHeading) {
+          paras.push({ text, isSectionHeading, isTitle, isBlue, hasRed, hasGreen, hasOrange, hasShdGreen, hasShdRed, hasShdOrange });
         }
       }
 
-      // Split into sections by bold-gray headings
+      // Split into sections by headings
       const sections = {};
       let currentSection = "_header";
       sections._header = [];
 
       for (const p of paras) {
-        if (p.isBoldGray && p.text) {
+        if (p.isSectionHeading && p.text) {
           currentSection = p.text.toLowerCase().trim();
           if (!sections[currentSection]) sections[currentSection] = [];
         } else {
@@ -505,19 +524,19 @@
       // Extract fields
       const header = sections._header || [];
 
-      // Title = first blue line
-      const title = header.find(p => p.isBlue)?.text || "";
+      // Title = first title-formatted or blue line
+      const title = header.find(p => p.isTitle)?.text || header.find(p => p.isBlue)?.text || "";
 
       // URL = first line that looks like a URL
       const urlPara = header.find(p => /^https?:\/\//.test(p.text));
       const url = urlPara?.text || "";
 
-      // Expert name (line starting with "Expert :")
+      // Expert name (line starting with "Expert :" or "Expert:")
       const expertPara = header.find(p => /^expert\s*:/i.test(p.text));
       const expert = expertPara?.text.replace(/^expert\s*:\s*/i, "").trim() || "";
 
-      // Certification date
-      const datePara = header.find(p => /certification date/i.test(p.text));
+      // Date (supports "certification date:" and "date:")
+      const datePara = header.find(p => /(?:certification\s+)?date\s*:/i.test(p.text));
       let date = "";
       if (datePara) {
         const raw = datePara.text.replace(/^.*?:\s*/i, "").trim();
@@ -525,36 +544,73 @@
         if (!isNaN(d)) date = String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear();
       }
 
-      // Descriptors
+      // Descriptors (supports both space-separated and " · " separated)
       const descParas = sections["descriptors"] || [];
       const descText = descParas.map(p => p.text).join(" ").trim();
-      const descWords = descText.split(/\s+/).filter(Boolean);
-      const descriptor1 = descWords[0] || "";
-      const descriptor2 = descWords[1] || "";
+      const descParts = descText.includes("·")
+        ? descText.split(/\s*·\s*/).map(s => s.trim()).filter(Boolean)
+        : descText.split(/\s+/).filter(Boolean);
+      const descriptor1 = descParts[0] || "";
+      const descriptor2 = descParts[1] || "";
 
-      // 3-Pointer
-      const pointerParas = sections["3-pointer"] || [];
-      const threePhrases = pointerParas.map(p => p.text).filter(Boolean).join("\n");
+      // Helper: parse labeled sub-fields (Context: ..., Content: ..., Reliability: ...)
+      function parseLabeledFields(paraList) {
+        const fields = { context: "", content: "", reliability: "" };
+        for (const p of paraList) {
+          const t = p.text;
+          if (/^context\s*:/i.test(t)) {
+            fields.context = t.replace(/^context\s*:\s*/i, "").trim();
+          } else if (/^content\s*:/i.test(t)) {
+            fields.content = t.replace(/^content\s*:\s*/i, "").trim();
+          } else if (/^reliability\s*:/i.test(t)) {
+            fields.reliability = t.replace(/^reliability\s*:\s*/i, "").trim();
+          }
+        }
+        return fields;
+      }
+
+      // 3 Sentences / 3-Pointer
+      const sentencesParas = sections["3 sentences"] || sections["3-pointer"] || [];
+      let threePhrases = "";
+      if (sentencesParas.some(p => /^(context|content|reliability)\s*:/i.test(p.text))) {
+        const sf = parseLabeledFields(sentencesParas);
+        threePhrases = [sf.context, sf.content, sf.reliability].filter(Boolean).join("\n");
+      } else {
+        threePhrases = sentencesParas.map(p => p.text).filter(Boolean).join("\n");
+      }
 
       // CCR
       const ccrParas = sections["ccr"] || [];
-      const ccrTexts = ccrParas.map(p => p.text).filter(Boolean);
-      const context = ccrTexts[0] || "";
-      const content = ccrTexts.join("\n");
-      const reliabilityText = ccrTexts[ccrTexts.length - 1] || "";
+      let context = "", content = "", reliabilityText = "";
+      if (ccrParas.some(p => /^(context|content|reliability)\s*:/i.test(p.text))) {
+        const cf = parseLabeledFields(ccrParas);
+        context = cf.context;
+        content = cf.content;
+        reliabilityText = cf.reliability;
+      } else {
+        const ccrTexts = ccrParas.map(p => p.text).filter(Boolean);
+        context = ccrTexts[0] || "";
+        content = ccrTexts.join("\n");
+        reliabilityText = ccrTexts[ccrTexts.length - 1] || "";
+      }
 
-      // References
+      // References (strip bullets and numbered prefixes)
       const refParas = sections["references"] || [];
       const references = refParas
-        .map(p => p.text.replace(/^[•·\-–—]\s*/, "").trim())
+        .map(p => p.text.replace(/^(?:[•·\-–—]|\d+[.)]\s*)\s*/, "").trim())
         .filter(Boolean)
         .join("\n");
 
-      // Label / reliability
-      const labelParas = sections["label"] || [];
+      // Reliability: check "label" (old) and "reliability" (new) sections
+      const labelParas = sections["label"] || sections["reliability"] || [];
       let reliability = "";
       for (const p of labelParas) {
         const t = p.text.toLowerCase();
+        // Background shading (new format)
+        if (p.hasShdRed) { reliability = "Pas fiable"; break; }
+        if (p.hasShdOrange) { reliability = "Indéterminé"; break; }
+        if (p.hasShdGreen) { reliability = "Fiable"; break; }
+        // Text color (old format)
         if (p.hasRed || t.includes("unreliable") || t.includes("pas fiable")) {
           reliability = "Pas fiable";
         } else if (p.hasOrange || t.includes("undetermined") || t.includes("indéterminé") || t.includes("in between")) {
