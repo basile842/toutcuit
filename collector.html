@@ -88,23 +88,7 @@
       Dépose un lien + un commentaire. <strong>Maximum 2 liens par personne</strong>.
     </p>
 
-    <!-- Étape 1 : code de séance -->
-    <section id="stepCode" class="card">
-      <form id="codeForm">
-        <label style="display:block;">
-          <small>Code de séance</small>
-          <input id="sessionCode" type="text" autocomplete="off" placeholder="Ex. ABC123" required />
-        </label>
-        <div class="row-actions">
-          <button class="btn" type="submit">Rejoindre</button>
-          <div id="codeStatus" class="status"></div>
-        </div>
-      </form>
-      <div id="codeMsg"></div>
-    </section>
-
-    <!-- Étape 2 : collecte (masquée au départ) -->
-    <section id="stepCollect" class="card hidden">
+    <section class="card">
       <div class="kv">
         <div class="pill"><small>Pseudo</small> <span id="nick">—</span></div>
         <div class="pill"><small>Restant</small> <span id="remaining">—</span></div>
@@ -117,6 +101,11 @@
 
       <form id="collectorForm">
         <label style="display:block; margin-top: 10px;">
+          <small>Code de séance</small>
+          <input id="sessionCode" type="text" autocomplete="off" placeholder="Ex. ABC123" required />
+        </label>
+
+        <label style="display:block; margin-top: 12px;">
           <small>URL</small>
           <input id="url" type="url" placeholder="https://www.rts.ch" required />
         </label>
@@ -133,7 +122,7 @@
 
         <div class="row-actions">
           <button class="btn" id="submitBtn" type="submit">Envoyer</button>
-          <button class="btn" id="refreshBtn" type="button" title="Rafraîchir l’état">Rafraîchir</button>
+          <button class="btn" id="refreshBtn" type="button" title="Rafraîchir l'état">Rafraîchir</button>
           <div id="status" class="status"></div>
         </div>
       </form>
