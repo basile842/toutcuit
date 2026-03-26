@@ -1360,7 +1360,19 @@
 
     // Reset all results button
     document.getElementById("resetAllBtn")?.addEventListener("click", async () => {
-      if (!confirm("Réinitialiser tous les résultats ?\n\nLes descripteurs choisis pour chaque lien et leur commentaire seront effacés.")) return;
+      if (!confirm("Réinitialiser tous les résultats ?\n\nLes descripteurs choisis pour chaque lien et leur commentaire seront effacés (y compris du feed).")) return;
+
+      // Delete responses from server
+      const userId = localStorage.getItem(USER_ID_KEY);
+      if (SESSION_CODE && userId) {
+        try {
+          await fetch(`${API_BASE}/student/reset.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_code: SESSION_CODE, user_id: userId })
+          });
+        } catch (e) { console.error("Server reset failed:", e); }
+      }
 
       // Clear all certify_page_result_* entries from localStorage
       const keysToRemove = [];
