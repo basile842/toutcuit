@@ -54,7 +54,7 @@
       color: #fff;
     }
 
-    .sort-btn {
+    .sort-btn, .reset-btn, .delete-user-btn {
       padding: 7px 14px;
       font-size: .82rem;
       font-weight: 700;
@@ -68,6 +68,16 @@
     }
     .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
     .sort-btn.active { border-color: var(--accent); color: var(--accent); }
+    .reset-btn { color: #b91c1c; border-color: rgba(239,68,68,.3); }
+    .reset-btn:hover { border-color: #b91c1c; }
+    .delete-user-btn {
+      margin-left: 0;
+      padding: 4px 10px;
+      font-size: .75rem;
+      color: #b91c1c;
+      border-color: rgba(239,68,68,.25);
+    }
+    .delete-user-btn:hover { border-color: #b91c1c; }
 
     /* ── Cards ── */
     .cards { display: flex; flex-direction: column; gap: 10px; }
@@ -461,6 +471,8 @@
             <button data-view="students">Par élève</button>
           </div>
           <button class="sort-btn" id="sortBtn" data-sort="none">Trier ↕</button>
+          <span style="flex:1;"></span>
+          <button class="reset-btn" id="resetAllBtn">Tout effacer</button>
         </div>
         <div id="viewLinks" class="cards"></div>
         <div id="viewStudents" class="cards" style="display:none;"></div>
@@ -578,10 +590,11 @@
         }).join("");
 
         studentsContainer.insertAdjacentHTML("beforeend", `
-          <div class="card" data-ratio="${ratio.toFixed(4)}">
+          <div class="card" data-ratio="${ratio.toFixed(4)}" data-user-id="${esc(userId)}">
             <div class="card-top">
               <span class="card-title">${esc(userId)}</span>
               <span class="card-score">${sTotal}/${sMax} pts</span>
+              <button class="delete-user-btn" data-delete-user="${esc(userId)}">Effacer</button>
             </div>
             <div class="bar-label">${pct(sTotal, sMax)}% · ${links.size} lien${links.size > 1 ? "s" : ""}</div>
             <div class="bar-wrap"><div class="bar-fill" style="width:${pct(sTotal, sMax)}%;"></div></div>
@@ -637,6 +650,43 @@
 
         const detail = card.querySelector(".detail-inline");
         if (detail) detail.classList.toggle("open");
+      });
+
+      /* ── Delete responses ── */
+      async function deleteResponses(userId) {
+        const body = { session_code: SESSION_CODE };
+        if (userId) body.user_id = userId;
+        const res = await fetch(`${API_BASE}/admin/reset-responses.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error("Delete failed");
+        return res.json();
+      }
+
+      // Delete all responses
+      document.getElementById("resetAllBtn").addEventListener("click", async () => {
+        if (!confirm("Effacer tous les résultats de cette séance ?\n\nCette action est irréversible.")) return;
+        try {
+          await deleteResponses(null);
+          location.reload();
+        } catch (e) { alert("Erreur : " + e.message); }
+      });
+
+      // Delete one student's responses
+      content.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-delete-user]");
+        if (!btn) return;
+        e.stopPropagation();
+        const userId = btn.dataset.deleteUser;
+        if (!confirm(`Effacer les résultats de « ${userId} » ?\n\nCette action est irréversible.`)) return;
+        try {
+          await deleteResponses(userId);
+          // Remove student cards and refresh
+          document.querySelectorAll(`.card[data-user-id="${userId}"]`).forEach(c => c.remove());
+          location.reload();
+        } catch (e) { alert("Erreur : " + e.message); }
       });
 
     } catch (err) {
