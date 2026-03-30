@@ -395,6 +395,18 @@
 
     /* ── Main ── */
     try {
+      // Fetch session name
+      let sessionName = "";
+      try {
+        const token = localStorage.getItem("tc_token");
+        if (token) {
+          const sRes = await fetch(`${API_BASE}/sessions/list.php`, { headers: { "Authorization": `Bearer ${token}` } });
+          const sessions = await sRes.json();
+          const session = (Array.isArray(sessions) ? sessions : []).find(s => s.code === SESSION_CODE);
+          if (session) sessionName = session.name || "";
+        }
+      } catch {}
+
       const [certs, feedRows] = await Promise.all([loadCerts(), loadFeed()]);
 
       const certIdToLinkId = new Map();
@@ -638,7 +650,8 @@
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Résultats");
-        XLSX.writeFile(wb, `resultats-${SESSION_CODE}.xlsx`);
+        const safeName = sessionName ? sessionName.replace(/[\/\\?%*:|"<>]/g, "_") : "resultats";
+        XLSX.writeFile(wb, `${safeName}_${SESSION_CODE}.xlsx`);
       });
 
       /* ── Sort button ── */

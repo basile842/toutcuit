@@ -265,11 +265,22 @@
     }
 
     let allLinks = [];
+    let sessionName = "";
 
     async function loadLinks() {
       const linksList = document.getElementById("linksList");
       const countLabel = document.getElementById("countLabel");
       const pageSub = document.getElementById("pageSub");
+
+      // Fetch session name
+      try {
+        const sRes = await fetch(`${API}/sessions/list.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const sessions = await sRes.json();
+        const session = (Array.isArray(sessions) ? sessions : []).find(s => s.code === SESSION_CODE);
+        if (session) sessionName = session.name || "";
+      } catch {}
 
       try {
         const res = await fetch(`${API}/sessions/collected.php?session_id=${SESSION_ID}`, {
@@ -283,7 +294,7 @@
         }
 
         allLinks = Array.isArray(data) ? data : [];
-        pageSub.textContent = `Séance ${SESSION_CODE}`;
+        pageSub.textContent = sessionName ? `${sessionName} · ${SESSION_CODE}` : `Séance ${SESSION_CODE}`;
         countLabel.textContent = `${allLinks.length} lien(s)`;
 
         if (!allLinks.length) {
@@ -350,7 +361,8 @@
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Liens collectés");
-      XLSX.writeFile(wb, `liens_collectes_${SESSION_CODE}.xlsx`);
+      const safeName = sessionName ? sessionName.replace(/[\/\\?%*:|"<>]/g, "_") : "liens_collectes";
+      XLSX.writeFile(wb, `${safeName}_${SESSION_CODE}.xlsx`);
     });
 
     loadLinks();
