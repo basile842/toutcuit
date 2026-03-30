@@ -1691,7 +1691,9 @@
 
         if (changed) {
           console.log(`[poll] responses changed: ${_lastResponseCount} → ${newCount}`);
+          const scrollY = window.scrollY;
           await loadAll();
+          window.scrollTo(0, scrollY);
         }
 
         _lastResponseCount = newCount;

@@ -7,6 +7,7 @@
   <title>Résultats — toutcuit.ch</title>
 
   <link rel="stylesheet" href="../assets/css/main.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
   <style>
     main { max-width: 860px !important; }
@@ -70,6 +71,19 @@
     .sort-btn.active { border-color: var(--accent); color: var(--accent); }
     .reset-btn { color: #b91c1c; border-color: rgba(239,68,68,.3); }
     .reset-btn:hover { border-color: #b91c1c; }
+    .export-btn {
+      padding: 7px 14px;
+      font-size: .82rem;
+      font-weight: 700;
+      border: 1.5px solid var(--accent);
+      border-radius: 9px;
+      background: none;
+      color: var(--accent);
+      cursor: pointer;
+      margin-left: 8px;
+      transition: background .15s, color .15s;
+    }
+    .export-btn:hover { background: var(--accent); color: #fff; }
     .delete-user-btn {
       margin-left: 0;
       padding: 4px 10px;
@@ -204,16 +218,6 @@
     }
     .detail-match { font-weight: 800; color: var(--text); }
     .detail-miss  { font-weight: 400; color: var(--border); }
-
-    /* ── Excluded notice ── */
-    .excluded-notice {
-      font-size: .8rem;
-      color: var(--muted);
-      margin-top: 16px;
-      padding: 10px 14px;
-      background: rgba(0,0,0,.02);
-      border-radius: 8px;
-    }
 
     /* ── States ── */
     .no-data {
@@ -433,15 +437,7 @@
       const allLinkIds = [...new Set(scoredRows.map(r => r.link_id))];
       allLinkIds.sort((a, b) => (certs.get(a)?.linkNumber ?? 999) - (certs.get(b)?.linkNumber ?? 999));
 
-      // 30% exclusion rule
-      const maxAnswered = Math.max(...[...allDetails.values()].map(m => m.size), 0);
-      const minRequired = Math.ceil(maxAnswered * 0.3);
-      const students = new Map();
-      const excluded = [];
-      for (const [userId, links] of allDetails) {
-        if (links.size >= minRequired) students.set(userId, links);
-        else excluded.push(userId);
-      }
+      const students = allDetails;
 
       const studentIds = [...students.keys()].sort((a, b) => a.localeCompare(b));
       const totalStudents = studentIds.length;
@@ -472,11 +468,11 @@
           </div>
           <button class="sort-btn" id="sortBtn" data-sort="none">Trier ↕</button>
           <span style="flex:1;"></span>
+          <button class="export-btn" id="exportBtn">Télécharger Excel</button>
           <button class="reset-btn" id="resetAllBtn">Tout effacer</button>
         </div>
         <div id="viewLinks" class="cards"></div>
         <div id="viewStudents" class="cards" style="display:none;"></div>
-        ${excluded.length ? `<div class="excluded-notice">Exclu${excluded.length > 1 ? "s" : ""} (moins de ${minRequired} lien${minRequired > 1 ? "s" : ""} analysé${minRequired > 1 ? "s" : ""}) : ${excluded.map(esc).join(", ")}</div>` : ""}
       `;
 
       /* ── View toggle ── */
@@ -608,6 +604,42 @@
           </div>
         `);
       }
+
+      /* ── Export Excel ── */
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        const header = ["Élève"];
+        for (const linkId of allLinkIds) {
+          const cert = certs.get(linkId);
+          const num = cert?.linkNumber ?? "?";
+          const title = cert?.title || "Sans titre";
+          header.push(`L${num} — ${title}`);
+        }
+        header.push("Total", "Max", "%");
+
+        const data = [header];
+        for (const userId of studentIds) {
+          const links = students.get(userId);
+          const row = [userId];
+          let sTotal = 0, sMax = 0;
+          for (const linkId of allLinkIds) {
+            const d = links.get(linkId);
+            if (d) {
+              row.push(`${d.score}/3`);
+              sTotal += d.score;
+              sMax += 3;
+            } else {
+              row.push("—");
+            }
+          }
+          row.push(sTotal, sMax, sMax ? Math.round(sTotal / sMax * 100) : 0);
+          data.push(row);
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Résultats");
+        XLSX.writeFile(wb, `resultats-${SESSION_CODE}.xlsx`);
+      });
 
       /* ── Sort button ── */
       const sortBtn = document.getElementById("sortBtn");
