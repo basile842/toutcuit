@@ -415,6 +415,42 @@
     }
     .session-row input[type="checkbox"] { cursor: pointer; flex-shrink: 0; }
 
+    /* ── Session detail panel ── */
+    .session-row-wrap { display: flex; flex-direction: column; gap: 0; }
+    .session-detail {
+      display: none;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 9px 9px;
+      font-size: .84rem;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .session-row-wrap.is-expanded .session-detail { display: flex; }
+    .session-row-wrap.is-expanded .session-row { border-radius: 9px 9px 0 0; }
+    .session-detail-stats { display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); }
+    .session-detail-stats strong { color: var(--text); }
+    .session-detail-certs { display: flex; flex-direction: column; gap: 4px; }
+    .session-detail-cert {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 8px; background: var(--panel-2); border-radius: 6px; font-size: .82rem;
+    }
+    .session-detail-cert .cert-desc-tag { font-size: .72rem; }
+    .session-detail-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-action {
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--panel); font-size: .82rem; font-weight: 600; cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Duplicate modal ── */
+    .dup-form { display: flex; flex-direction: column; gap: 10px; }
+    .dup-form label { font-size: .82rem; font-weight: 600; color: var(--muted); }
+    .dup-form select, .dup-form input { font-size: .92rem; }
+
     /* ── Feed global bar ── */
     .feed-bar {
       position: sticky;
@@ -485,7 +521,7 @@
           </a>
           <a class="home-link" href="#" onclick="showView('certs');return false;">
             <div class="home-link-body">
-              <div class="home-link-name">Dépôt de CERTs <span class="home-link-count" id="homeCertCount"></span></div>
+              <div class="home-link-name">Stock de CERTs <span class="home-link-count" id="homeCertCount"></span></div>
               <div class="home-link-desc">Consulter, modifier, supprimer</div>
             </div>
             <span class="home-link-arrow">&rarr;</span>
@@ -557,7 +593,7 @@
     <div class="sa-view" id="viewCerts">
       <main class="console-main">
         <div class="view-toolbar">
-          <span class="view-title">Dépôt de CERTs</span>
+          <span class="view-title">Stock de CERTs</span>
           <span class="view-count" id="certsCount"></span>
         </div>
         <div class="search-box" id="certSearchBox">
@@ -589,7 +625,7 @@
       } else {
         const label = name === "teachers" ? "Enseignant-es" :
                       name === "sessions" ? "Séances" :
-                      name === "certs" ? "Dépôt de CERTs" : "";
+                      name === "certs" ? "Stock de CERTs" : "";
         leaf.textContent = label;
         sep.style.display = "";
         leaf.style.display = "";
@@ -791,19 +827,23 @@
       list.innerHTML = filtered.map(s => {
         const isOpen = s.is_open === 1 || s.is_open === "1" || s.is_open === true;
         return `
-        <div class="session-row">
-          <input type="checkbox" value="${esc(s.code)}" class="gf-check" ${globalFeedSelectedCodes.has(s.code) ? "checked" : ""}>
-          <span class="list-row-name">${esc(s.school_name || "")} — ${esc(s.name)}</span>
-          <span class="list-row-code">${esc(s.code)}</span>
-          <span class="list-row-meta" style="font-size:.72rem;">${esc(s.teacher_name || "—")}</span>
-          <button class="btn-toggle-open" data-id="${s.id}" data-open="${isOpen ? "1" : "0"}" style="
-            padding:4px 10px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;
-            border:1px solid ${isOpen ? "rgba(34,197,94,.4)" : "var(--border)"};
-            background:${isOpen ? "rgba(34,197,94,.08)" : "var(--panel-2)"};
-            color:${isOpen ? "#166534" : "var(--muted)"};
-            transition:all .15s;
-          ">${isOpen ? "Ouverte" : "Fermée"}</button>
-          <button class="btn-delete" onclick="confirmDeleteSession(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.code)}')">Supprimer</button>
+        <div class="session-row-wrap" data-session-id="${s.id}">
+          <div class="session-row">
+            <input type="checkbox" value="${esc(s.code)}" class="gf-check" ${globalFeedSelectedCodes.has(s.code) ? "checked" : ""}>
+            <span class="list-row-name">${esc(s.school_name || "")} — ${esc(s.name)}</span>
+            <span class="list-row-code">${esc(s.code)}</span>
+            <span class="list-row-meta" style="font-size:.72rem;">${esc(s.teacher_name || "—")}</span>
+            <button class="btn-toggle-open" data-id="${s.id}" data-open="${isOpen ? "1" : "0"}" style="
+              padding:4px 10px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;
+              border:1px solid ${isOpen ? "rgba(34,197,94,.4)" : "var(--border)"};
+              background:${isOpen ? "rgba(34,197,94,.08)" : "var(--panel-2)"};
+              color:${isOpen ? "#166534" : "var(--muted)"};
+              transition:all .15s;
+            ">${isOpen ? "Ouverte" : "Fermée"}</button>
+            <button class="btn-action btn-session-view" data-id="${s.id}" title="Voir le contenu">&#9662;</button>
+            <button class="btn-delete" onclick="confirmDeleteSession(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.code)}')">Supprimer</button>
+          </div>
+          <div class="session-detail" id="session-detail-${s.id}"></div>
         </div>`;
       }).join("");
 
@@ -817,6 +857,10 @@
 
       list.querySelectorAll(".btn-toggle-open").forEach(btn => {
         btn.addEventListener("click", () => toggleSessionOpen(btn));
+      });
+
+      list.querySelectorAll(".btn-session-view").forEach(btn => {
+        btn.addEventListener("click", () => toggleSessionDetail(parseInt(btn.dataset.id)));
       });
     }
 
@@ -936,6 +980,146 @@
       );
       if (!side) { try { main.close(); } catch {} alert("Pop-ups bloquées."); }
     });
+
+    // ── Session detail & duplicate ──
+
+    async function toggleSessionDetail(id) {
+      const wrap = document.querySelector(`.session-row-wrap[data-session-id="${id}"]`);
+      if (!wrap) return;
+      const btn = wrap.querySelector(".btn-session-view");
+
+      if (wrap.classList.contains("is-expanded")) {
+        wrap.classList.remove("is-expanded");
+        if (btn) btn.innerHTML = "&#9662;";
+        return;
+      }
+
+      wrap.classList.add("is-expanded");
+      if (btn) btn.innerHTML = "&#9652;";
+      const detail = document.getElementById(`session-detail-${id}`);
+      detail.innerHTML = '<span style="color:var(--muted);font-size:.82rem;">Chargement…</span>';
+
+      try {
+        const res = await fetch(`${API}/admin/session-detail.php?session_id=${id}`);
+        const data = await res.json();
+        if (data.error) { detail.innerHTML = `<span style="color:#b91c1c;">${esc(data.error)}</span>`; return; }
+
+        const s = data.session;
+        const isOpen = s.is_open === 1 || s.is_open === "1" || s.is_open === true;
+
+        let certsHtml = "";
+        if (data.certs.length) {
+          certsHtml = `
+            <div style="font-weight:700;font-size:.82rem;">CERTs (${data.certs.length})</div>
+            <div class="session-detail-certs">
+              ${data.certs.map(c => `
+                <div class="session-detail-cert">
+                  <span>${esc(c.title)}</span>
+                  ${c.descriptor1 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor1)}</span>` : ""}
+                  ${c.descriptor2 ? `<span class="cert-desc-tag ${c.reliability}">${esc(c.descriptor2)}</span>` : ""}
+                </div>
+              `).join("")}
+            </div>`;
+        } else {
+          certsHtml = '<div style="color:var(--muted);font-size:.82rem;">Aucune CERT assignée.</div>';
+        }
+
+        detail.innerHTML = `
+          <div class="session-detail-stats">
+            <span><strong>${esc(s.school_name || "—")}</strong> — ${esc(s.name)}</span>
+            <span>Code : <strong>${esc(s.code)}</strong></span>
+            <span>Enseignant-e : <strong>${esc(s.teacher_name || "—")}</strong></span>
+            <span>Créée le ${esc(s.created_at?.substring(0, 10) || "—")}</span>
+          </div>
+          <div class="session-detail-stats">
+            <span><strong>${data.students_count}</strong> élève(s)</span>
+            <span><strong>${data.responses_count}</strong> réponse(s)</span>
+            <span><strong>${data.collected_count}</strong> lien(s) collecté(s)</span>
+          </div>
+          ${certsHtml}
+          <div class="session-detail-actions">
+            <button class="btn-action" onclick="window.open('/global-feed.html?sessions=${encodeURIComponent(s.code)}','_blank')">Ouvrir le feed</button>
+            <button class="btn-action" onclick="showDuplicateModal(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}')">Dupliquer</button>
+          </div>
+        `;
+      } catch (err) {
+        detail.innerHTML = `<span style="color:#b91c1c;">Erreur : ${esc(err.message)}</span>`;
+      }
+    }
+
+    function showDuplicateModal(sessionId, sessionName) {
+      const overlay = document.createElement("div");
+      overlay.className = "confirm-dialog";
+
+      const teacherOptions = allTeachersData.map(t =>
+        `<option value="${t.id}">${esc(t.name)} (${esc(t.email)})</option>`
+      ).join("");
+
+      overlay.innerHTML = `
+        <div class="confirm-card" style="max-width:420px;">
+          <h3>Dupliquer la séance</h3>
+          <p style="color:var(--muted);font-size:.85rem;">« ${esc(sessionName)} » — copie les CERTs, résultats d'élèves et liens collectés.</p>
+          <div class="dup-form">
+            <div class="field">
+              <label>Assigner à l'enseignant-e</label>
+              <select id="dupTeacher">${teacherOptions}</select>
+            </div>
+            <div class="field">
+              <label>Nom de la nouvelle séance</label>
+              <input type="text" id="dupName" value="${esc(sessionName)} (copie)" />
+            </div>
+          </div>
+          <div id="dupError" class="error-msg" style="margin-top:8px;"></div>
+          <div class="confirm-actions" style="margin-top:14px;">
+            <button class="btn-cancel" id="dupCancel">Annuler</button>
+            <button class="btn-primary" id="dupConfirm" style="width:auto;padding:8px 20px;">Dupliquer</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector("#dupCancel").addEventListener("click", () => overlay.remove());
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+
+      overlay.querySelector("#dupConfirm").addEventListener("click", async () => {
+        const teacherId = parseInt(document.getElementById("dupTeacher").value);
+        const name = document.getElementById("dupName").value.trim();
+        const errEl = document.getElementById("dupError");
+        errEl.style.display = "none";
+
+        if (!name) { errEl.textContent = "Le nom est requis."; errEl.style.display = "block"; return; }
+
+        const btn = overlay.querySelector("#dupConfirm");
+        btn.disabled = true;
+        btn.textContent = "Duplication…";
+
+        try {
+          const res = await fetch(`${API}/admin/duplicate-session.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: sessionId, target_teacher_id: teacherId, name })
+          });
+          const data = await res.json();
+
+          if (data.error) {
+            errEl.textContent = data.error;
+            errEl.style.display = "block";
+            btn.disabled = false;
+            btn.textContent = "Dupliquer";
+            return;
+          }
+
+          overlay.remove();
+          alert(`Séance dupliquée !\nNouveau code : ${data.code}\n${data.responses_copied} réponse(s) copiée(s).`);
+          loadSessions();
+        } catch (err) {
+          errEl.textContent = "Erreur : " + err.message;
+          errEl.style.display = "block";
+          btn.disabled = false;
+          btn.textContent = "Dupliquer";
+        }
+      });
+    }
 
     // ── CERTs ──
 
