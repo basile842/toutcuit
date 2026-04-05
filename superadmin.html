@@ -840,7 +840,7 @@
               color:${isOpen ? "#166534" : "var(--muted)"};
               transition:all .15s;
             ">${isOpen ? "Ouverte" : "Fermée"}</button>
-            <button class="btn-action btn-session-view" data-id="${s.id}" title="Voir le contenu">&#9662;</button>
+            <button class="cert-toggle btn-session-view" data-id="${s.id}" title="Voir le contenu">&#9662;</button>
             <button class="btn-delete" onclick="confirmDeleteSession(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.code)}')">Supprimer</button>
           </div>
           <div class="session-detail" id="session-detail-${s.id}"></div>
