@@ -139,7 +139,7 @@ RULES;
 
 // Call Claude API
 $payload = json_encode([
-    'model'      => 'claude-sonnet-4-5-20250514',
+    'model'      => 'claude-sonnet-4-5-latest',
     'max_tokens' => 4096,
     'messages'   => [
         ['role' => 'user', 'content' => $prompt],
