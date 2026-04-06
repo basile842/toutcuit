@@ -964,7 +964,9 @@
     }
 
     function bulkAction(action) {
-      Object.keys(suggestions).forEach(key => setDecision(key, action));
+      const map = { accept: "accepted", reject: "rejected", edit: "edited" };
+      const decision = map[action] || action;
+      Object.keys(suggestions).forEach(key => setDecision(key, decision));
     }
 
     // ── Save counter ──
