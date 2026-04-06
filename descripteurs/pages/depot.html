@@ -402,7 +402,7 @@
     <nav style="display:flex;align-items:center;gap:6px;">
       <span style="font-weight:900;letter-spacing:-0.02em;color:var(--accent);">toutcuit</span>
       <span style="color:var(--border);">/</span>
-      <a href="/admin.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Console</a>
+      <a href="/expert.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Console</a>
       <span style="flex:1;"></span>
       <span id="userName" style="font-size:.82rem;color:var(--muted);"></span>
       <button id="logoutBtn" style="font-size:.82rem;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600;">Déconnexion</button>
@@ -452,7 +452,7 @@
     const API = "/api";
     const token = localStorage.getItem("tc_token");
     if (!token) {
-      window.location.href = "/admin.html";
+      window.location.href = "/expert.html";
     }
 
     try {
@@ -462,7 +462,7 @@
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("tc_token");
       localStorage.removeItem("tc_teacher");
-      window.location.href = "/admin.html";
+      window.location.href = "/expert.html";
     });
 
     const depotContent = document.getElementById("depotContent");

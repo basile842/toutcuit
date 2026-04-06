@@ -6,6 +6,10 @@ RewriteEngine On
 RewriteCond %{HTTP_HOST} ^www\.toutcuit\.ch$ [NC]
 RewriteRule ^(.*)$ https://toutcuit.ch/$1 [R=301,L]
 
+# Redirects: old routes → new routes
+RewriteRule ^admin$ /expert [R=301,L]
+RewriteRule ^superadmin$ /editor [R=301,L]
+
 # Permet d'accéder aux fichiers HTML sans l'extension .html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

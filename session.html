@@ -505,7 +505,7 @@
   <header class="console-header">
     <span class="console-header-logo">toutcuit</span>
     <span class="console-header-sep">/</span>
-    <a href="/admin.html" class="console-header-link">Console</a>
+    <a href="/expert.html" class="console-header-link">Console</a>
     <span class="console-header-spacer"></span>
     <span class="console-header-user" id="userName"></span>
     <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
@@ -696,14 +696,14 @@
     }
 
     const token = getToken();
-    if (!token) { window.location.href = "/admin.html"; }
+    if (!token) { window.location.href = "/expert.html"; }
 
     const teacher = getTeacher();
     if (teacher?.name) document.getElementById("userName").textContent = teacher.name;
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("tc_token");
       localStorage.removeItem("tc_teacher");
-      window.location.href = "/admin.html";
+      window.location.href = "/expert.html";
     });
 
     function esc(s) {
@@ -731,7 +731,7 @@
 
         if (!s) {
           alert("Séance introuvable.");
-          window.location.href = "/admin.html";
+          window.location.href = "/expert.html";
           return;
         }
 
@@ -826,7 +826,7 @@
         document.getElementById("sessionContent").style.display = "flex";
       } catch (err) {
         alert("Erreur : " + err.message);
-        window.location.href = "/admin.html";
+        window.location.href = "/expert.html";
       }
     }
 
@@ -1409,7 +1409,7 @@
         if (result.error) {
           alert("Erreur : " + result.error);
         } else {
-          window.location.href = "/admin.html";
+          window.location.href = "/expert.html";
         }
       } catch (err) {
         alert("Erreur : " + err.message);

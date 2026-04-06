@@ -218,7 +218,7 @@
   <header class="console-header">
     <span class="console-header-logo">toutcuit</span>
     <span class="console-header-sep">/</span>
-    <a href="/admin.html" class="console-header-link">Console</a>
+    <a href="/expert.html" class="console-header-link">Console</a>
     <span class="console-header-sep">/</span>
     <a href="#" class="console-header-link" id="backLink">Séance</a>
     <span class="console-header-spacer"></span>
@@ -245,7 +245,7 @@
     const SESSION_CODE = params.get("code") || "";
 
     const token = localStorage.getItem("tc_token");
-    if (!token) { window.location.href = "/admin.html"; }
+    if (!token) { window.location.href = "/expert.html"; }
 
     try {
       const t = JSON.parse(localStorage.getItem("tc_teacher"));
@@ -255,7 +255,7 @@
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("tc_token");
       localStorage.removeItem("tc_teacher");
-      window.location.href = "/admin.html";
+      window.location.href = "/expert.html";
     });
 
     document.getElementById("backLink").href = `/session.html?id=${SESSION_ID}&code=${encodeURIComponent(SESSION_CODE)}`;
