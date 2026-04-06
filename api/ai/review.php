@@ -190,4 +190,20 @@ if (!is_array($parsed) || !isset($parsed['suggestions'])) {
     }
 }
 
+// Attach usage and cost info
+$usage = $result['usage'] ?? [];
+$inputTokens  = ($usage['input_tokens'] ?? 0) + ($usage['cache_creation_input_tokens'] ?? 0);
+$outputTokens = $usage['output_tokens'] ?? 0;
+
+// Claude Sonnet 4.6 pricing (USD per token)
+$inputCost  = $inputTokens  * 3.0  / 1_000_000;
+$outputCost = $outputTokens * 15.0 / 1_000_000;
+$totalCost  = $inputCost + $outputCost;
+
+$parsed['usage'] = [
+    'input_tokens'  => $inputTokens,
+    'output_tokens' => $outputTokens,
+    'cost_usd'      => round($totalCost, 4),
+];
+
 jsonResponse($parsed);

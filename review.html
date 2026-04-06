@@ -268,6 +268,26 @@
     }
     .error-banner.visible { display: block; }
 
+    /* ── Cost badge ── */
+    .cost-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+    .cost-badge.visible { display: inline-flex; }
+    .cost-amount {
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .cost-tokens { font-size: .75rem; }
+
     /* ── Review results ── */
     .review-section {
       display: none;
@@ -624,7 +644,13 @@
             <a class="cert-summary-url" id="summaryUrl" href="#" target="_blank"></a>
             <div class="cert-meta-row" id="summaryMeta"></div>
           </div>
-          <button class="btn-review" id="reviewBtn">Analyser</button>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span class="cost-badge" id="costBadge">
+              <span class="cost-amount" id="costAmount"></span>
+              <span class="cost-tokens" id="costTokens"></span>
+            </span>
+            <button class="btn-review" id="reviewBtn">Analyser</button>
+          </div>
         </div>
       </div>
 
@@ -759,6 +785,7 @@
       hide("saveBar");
       hide("loadingBar");
       hide("errorBanner");
+      hide("costBadge");
 
       // Update summary
       document.getElementById("summaryTitle").textContent = selectedCert.title;
@@ -823,6 +850,16 @@
         suggestions = data.suggestions || {};
         decisions = {};
         editedTexts = {};
+
+        // Display cost
+        if (data.usage) {
+          const u = data.usage;
+          document.getElementById("costAmount").textContent = u.cost_usd.toFixed(4) + " $";
+          document.getElementById("costTokens").textContent =
+            `(${u.input_tokens.toLocaleString("fr-CH")} in + ${u.output_tokens.toLocaleString("fr-CH")} out)`;
+          show("costBadge");
+        }
+
         renderReview();
       } catch (err) {
         showError(err.message);
