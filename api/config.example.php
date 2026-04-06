@@ -10,3 +10,6 @@ define('JWT_SECRET', 'CHANGE_ME_TO_A_RANDOM_SECRET');
 
 // JWT token lifetime in seconds (24 hours)
 define('JWT_LIFETIME', 86400);
+
+// Anthropic API key — used by the CERT review tool (api/ai/review.php)
+define('ANTHROPIC_API_KEY', '');

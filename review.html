@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Révision — toutcuit.ch</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f3f9;
+      --text: #1f2328;
+      --muted: #5e6673;
+      --border: #d7dbe6;
+      --accent: #6f5cf7;
+      --accent-hover: #5a48e0;
+      --accent-light: rgba(111, 92, 247, .08);
+      --shadow: 0 10px 30px rgba(16, 24, 40, .08);
+      --radius: 14px;
+      --green: #16a34a;
+      --green-bg: rgba(22, 163, 74, .07);
+      --green-border: rgba(22, 163, 74, .22);
+      --red: #dc2626;
+      --red-bg: rgba(220, 38, 38, .06);
+      --red-border: rgba(220, 38, 38, .18);
+      --amber: #d97706;
+      --amber-bg: rgba(217, 119, 6, .07);
+      --amber-border: rgba(217, 119, 6, .22);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, rgba(111, 92, 247, .07), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-logo {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .header-sep { color: var(--border); font-size: 1.2rem; }
+    .header-title { font-size: .95rem; font-weight: 700; }
+    .header-spacer { flex: 1; }
+    .header-link {
+      font-size: .82rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ── Main layout ── */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 20px 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Cert selector ── */
+    .selector-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(16,24,40,.04);
+    }
+    .selector-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem;
+      font-weight: 400;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .search-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: .95rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      font-family: inherit;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .cert-list {
+      max-height: 320px;
+      overflow-y: auto;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cert-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .12s;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .cert-item:hover { background: var(--panel-2); }
+    .cert-item.selected { background: var(--accent-light); }
+    .cert-item-title {
+      font-weight: 600;
+      font-size: .9rem;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cert-item-meta {
+      font-size: .78rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .cert-item-rel {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      top: -1px;
+    }
+    .cert-item-rel.good { background: var(--green); }
+    .cert-item-rel.mid { background: var(--amber); }
+    .cert-item-rel.bad { background: var(--red); }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* ── Selected cert summary ── */
+    .cert-summary {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(16,24,40,.04);
+      display: none;
+    }
+    .cert-summary.visible { display: block; }
+    .cert-summary-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .cert-summary-info { flex: 1; }
+    .cert-summary-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      line-height: 1.35;
+      margin-bottom: 4px;
+    }
+    .cert-summary-url {
+      font-size: .78rem;
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .cert-summary-url:hover { text-decoration: underline; }
+    .cert-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-top: 10px;
+    }
+    .cert-meta-tag {
+      font-size: .78rem;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .btn-review {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-review:hover { background: var(--accent-hover); }
+    .btn-review:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* ── Loading state ── */
+    .loading-bar {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .loading-bar.visible { display: flex; }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: .9rem; color: var(--muted); }
+
+    /* ── Error ── */
+    .error-banner {
+      display: none;
+      padding: 12px 16px;
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      border-radius: 10px;
+      color: var(--red);
+      font-size: .85rem;
+      font-weight: 600;
+    }
+    .error-banner.visible { display: block; }
+
+    /* ── Review results ── */
+    .review-section {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .review-section.visible { display: flex; }
+
+    .review-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .no-changes {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--green);
+      font-weight: 600;
+      font-size: .95rem;
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      border-radius: var(--radius);
+    }
+
+    /* ── Field card ── */
+    .field-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(16,24,40,.04);
+      transition: border-color .2s;
+    }
+    .field-card.accepted { border-color: var(--green-border); }
+    .field-card.rejected { border-color: var(--red-border); }
+    .field-card.edited { border-color: var(--amber-border); }
+
+    .field-card-header {
+      padding: 14px 18px;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .field-label {
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex: 1;
+    }
+    .field-status {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 5px;
+    }
+    .field-status.pending { background: var(--accent-light); color: var(--accent); }
+    .field-status.accepted { background: var(--green-bg); color: var(--green); }
+    .field-status.rejected { background: var(--red-bg); color: var(--red); }
+    .field-status.edited { background: var(--amber-bg); color: var(--amber); }
+
+    .field-card-body { padding: 18px; }
+
+    .field-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .field-columns { grid-template-columns: 1fr; }
+    }
+
+    .field-col-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field-col-label.original { color: var(--red); }
+    .field-col-label.suggested { color: var(--green); }
+
+    .field-text {
+      font-size: .88rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+    .field-text.original-text {
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .field-text.suggested-text {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .field-changes {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: var(--panel-2);
+      border-radius: 8px;
+    }
+    .field-changes-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .field-changes ul {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .field-changes li {
+      font-size: .82rem;
+      color: var(--text);
+      padding-left: 14px;
+      position: relative;
+    }
+    .field-changes li::before {
+      content: "\2192";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ── Edit textarea ── */
+    .field-edit-area {
+      display: none;
+      margin-top: 14px;
+    }
+    .field-edit-area.visible { display: block; }
+    .field-edit-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--amber-border);
+      border-radius: 8px;
+      background: var(--amber-bg);
+      font-family: inherit;
+      font-size: .88rem;
+      line-height: 1.6;
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field-edit-textarea:focus { border-color: var(--amber); }
+
+    .field-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      background: var(--panel);
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-accept { border-color: var(--green-border); color: var(--green); }
+    .btn-accept:hover { background: var(--green-bg); border-color: var(--green); }
+    .btn-reject { border-color: var(--red-border); color: var(--red); }
+    .btn-reject:hover { background: var(--red-bg); border-color: var(--red); }
+    .btn-edit { border-color: var(--amber-border); color: var(--amber); }
+    .btn-edit:hover { background: var(--amber-bg); border-color: var(--amber); }
+    .btn-action.active {
+      color: #fff !important;
+    }
+    .btn-accept.active { background: var(--green); border-color: var(--green); }
+    .btn-reject.active { background: var(--red); border-color: var(--red); }
+    .btn-edit.active { background: var(--amber); border-color: var(--amber); }
+
+    /* ── Save bar ── */
+    .save-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      padding: 14px 20px;
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+    }
+    .save-bar.visible { display: flex; }
+    .save-counter {
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    .save-counter strong { color: var(--text); }
+    .btn-save {
+      padding: 10px 28px;
+      border: none;
+      border-radius: 9px;
+      background: var(--green);
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+    .btn-save:hover { background: #15803d; }
+    .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+    .save-status {
+      font-size: .85rem;
+      font-weight: 600;
+    }
+    .save-status.success { color: var(--green); }
+    .save-status.error { color: var(--red); }
+
+    /* ── Login (same as editor) ── */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .login-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .login-logo { font-size: 1.6rem; font-weight: 900; letter-spacing: -0.02em; color: var(--accent); }
+    .login-title { font-size: 1.1rem; font-weight: 700; }
+    .login-field { display: flex; flex-direction: column; gap: 6px; }
+    .login-field label { font-size: .85rem; font-weight: 600; color: var(--muted); }
+    .login-error {
+      display: none;
+      font-size: .85rem;
+      color: var(--red);
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    /* ── Accept/Reject all ── */
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-bulk {
+      padding: 6px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      background: var(--panel);
+      font-size: .78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .btn-bulk:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- ════ LOGIN ════ -->
+  <div id="loginPage" class="login-page">
+    <form class="login-card" id="loginForm">
+      <span class="login-logo">toutcuit</span>
+      <span class="login-title">Outil de révision</span>
+      <div class="login-field">
+        <label for="pwInput">Mot de passe</label>
+        <input type="password" id="pwInput" class="search-input" required autofocus>
+      </div>
+      <div class="login-error" id="loginError">Mot de passe incorrect.</div>
+      <button class="btn-primary" type="submit">Entrer</button>
+    </form>
+  </div>
+
+  <!-- ════ APP ════ -->
+  <div id="appContent" style="display:none;">
+
+    <header class="header">
+      <a href="/editor" class="header-logo">toutcuit</a>
+      <span class="header-sep">/</span>
+      <span class="header-title">Révision des CERTs</span>
+      <span class="header-spacer"></span>
+      <a href="/editor" class="header-link">Editeur</a>
+    </header>
+
+    <main class="main">
+
+      <!-- Cert selector -->
+      <div class="selector-card">
+        <div class="selector-title">Choisir une CERT</div>
+        <input type="text" id="searchInput" class="search-input" placeholder="Rechercher par titre, expert, descripteur...">
+        <div class="cert-list" id="certList">
+          <div class="empty-state">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- Selected cert summary -->
+      <div class="cert-summary" id="certSummary">
+        <div class="cert-summary-header">
+          <div class="cert-summary-info">
+            <div class="cert-summary-title" id="summaryTitle"></div>
+            <a class="cert-summary-url" id="summaryUrl" href="#" target="_blank"></a>
+            <div class="cert-meta-row" id="summaryMeta"></div>
+          </div>
+          <button class="btn-review" id="reviewBtn">Analyser</button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-bar" id="loadingBar">
+        <div class="spinner"></div>
+        <span class="loading-text">Analyse en cours par Claude...</span>
+      </div>
+
+      <!-- Error -->
+      <div class="error-banner" id="errorBanner"></div>
+
+      <!-- Review results -->
+      <div class="review-section" id="reviewSection">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div class="review-heading" style="flex:1;border:none;padding:0;">Suggestions</div>
+          <div class="bulk-actions">
+            <button class="btn-bulk" onclick="bulkAction('accept')">Tout accepter</button>
+            <button class="btn-bulk" onclick="bulkAction('reject')">Tout refuser</button>
+          </div>
+        </div>
+        <div id="reviewCards"></div>
+      </div>
+
+    </main>
+
+    <!-- Save bar -->
+    <div class="save-bar" id="saveBar">
+      <span class="save-counter" id="saveCounter"></span>
+      <button class="btn-save" id="saveBtn" onclick="saveCert()">Sauvegarder</button>
+      <span class="save-status" id="saveStatus"></span>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "/api";
+    const SA_KEY = "tc_superadmin";
+    const PASSWORD = "certify2026!";
+
+    // ── Auth ──
+    const loginPage = document.getElementById("loginPage");
+    const appContent = document.getElementById("appContent");
+
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pw = document.getElementById("pwInput");
+      if (pw.value === PASSWORD) {
+        sessionStorage.setItem(SA_KEY, "true");
+        unlock();
+      } else {
+        document.getElementById("loginError").style.display = "block";
+        pw.value = "";
+        pw.focus();
+      }
+    });
+
+    function unlock() {
+      loginPage.style.display = "none";
+      appContent.style.display = "block";
+      loadCerts();
+    }
+
+    if (sessionStorage.getItem(SA_KEY) === "true") unlock();
+
+    // ── State ──
+    let allCerts = [];
+    let selectedCert = null;
+    let suggestions = {};  // { field_key: { suggested, changes } }
+    let decisions = {};    // { field_key: 'accepted' | 'rejected' | 'edited' }
+    let editedTexts = {};  // { field_key: string }
+
+    const FIELD_LABELS = {
+      title: "Titre",
+      three_phrases: "3 Phrases",
+      context: "Contexte",
+      content: "Contenu",
+      reliability_text: "Fiabilité",
+      references_text: "Références",
+    };
+
+    // ── Load certs ──
+    async function loadCerts() {
+      try {
+        const res = await fetch(`${API}/admin/certs.php`);
+        allCerts = await res.json();
+        renderCertList();
+      } catch (err) {
+        document.getElementById("certList").innerHTML =
+          '<div class="empty-state">Erreur de chargement.</div>';
+      }
+    }
+
+    function renderCertList(filter = "") {
+      const list = document.getElementById("certList");
+      const terms = filter.toLowerCase().split(/\s+/).filter(Boolean);
+      const filtered = allCerts.filter(c => {
+        if (!terms.length) return true;
+        const haystack = [c.title, c.expert, c.teacher_name, c.descriptor1, c.descriptor2].join(" ").toLowerCase();
+        return terms.every(t => haystack.includes(t));
+      });
+
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty-state">Aucune CERT trouvée.</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(c => `
+        <div class="cert-item ${selectedCert && selectedCert.id === c.id ? 'selected' : ''}"
+             data-id="${c.id}" onclick="selectCert(${c.id})">
+          <span class="cert-item-rel ${c.reliability}"></span>
+          <span class="cert-item-title">${esc(c.title)}</span>
+          <span class="cert-item-meta">${esc(c.teacher_name || '?')}</span>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      renderCertList(e.target.value);
+    });
+
+    // ── Select cert ──
+    function selectCert(id) {
+      selectedCert = allCerts.find(c => c.id === id);
+      if (!selectedCert) return;
+
+      // Reset review state
+      suggestions = {};
+      decisions = {};
+      editedTexts = {};
+      hide("reviewSection");
+      hide("saveBar");
+      hide("loadingBar");
+      hide("errorBanner");
+
+      // Update summary
+      document.getElementById("summaryTitle").textContent = selectedCert.title;
+      const urlEl = document.getElementById("summaryUrl");
+      urlEl.textContent = selectedCert.url;
+      urlEl.href = selectedCert.url;
+
+      const metaRow = document.getElementById("summaryMeta");
+      const tags = [];
+      if (selectedCert.expert) tags.push(selectedCert.expert);
+      if (selectedCert.descriptor1) tags.push(selectedCert.descriptor1);
+      if (selectedCert.descriptor2) tags.push(selectedCert.descriptor2);
+      const relLabel = { good: "Fiable", mid: "Indéterminé", bad: "Pas fiable" };
+      if (selectedCert.reliability) tags.push(relLabel[selectedCert.reliability] || selectedCert.reliability);
+      if (selectedCert.teacher_name) tags.push("par " + selectedCert.teacher_name);
+      metaRow.innerHTML = tags.map(t => `<span class="cert-meta-tag">${esc(t)}</span>`).join("");
+
+      show("certSummary");
+      document.getElementById("reviewBtn").disabled = false;
+      renderCertList(document.getElementById("searchInput").value);
+    }
+
+    // ── Review ──
+    document.getElementById("reviewBtn").addEventListener("click", runReview);
+
+    async function runReview() {
+      if (!selectedCert) return;
+      const btn = document.getElementById("reviewBtn");
+      btn.disabled = true;
+      hide("reviewSection");
+      hide("saveBar");
+      hide("errorBanner");
+      show("loadingBar");
+
+      try {
+        const body = {
+          title: selectedCert.title || "",
+          url: selectedCert.url || "",
+          expert: selectedCert.expert || "",
+          descriptor1: selectedCert.descriptor1 || "",
+          descriptor2: selectedCert.descriptor2 || "",
+          reliability: selectedCert.reliability || "",
+          three_phrases: selectedCert.three_phrases || "",
+          context: selectedCert.context || "",
+          content: selectedCert.content || "",
+          reliability_text: selectedCert.reliability_text || "",
+          references_text: selectedCert.references_text || "",
+        };
+
+        const res = await fetch(`${API}/ai/review.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Erreur ${res.status}`);
+        }
+
+        const data = await res.json();
+        suggestions = data.suggestions || {};
+        decisions = {};
+        editedTexts = {};
+        renderReview();
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hide("loadingBar");
+        btn.disabled = false;
+      }
+    }
+
+    // ── Render review cards ──
+    function renderReview() {
+      const container = document.getElementById("reviewCards");
+      const keys = Object.keys(suggestions);
+
+      if (!keys.length) {
+        container.innerHTML = '<div class="no-changes">Aucune modification suggérée — cette CERT est bien rédigée.</div>';
+        show("reviewSection");
+        return;
+      }
+
+      container.innerHTML = keys.map(key => {
+        const s = suggestions[key];
+        const label = FIELD_LABELS[key] || key;
+        const original = selectedCert[key] || "";
+        const status = decisions[key] || "pending";
+
+        return `
+          <div class="field-card ${status !== 'pending' ? status : ''}" id="card-${key}" style="margin-bottom:18px;">
+            <div class="field-card-header">
+              <span class="field-label">${esc(label)}</span>
+              <span class="field-status ${status}" id="status-${key}">${statusLabel(status)}</span>
+            </div>
+            <div class="field-card-body">
+              <div class="field-columns">
+                <div>
+                  <div class="field-col-label original">Original</div>
+                  <div class="field-text original-text">${esc(original)}</div>
+                </div>
+                <div>
+                  <div class="field-col-label suggested">Suggestion</div>
+                  <div class="field-text suggested-text">${esc(s.suggested)}</div>
+                </div>
+              </div>
+              ${s.changes && s.changes.length ? `
+                <div class="field-changes">
+                  <div class="field-changes-title">Modifications</div>
+                  <ul>${s.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+                </div>
+              ` : ''}
+              <div class="field-edit-area" id="edit-area-${key}">
+                <textarea class="field-edit-textarea" id="edit-text-${key}"
+                  oninput="editedTexts['${key}'] = this.value; updateSaveCounter();"
+                >${esc(editedTexts[key] || s.suggested)}</textarea>
+              </div>
+              <div class="field-actions">
+                <button class="btn-action btn-accept ${status === 'accepted' ? 'active' : ''}"
+                        onclick="setDecision('${key}','accepted')">Accepter</button>
+                <button class="btn-action btn-reject ${status === 'rejected' ? 'active' : ''}"
+                        onclick="setDecision('${key}','rejected')">Refuser</button>
+                <button class="btn-action btn-edit ${status === 'edited' ? 'active' : ''}"
+                        onclick="setDecision('${key}','edited')">Modifier</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      show("reviewSection");
+      updateSaveCounter();
+    }
+
+    function statusLabel(s) {
+      return { pending: "En attente", accepted: "Accepté", rejected: "Refusé", edited: "Modifié" }[s] || s;
+    }
+
+    // ── Decisions ──
+    function setDecision(key, decision) {
+      decisions[key] = decision;
+      const card = document.getElementById(`card-${key}`);
+      card.className = `field-card ${decision}`;
+      const statusEl = document.getElementById(`status-${key}`);
+      statusEl.className = `field-status ${decision}`;
+      statusEl.textContent = statusLabel(decision);
+
+      // Toggle edit area
+      const editArea = document.getElementById(`edit-area-${key}`);
+      if (decision === "edited") {
+        editArea.classList.add("visible");
+        const ta = document.getElementById(`edit-text-${key}`);
+        if (!editedTexts[key]) editedTexts[key] = suggestions[key].suggested;
+        ta.value = editedTexts[key];
+        ta.focus();
+      } else {
+        editArea.classList.remove("visible");
+      }
+
+      // Update action button active states
+      card.querySelectorAll(".btn-action").forEach(b => b.classList.remove("active"));
+      card.querySelector(`.btn-${decision}`).classList.add("active");
+
+      updateSaveCounter();
+    }
+
+    function bulkAction(action) {
+      Object.keys(suggestions).forEach(key => setDecision(key, action));
+    }
+
+    // ── Save counter ──
+    function updateSaveCounter() {
+      const keys = Object.keys(suggestions);
+      const decided = keys.filter(k => decisions[k] && decisions[k] !== "pending");
+      const accepted = keys.filter(k => decisions[k] === "accepted" || decisions[k] === "edited");
+
+      const counter = document.getElementById("saveCounter");
+      counter.innerHTML = `<strong>${accepted.length}</strong> modification${accepted.length > 1 ? 's' : ''} à appliquer — ${decided.length}/${keys.length} traité${decided.length > 1 ? 's' : ''}`;
+
+      const allDone = decided.length === keys.length;
+      const hasChanges = accepted.length > 0;
+      document.getElementById("saveBtn").disabled = !allDone || !hasChanges;
+      show("saveBar");
+    }
+
+    // ── Save ──
+    async function saveCert() {
+      const btn = document.getElementById("saveBtn");
+      const status = document.getElementById("saveStatus");
+      btn.disabled = true;
+      status.textContent = "";
+
+      // Build update payload
+      const payload = { action: "update", id: selectedCert.id };
+      Object.keys(suggestions).forEach(key => {
+        if (decisions[key] === "accepted") {
+          payload[key] = suggestions[key].suggested;
+        } else if (decisions[key] === "edited") {
+          payload[key] = editedTexts[key] || suggestions[key].suggested;
+        }
+        // rejected: keep original, don't send
+      });
+
+      try {
+        const res = await fetch(`${API}/admin/certs.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Erreur ${res.status}`);
+        }
+
+        status.className = "save-status success";
+        status.textContent = "CERT sauvegardée.";
+
+        // Update local data
+        Object.keys(payload).forEach(k => {
+          if (k !== "action" && k !== "id" && selectedCert[k] !== undefined) {
+            selectedCert[k] = payload[k];
+          }
+        });
+
+        // Refresh display
+        selectCert(selectedCert.id);
+      } catch (err) {
+        status.className = "save-status error";
+        status.textContent = err.message;
+        btn.disabled = false;
+      }
+    }
+
+    // ── Helpers ──
+    function show(id) { document.getElementById(id).classList.add("visible"); }
+    function hide(id) { document.getElementById(id).classList.remove("visible"); }
+    function showError(msg) {
+      const el = document.getElementById("errorBanner");
+      el.textContent = msg;
+      el.classList.add("visible");
+    }
+    function esc(s) {
+      if (!s) return "";
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
