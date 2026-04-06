@@ -170,8 +170,9 @@ if ($curlErr) {
 
 if ($httpCode !== 200) {
     $body = json_decode($response, true);
-    $msg  = $body['error']['message'] ?? "HTTP $httpCode";
-    jsonError("Claude API: $msg", 502);
+    $errType = $body['error']['type'] ?? 'unknown';
+    $errMsg  = $body['error']['message'] ?? $response;
+    jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
 }
 
 $result = json_decode($response, true);
