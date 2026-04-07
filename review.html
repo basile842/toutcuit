@@ -900,8 +900,8 @@
                   <div class="field-text original-text">${esc(original)}</div>
                 </div>
                 <div>
-                  <div class="field-col-label suggested">Suggestion</div>
-                  <div class="field-text suggested-text">${esc(s.suggested)}</div>
+                  <div class="field-col-label suggested">Nouvelle version</div>
+                  <div class="field-text suggested-text" id="suggested-${key}">${esc(s.suggested)}</div>
                 </div>
               </div>
               ${s.changes && s.changes.length ? `
@@ -912,7 +912,7 @@
               ` : ''}
               <div class="field-edit-area" id="edit-area-${key}">
                 <textarea class="field-edit-textarea" id="edit-text-${key}"
-                  oninput="editedTexts['${key}'] = this.value; updateSaveCounter();"
+                  oninput="editedTexts['${key}'] = this.value; updateSuggestedText('${key}'); updateSaveCounter();"
                 >${esc(editedTexts[key] || s.suggested)}</textarea>
               </div>
               <div class="field-actions">
@@ -957,11 +957,28 @@
         editArea.classList.remove("visible");
       }
 
+      // Update "Nouvelle version" text
+      updateSuggestedText(key);
+
       // Update action button active states
+      const btnClass = { accepted: "accept", rejected: "reject", edited: "edit" }[decision];
       card.querySelectorAll(".btn-action").forEach(b => b.classList.remove("active"));
-      card.querySelector(`.btn-${decision}`).classList.add("active");
+      card.querySelector(`.btn-${btnClass}`).classList.add("active");
 
       updateSaveCounter();
+    }
+
+    function updateSuggestedText(key) {
+      const el = document.getElementById(`suggested-${key}`);
+      if (!el) return;
+      const decision = decisions[key] || "pending";
+      if (decision === "rejected") {
+        el.textContent = selectedCert[key] || "";
+      } else if (decision === "edited") {
+        el.textContent = editedTexts[key] || suggestions[key].suggested;
+      } else {
+        el.textContent = suggestions[key].suggested;
+      }
     }
 
     function bulkAction(action) {
