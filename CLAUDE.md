@@ -40,6 +40,8 @@ Prototype avancé Certify avec backend PHP/MySQL — sessions de classe, soumiss
 | `global-feed.html` | Feed global des réponses (admin) |
 | `reset.html` | Reset mot de passe |
 | `superadmin.html` | Console super-admin |
+| `editor.html` | Console éditeur (password-protected, gestion enseignants/sessions/CERTs + outils) |
+| `review.html` | Outil de révision éditoriale des CERTs via Claude API |
 
 ## API (34 endpoints)
 
@@ -67,7 +69,11 @@ Tous dans `api/`, requêtes JSON, réponses JSON.
 
 ### Admin (`api/admin/`)
 - `teachers.php`, `sessions.php`, `certs.php`, `global-feed.php` [GET] — vues superadmin
+- `session-detail.php` [GET] — détail agrégé d'une session (CERTs, compteurs élèves/réponses/liens)
 - `update-session.php` [POST], `delete-session.php` [DELETE], `delete-teacher.php` [DELETE], `reset-responses.php` [POST]
+
+### AI (`api/ai/`)
+- `review.php` [POST] — envoie les champs texte d'une CERT à Claude Sonnet pour révision éditoriale. Si `three_phrases` est vide, demande à Claude de le générer. Clé API dans `config.php` (`ANTHROPIC_API_KEY`)
 
 ### Schools (`api/schools/`)
 - `list.php` [GET], `save.php` [POST]
@@ -98,6 +104,29 @@ password_resets (id, teacher_id, token, expires_at, created_at)
 ```
 
 Points clés : `dedup_key` empêche les soumissions en double, `is_shared` sur certs permet le partage entre enseignants, pas de table élèves (soumissions anonymes via `user_id` string).
+
+## Éditeur et Révision
+
+### Éditeur (`editor.html`)
+
+Console password-protected (pas de JWT, mot de passe frontend) avec vues :
+- **Home** : liens vers Enseignants, Séances, Stock de CERTs, et outils (Révision)
+- **Enseignants** : créer, lister, supprimer des comptes
+- **Séances** : lister avec détail dépliable (CERTs, stats, feed, dupliquer, télécharger Excel)
+- **Stock de CERTs** : lister, modifier, supprimer
+
+Le téléchargement Excel utilise SheetJS côté client, sans endpoint dédié — il charge les données via `sessions/certs.php` + `student/feed.php` et génère le fichier localement.
+
+### Révision (`review.html`)
+
+Outil de révision éditoriale des CERTs via Claude API. Flow :
+1. Choisir une CERT → Analyser (appel `api/ai/review.php`)
+2. Pour chaque champ modifié, Claude propose une suggestion
+3. L'éditeur choisit par champ : **Original** (garder l'existant), **Claude** (accepter la suggestion), ou **Éditer** (modifier manuellement)
+4. La colonne "Nouvelle version" reflète le choix en temps réel (couleur + texte)
+5. Sauvegarder envoie les modifications à `api/admin/certs.php` (action: update)
+
+Palette UI : violet (accent) pour "Claude", gris pour "Original", ambre pour "Éditer". Le rouge et le vert sont réservés aux indicateurs de fiabilité.
 
 ## Descripteurs
 

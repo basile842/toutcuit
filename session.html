@@ -906,8 +906,8 @@
           searchTerms.forEach(term => {
             const chip = document.createElement("span");
             chip.className = "search-chip";
-            chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 10px;border-radius:7px;background:rgba(111,92,247,.1);border:1px solid rgba(111,92,247,.25);color:var(--text);font-size:.8rem;font-weight:600;white-space:nowrap;";
-            chip.innerHTML = `${esc(term)}<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;line-height:1;padding:0 2px;border-radius:4px;">&times;</button>`;
+            chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:4px 6px 4px 10px;border-radius:7px;background:rgba(111,92,247,.15);border:1px solid rgba(111,92,247,.35);color:#4338ca;font-size:.8rem;font-weight:600;white-space:nowrap;";
+            chip.innerHTML = `${esc(term)}<button style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:rgba(111,92,247,.12);border:none;cursor:pointer;color:rgba(111,92,247,.6);font-size:.9rem;line-height:1;padding:0;border-radius:50%;">&times;</button>`;
             chip.querySelector("button").addEventListener("click", () => {
               searchTerms = searchTerms.filter(t => t !== term);
               renderChips();

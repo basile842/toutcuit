@@ -65,31 +65,36 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 8px 3px 10px;
+      padding: 4px 6px 4px 10px;
       border-radius: 7px;
-      background: rgba(111,92,247,.1);
-      border: 1px solid rgba(111,92,247,.25);
-      color: var(--text);
+      background: rgba(111,92,247,.15);
+      border: 1px solid rgba(111,92,247,.35);
+      color: #4338ca;
       font-size: .8rem;
       font-weight: 600;
       white-space: nowrap;
     }
 
     .search-chip button {
-      background: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: rgba(111,92,247,.12);
       border: none;
       cursor: pointer;
-      color: var(--muted);
-      font-size: .85rem;
+      color: rgba(111,92,247,.6);
+      font-size: .9rem;
       line-height: 1;
-      padding: 0 2px;
-      border-radius: 4px;
+      padding: 0;
+      border-radius: 50%;
       transition: color .15s, background .15s;
     }
 
     .search-chip button:hover {
-      color: #b91c1c;
-      background: rgba(239,68,68,.1);
+      color: #fff;
+      background: #b91c1c;
     }
 
     .depot-toolbar select {

@@ -99,20 +99,61 @@
       margin-bottom: 16px;
       color: var(--text);
     }
-    .search-input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
+    .search-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 8px 12px;
       border-radius: 9px;
-      font-size: .95rem;
+      border: 1.5px solid var(--border);
       background: var(--bg);
-      color: var(--text);
-      outline: none;
+      cursor: text;
       transition: border-color .15s;
+    }
+    .search-box:focus-within { border-color: var(--accent); }
+    .search-box input {
+      flex: 1 1 100px;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: .88rem;
+      color: var(--text);
+      padding: 4px 0;
+      min-width: 80px;
       font-family: inherit;
     }
-    .search-input:focus { border-color: var(--accent); }
-    .search-input::placeholder { color: var(--muted); }
+    .search-box input::placeholder { color: var(--muted); }
+    .search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px 4px 10px;
+      border-radius: 7px;
+      background: rgba(111,92,247,.15);
+      border: 1px solid rgba(111,92,247,.35);
+      color: #4338ca;
+      font-size: .8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .search-chip button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: rgba(111,92,247,.12);
+      border: none;
+      cursor: pointer;
+      color: rgba(111,92,247,.6);
+      font-size: .9rem;
+      line-height: 1;
+      padding: 0;
+      border-radius: 50%;
+      transition: color .15s, background .15s;
+    }
+    .search-chip button:hover { color: #fff; background: #b91c1c; }
 
     .cert-list {
       max-height: 320px;
@@ -629,7 +670,9 @@
       <!-- Cert selector -->
       <div class="selector-card">
         <div class="selector-title">Choisir une CERT</div>
-        <input type="text" id="searchInput" class="search-input" placeholder="Rechercher par titre, expert, descripteur...">
+        <div class="search-box" id="searchBox">
+          <input type="text" id="searchInput" placeholder="Rechercher par titre, expert, descripteur...">
+        </div>
         <div class="cert-list" id="certList">
           <div class="empty-state">Chargement...</div>
         </div>
@@ -743,13 +786,12 @@
       }
     }
 
-    function renderCertList(filter = "") {
+    function renderCertList() {
       const list = document.getElementById("certList");
-      const terms = filter.toLowerCase().split(/\s+/).filter(Boolean);
       const filtered = allCerts.filter(c => {
-        if (!terms.length) return true;
+        if (!searchTerms.length) return true;
         const haystack = [c.title, c.expert, c.teacher_name, c.descriptor1, c.descriptor2].join(" ").toLowerCase();
-        return terms.every(t => haystack.includes(t));
+        return searchTerms.every(t => haystack.includes(t));
       });
 
       if (!filtered.length) {
@@ -767,9 +809,48 @@
       `).join("");
     }
 
-    document.getElementById("searchInput").addEventListener("input", (e) => {
-      renderCertList(e.target.value);
+    let searchTerms = [];
+    const searchBox = document.getElementById("searchBox");
+    const searchInput = document.getElementById("searchInput");
+
+    function addSearchTerm(term) {
+      term = term.trim().toLowerCase();
+      if (!term || searchTerms.includes(term)) return;
+      searchTerms.push(term);
+      renderSearchChips();
+      renderCertList();
+    }
+
+    function removeSearchTerm(term) {
+      searchTerms = searchTerms.filter(t => t !== term);
+      renderSearchChips();
+      renderCertList();
+    }
+
+    function renderSearchChips() {
+      searchBox.querySelectorAll(".search-chip").forEach(el => el.remove());
+      searchTerms.forEach(term => {
+        const chip = document.createElement("span");
+        chip.className = "search-chip";
+        chip.innerHTML = `${esc(term)}<button title="Supprimer">&times;</button>`;
+        chip.querySelector("button").addEventListener("click", () => removeSearchTerm(term));
+        searchBox.insertBefore(chip, searchInput);
+      });
+      searchInput.placeholder = searchTerms.length ? "Ajouter un critère..." : "Rechercher par titre, expert, descripteur...";
+    }
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addSearchTerm(searchInput.value);
+        searchInput.value = "";
+      }
+      if (e.key === "Backspace" && !searchInput.value && searchTerms.length) {
+        removeSearchTerm(searchTerms[searchTerms.length - 1]);
+      }
     });
+
+    searchBox.addEventListener("click", () => searchInput.focus());
 
     // ── Select cert ──
     function selectCert(id) {
@@ -804,7 +885,7 @@
 
       show("certSummary");
       document.getElementById("reviewBtn").disabled = false;
-      renderCertList(document.getElementById("searchInput").value);
+      renderCertList();
     }
 
     // ── Review ──
