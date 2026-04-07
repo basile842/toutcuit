@@ -25,7 +25,10 @@ foreach ($reviewable as $key) {
     }
 }
 
-if (empty($fields)) {
+// Flag missing three_phrases for auto-generation
+$generateThreePhrases = !isset($fields['three_phrases']);
+
+if (empty($fields) && !$generateThreePhrases) {
     jsonError('Aucun champ textuel à réviser.');
 }
 
@@ -63,6 +66,18 @@ PROMPT;
 $prompt .= "\n- URL : {$meta['url']}\n- Expert : {$meta['expert']}\n- Descripteur 1 : {$meta['descriptor1']}\n- Descripteur 2 : {$meta['descriptor2']}\n- Fiabilité : {$meta['reliability']}\n\n";
 
 $prompt .= "## Champs à réviser\n\n{$fieldsBlock}";
+
+if ($generateThreePhrases) {
+    $prompt .= <<<'GEN'
+
+## Champ manquant à générer
+
+Le champ `three_phrases` (3 Phrases) est VIDE. Tu dois le GÉNÉRER à partir des autres champs disponibles (titre, contexte, contenu, fiabilité, références, métadonnées).
+Inclus-le OBLIGATOIREMENT dans tes suggestions, avec comme "changes": ["Généré automatiquement (le champ était vide)"].
+Respecte strictement les règles de structure des 3 Phrases définies plus haut.
+
+GEN;
+}
 
 $prompt .= <<<'RULES'
 ## Règles éditoriales (à appliquer rigoureusement)

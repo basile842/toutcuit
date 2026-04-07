@@ -620,9 +620,10 @@
     <header class="header">
       <a href="/editor" class="header-logo">toutcuit</a>
       <span class="header-sep">/</span>
+      <a href="/editor" class="header-title" style="text-decoration:none;color:inherit">Éditeur</a>
+      <span class="header-sep">/</span>
       <span class="header-title">Révision des CERTs</span>
       <span class="header-spacer"></span>
-      <a href="/editor" class="header-link">Editeur</a>
     </header>
 
     <main class="main">
@@ -978,9 +979,7 @@
       const counter = document.getElementById("saveCounter");
       counter.innerHTML = `<strong>${accepted.length}</strong> modification${accepted.length > 1 ? 's' : ''} à appliquer — ${decided.length}/${keys.length} traité${decided.length > 1 ? 's' : ''}`;
 
-      const allDone = decided.length === keys.length;
-      const hasChanges = accepted.length > 0;
-      document.getElementById("saveBtn").disabled = !allDone || !hasChanges;
+      document.getElementById("saveBtn").disabled = decided.length === 0;
       show("saveBar");
     }
 
