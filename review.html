@@ -307,11 +307,11 @@
     .no-changes {
       text-align: center;
       padding: 32px 16px;
-      color: var(--green);
+      color: var(--accent);
       font-weight: 600;
       font-size: .95rem;
-      background: var(--green-bg);
-      border: 1px solid var(--green-border);
+      background: var(--accent-light);
+      border: 1px solid rgba(111, 92, 247, .22);
       border-radius: var(--radius);
     }
 
@@ -324,8 +324,8 @@
       box-shadow: 0 2px 8px rgba(16,24,40,.04);
       transition: border-color .2s;
     }
-    .field-card.accepted { border-color: var(--green-border); }
-    .field-card.rejected { border-color: var(--red-border); }
+    .field-card.accepted { border-color: rgba(111, 92, 247, .35); }
+    .field-card.rejected { border-color: var(--border); }
     .field-card.edited { border-color: var(--amber-border); }
 
     .field-card-header {
@@ -353,8 +353,8 @@
       border-radius: 5px;
     }
     .field-status.pending { background: var(--accent-light); color: var(--accent); }
-    .field-status.accepted { background: var(--green-bg); color: var(--green); }
-    .field-status.rejected { background: var(--red-bg); color: var(--red); }
+    .field-status.accepted { background: var(--accent-light); color: var(--accent); }
+    .field-status.rejected { background: var(--panel-2); color: var(--muted); }
     .field-status.edited { background: var(--amber-bg); color: var(--amber); }
 
     .field-card-body { padding: 18px; }
@@ -376,8 +376,8 @@
       color: var(--muted);
       margin-bottom: 6px;
     }
-    .field-col-label.original { color: var(--red); }
-    .field-col-label.suggested { color: var(--green); }
+    .field-col-label.original { color: var(--muted); }
+    .field-col-label.suggested { color: var(--accent); }
 
     .field-text {
       font-size: .88rem;
@@ -387,14 +387,14 @@
       color: var(--text);
     }
     .field-text.original-text {
-      background: var(--red-bg);
-      border: 1px solid var(--red-border);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px 14px;
     }
     .field-text.suggested-text {
-      background: var(--green-bg);
-      border: 1px solid var(--green-border);
+      background: var(--accent-light);
+      border: 1px solid rgba(111, 92, 247, .22);
       border-radius: 8px;
       padding: 12px 14px;
     }
@@ -476,17 +476,17 @@
       font-family: inherit;
     }
     .btn-action:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-accept { border-color: var(--green-border); color: var(--green); }
-    .btn-accept:hover { background: var(--green-bg); border-color: var(--green); }
-    .btn-reject { border-color: var(--red-border); color: var(--red); }
-    .btn-reject:hover { background: var(--red-bg); border-color: var(--red); }
+    .btn-accept { border-color: rgba(111, 92, 247, .35); color: var(--accent); }
+    .btn-accept:hover { background: var(--accent-light); border-color: var(--accent); }
+    .btn-reject { border-color: var(--border); color: var(--muted); }
+    .btn-reject:hover { background: var(--panel-2); border-color: var(--muted); }
     .btn-edit { border-color: var(--amber-border); color: var(--amber); }
     .btn-edit:hover { background: var(--amber-bg); border-color: var(--amber); }
     .btn-action.active {
       color: #fff !important;
     }
-    .btn-accept.active { background: var(--green); border-color: var(--green); }
-    .btn-reject.active { background: var(--red); border-color: var(--red); }
+    .btn-accept.active { background: var(--accent); border-color: var(--accent); }
+    .btn-reject.active { background: var(--muted); border-color: var(--muted); }
     .btn-edit.active { background: var(--amber); border-color: var(--amber); }
 
     /* ── Save bar ── */
@@ -515,21 +515,21 @@
       padding: 10px 28px;
       border: none;
       border-radius: 9px;
-      background: var(--green);
+      background: var(--accent);
       color: #fff;
       font-size: .9rem;
       font-weight: 700;
       cursor: pointer;
       transition: background .15s, opacity .15s;
     }
-    .btn-save:hover { background: #15803d; }
+    .btn-save:hover { background: var(--accent-hover); }
     .btn-save:disabled { opacity: .5; cursor: not-allowed; }
     .save-status {
       font-size: .85rem;
       font-weight: 600;
     }
-    .save-status.success { color: var(--green); }
-    .save-status.error { color: var(--red); }
+    .save-status.success { color: var(--accent); }
+    .save-status.error { color: #b91c1c; }
 
     /* ── Login (same as editor) ── */
     .login-page {
@@ -900,7 +900,7 @@
                   <div class="field-text original-text">${esc(original)}</div>
                 </div>
                 <div>
-                  <div class="field-col-label suggested">Nouvelle version</div>
+                  <div class="field-col-label suggested" id="label-${key}">Nouvelle version</div>
                   <div class="field-text suggested-text" id="suggested-${key}">${esc(s.suggested)}</div>
                 </div>
               </div>
@@ -916,12 +916,12 @@
                 >${esc(editedTexts[key] || s.suggested)}</textarea>
               </div>
               <div class="field-actions">
-                <button class="btn-action btn-accept ${status === 'accepted' ? 'active' : ''}"
-                        onclick="setDecision('${key}','accepted')">Accepter</button>
                 <button class="btn-action btn-reject ${status === 'rejected' ? 'active' : ''}"
-                        onclick="setDecision('${key}','rejected')">Refuser</button>
+                        onclick="setDecision('${key}','rejected')">Original</button>
+                <button class="btn-action btn-accept ${status === 'accepted' ? 'active' : ''}"
+                        onclick="setDecision('${key}','accepted')">Claude</button>
                 <button class="btn-action btn-edit ${status === 'edited' ? 'active' : ''}"
-                        onclick="setDecision('${key}','edited')">Modifier</button>
+                        onclick="setDecision('${key}','edited')">Édité</button>
               </div>
             </div>
           </div>
@@ -933,7 +933,7 @@
     }
 
     function statusLabel(s) {
-      return { pending: "En attente", accepted: "Accepté", rejected: "Refusé", edited: "Modifié" }[s] || s;
+      return { pending: "En attente", accepted: "Claude", rejected: "Original", edited: "Édité" }[s] || s;
     }
 
     // ── Decisions ──
@@ -978,6 +978,25 @@
         el.textContent = editedTexts[key] || suggestions[key].suggested;
       } else {
         el.textContent = suggestions[key].suggested;
+      }
+
+      // Match border/background to the selected button
+      const styles = {
+        pending:  { bg: 'var(--accent-light)', border: 'rgba(111, 92, 247, .22)' },
+        accepted: { bg: 'var(--accent-light)', border: 'rgba(111, 92, 247, .22)' },
+        rejected: { bg: 'var(--panel-2)',       border: 'var(--border)' },
+        edited:   { bg: 'var(--amber-bg)',      border: 'var(--amber-border)' },
+      }[decision];
+      el.style.background = styles.bg;
+      el.style.borderColor = styles.border;
+
+      const label = document.getElementById(`label-${key}`);
+      if (label) {
+        const labelColor = {
+          pending: 'var(--accent)', accepted: 'var(--accent)',
+          rejected: 'var(--muted)', edited: 'var(--amber)',
+        }[decision];
+        label.style.color = labelColor;
       }
     }
 
