@@ -676,7 +676,7 @@
     let allSessionsData = [];
     let allCertsData = [];
     let teacherSearchTerm = "";
-    let sessionSearchTerm = "";
+    let sessionSearchTerms = [];
     let certSearchTerms = [];
     let globalFeedSelectedCodes = new Set();
 
@@ -828,10 +828,10 @@
 
     function renderSessions() {
       const list = document.getElementById("sessionsList");
-      const q = sessionSearchTerm.toLowerCase();
       const filtered = allSessionsData.filter(s => {
-        if (!q) return true;
-        return [s.name, s.code, s.teacher_name, s.school_name].filter(Boolean).join(" ").toLowerCase().includes(q);
+        if (!sessionSearchTerms.length) return true;
+        const haystack = [s.name, s.code, s.teacher_name, s.school_name].filter(Boolean).join(" ").toLowerCase();
+        return sessionSearchTerms.every(t => haystack.includes(t));
       });
       document.getElementById("sessionsCount").textContent = `${filtered.length} / ${allSessionsData.length}`;
 
@@ -901,10 +901,47 @@
       } catch (err) { alert("Erreur réseau : " + err.message); btn.disabled = false; btn.textContent = currentlyOpen ? "Ouverte" : "Fermée"; }
     }
 
-    document.getElementById("sessionSearchInput").addEventListener("input", (e) => {
-      sessionSearchTerm = e.target.value;
+    const sessionSearchBox = document.getElementById("sessionSearchBox");
+    const sessionSearchInput = document.getElementById("sessionSearchInput");
+
+    function addSessionSearchTerm(term) {
+      term = term.trim().toLowerCase();
+      if (!term || sessionSearchTerms.includes(term)) return;
+      sessionSearchTerms.push(term);
+      renderSessionChips();
       renderSessions();
+    }
+
+    function removeSessionSearchTerm(term) {
+      sessionSearchTerms = sessionSearchTerms.filter(t => t !== term);
+      renderSessionChips();
+      renderSessions();
+    }
+
+    function renderSessionChips() {
+      sessionSearchBox.querySelectorAll(".search-chip").forEach(el => el.remove());
+      sessionSearchTerms.forEach(term => {
+        const chip = document.createElement("span");
+        chip.className = "search-chip";
+        chip.innerHTML = `${esc(term)}<button title="Supprimer">&times;</button>`;
+        chip.querySelector("button").addEventListener("click", () => removeSessionSearchTerm(term));
+        sessionSearchBox.insertBefore(chip, sessionSearchInput);
+      });
+      sessionSearchInput.placeholder = sessionSearchTerms.length ? "Ajouter un critère..." : "Rechercher par nom, code ou enseignant-e...";
+    }
+
+    sessionSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addSessionSearchTerm(sessionSearchInput.value);
+        sessionSearchInput.value = "";
+      }
+      if (e.key === "Backspace" && !sessionSearchInput.value && sessionSearchTerms.length) {
+        removeSessionSearchTerm(sessionSearchTerms[sessionSearchTerms.length - 1]);
+      }
     });
+
+    sessionSearchBox.addEventListener("click", () => sessionSearchInput.focus());
 
     function updateGlobalFeedBtn() {
       const count = document.getElementById("globalFeedCount");
