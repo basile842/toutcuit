@@ -465,6 +465,7 @@
       justify-content: center;
     }
   </style>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -1050,11 +1051,99 @@
           <div class="session-detail-actions">
             <button class="btn-action" onclick="window.open('/global-feed.html?sessions=${encodeURIComponent(s.code)}','_blank')">Ouvrir le feed</button>
             <button class="btn-action" onclick="showDuplicateModal(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}')">Dupliquer</button>
+            <button class="btn-action" onclick="downloadSessionExcel('${esc(s.code).replace(/'/g, "\\'")}', '${esc(s.name).replace(/'/g, "\\'")}')">Télécharger Excel</button>
           </div>
         `;
       } catch (err) {
         detail.innerHTML = `<span style="color:#b91c1c;">Erreur : ${esc(err.message)}</span>`;
       }
+    }
+
+    // ── Excel download ──
+
+    async function downloadSessionExcel(code, name) {
+      // Load CERTs and student feed for this session
+      const [certsArr, feedRows] = await Promise.all([
+        fetch(`${API}/sessions/certs.php?session=${encodeURIComponent(code)}`, { cache: "no-store" }).then(r => r.json()),
+        fetch(`${API}/student/feed.php?session=${encodeURIComponent(code)}`, { cache: "no-store" }).then(r => r.json()),
+      ]);
+
+      // Build certs map (keyed by cert ID)
+      const certs = new Map();
+      for (const c of certsArr) {
+        if (c.descriptor1 || c.descriptor2 || c.reliability) {
+          certs.set(String(c.id), {
+            position: (c.position || 0) + 1,
+            title: c.title || "",
+            descriptor1: (c.descriptor1 || "").trim().toLowerCase(),
+            descriptor2: (c.descriptor2 || "").trim().toLowerCase(),
+            reliability: c.reliability || "",
+          });
+        }
+      }
+
+      // Score each response
+      function scoreRow(r) {
+        const cert = certs.get(String(r.cert_id));
+        if (!cert) return null;
+        const relOk = !!(r.reliability && r.reliability.toLowerCase() === cert.reliability);
+        const firstOk = !!(r.first_label && r.first_label.trim().toLowerCase() === cert.descriptor1);
+        const lastOk = !!(r.last_label && r.last_label.trim().toLowerCase() === cert.descriptor2);
+        return { certId: String(r.cert_id), score: (relOk ? 1 : 0) + (firstOk ? 1 : 0) + (lastOk ? 1 : 0) };
+      }
+
+      // Aggregate per student, per cert (keep best score)
+      const students = new Map();
+      for (const r of feedRows) {
+        const d = scoreRow(r);
+        if (!d) continue;
+        const userId = String(r.user_id || "Anonyme").trim();
+        if (!students.has(userId)) students.set(userId, new Map());
+        const prev = students.get(userId).get(d.certId);
+        if (!prev || d.score > prev.score) students.get(userId).set(d.certId, d);
+      }
+
+      // Sorted cert IDs by position
+      const certIds = [...certs.keys()].sort((a, b) => certs.get(a).position - certs.get(b).position);
+      const studentIds = [...students.keys()].sort((a, b) => a.localeCompare(b));
+
+      if (!studentIds.length) {
+        alert("Aucun résultat d'élève pour cette séance.");
+        return;
+      }
+
+      // Build spreadsheet data
+      const header = ["Élève"];
+      for (const cid of certIds) {
+        const c = certs.get(cid);
+        header.push(`L${c.position} — ${c.title}`);
+      }
+      header.push("Total", "Max", "%");
+
+      const data = [header];
+      for (const userId of studentIds) {
+        const links = students.get(userId);
+        const row = [userId];
+        let sTotal = 0, sMax = 0;
+        for (const cid of certIds) {
+          const d = links.get(cid);
+          if (d) {
+            row.push(`${d.score}/3`);
+            sTotal += d.score;
+            sMax += 3;
+          } else {
+            row.push("—");
+          }
+        }
+        row.push(sTotal, sMax, sMax ? Math.round(sTotal / sMax * 100) : 0);
+        data.push(row);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Résultats");
+      const safeName = name ? name.replace(/[\/\\?%*:|"<>]/g, "_") : "resultats";
+      XLSX.writeFile(wb, `${safeName}_${code}.xlsx`);
     }
 
     function showDuplicateModal(sessionId, sessionName) {
