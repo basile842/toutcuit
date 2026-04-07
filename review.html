@@ -6,8 +6,6 @@
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
   <title>Révision — toutcuit.ch</title>
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f6f7fb;
@@ -95,7 +93,7 @@
       box-shadow: 0 2px 8px rgba(16,24,40,.04);
     }
     .selector-title {
-      font-family: 'DM Serif Display', serif;
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
       font-size: 1.35rem;
       font-weight: 400;
       margin-bottom: 16px;
@@ -186,7 +184,7 @@
     }
     .cert-summary-info { flex: 1; }
     .cert-summary-title {
-      font-family: 'DM Serif Display', serif;
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
       font-size: 1.15rem;
       font-weight: 400;
       line-height: 1.35;
@@ -297,7 +295,7 @@
     .review-section.visible { display: flex; }
 
     .review-heading {
-      font-family: 'DM Serif Display', serif;
+      font-family: 'Inter var', 'Inter', system-ui, sans-serif;
       font-size: 1.2rem;
       font-weight: 400;
       padding-bottom: 8px;
@@ -921,7 +919,7 @@
                 <button class="btn-action btn-accept ${status === 'accepted' ? 'active' : ''}"
                         onclick="setDecision('${key}','accepted')">Claude</button>
                 <button class="btn-action btn-edit ${status === 'edited' ? 'active' : ''}"
-                        onclick="setDecision('${key}','edited')">Édité</button>
+                        onclick="setDecision('${key}','edited')">Éditer</button>
               </div>
             </div>
           </div>
@@ -933,7 +931,7 @@
     }
 
     function statusLabel(s) {
-      return { pending: "En attente", accepted: "Claude", rejected: "Original", edited: "Édité" }[s] || s;
+      return { pending: "En attente", accepted: "Claude", rejected: "Original", edited: "Éditer" }[s] || s;
     }
 
     // ── Decisions ──
