@@ -14,3 +14,8 @@ RewriteRule ^(.*)$ $1 [R=204,L]
 <Files "config.php">
     Require all denied
 </Files>
+
+# Deny access to markdown files (e.g. ai/review-prompt.md)
+<FilesMatch "\.md$">
+    Require all denied
+</FilesMatch>
