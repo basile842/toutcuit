@@ -169,7 +169,7 @@
       cursor: pointer;
       transition: background .12s;
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 10px;
     }
     .cert-item:hover { background: var(--panel-2); }
@@ -178,6 +178,7 @@
       font-weight: 600;
       font-size: .9rem;
       flex: 1;
+      min-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -187,18 +188,18 @@
       color: var(--muted);
       white-space: nowrap;
     }
-    .cert-item-rel {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+    /* Reliability-colored descriptor tags (shared with cert summary) */
+    .cert-desc-tag {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
       flex-shrink: 0;
-      position: relative;
-      top: -1px;
     }
-    .cert-item-rel.good { background: var(--green); }
-    .cert-item-rel.mid { background: var(--amber); }
-    .cert-item-rel.bad { background: var(--red); }
+    .cert-desc-tag.good { background: rgba(34,197,94,.30);  color: #166534; border: 1px solid rgba(34,197,94,.75); }
+    .cert-desc-tag.mid  { background: rgba(249,115,22,.30); color: #9a3412; border: 1px solid rgba(249,115,22,.75); }
+    .cert-desc-tag.bad  { background: rgba(239,68,68,.32);  color: #991b1b; border: 1px solid rgba(239,68,68,.80); }
 
     .empty-state {
       text-align: center;
@@ -252,6 +253,71 @@
       color: var(--muted);
       font-weight: 600;
     }
+    /* Slightly larger descriptor tag inside the summary meta row */
+    .cert-meta-row .cert-desc-tag {
+      font-size: .76rem;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    /* ── Cert preview (toggle + content) ── */
+    .cert-preview-toggle {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cert-preview-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px 6px 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .cert-preview-btn:hover { color: var(--accent); border-color: rgba(111,92,247,.3); background: rgba(111,92,247,.06); }
+    .cert-preview-btn .arrow {
+      display: inline-block;
+      transition: transform .2s;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .cert-preview-btn.is-expanded .arrow { transform: rotate(180deg); }
+    .cert-preview-content {
+      display: none;
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .cert-preview-content.is-visible { display: block; }
+    .cert-preview-content p { margin: 6px 0; }
+    .cert-preview-content ul,
+    .cert-preview-content ol { margin: 6px 0 6px 4px; padding-left: 18px; }
+    .cert-preview-content strong { font-weight: 700; color: var(--text); }
+    .cert-preview-content .preview-label {
+      display: block;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 12px 0 4px;
+    }
+    .cert-preview-content .preview-label:first-child { margin-top: 0; }
 
     .btn-review {
       padding: 10px 22px;
@@ -694,6 +760,13 @@
             <button class="btn-review" id="reviewBtn">Analyser</button>
           </div>
         </div>
+        <div class="cert-preview-toggle">
+          <button type="button" class="cert-preview-btn" id="previewToggleBtn">
+            <span class="arrow">&#9662;</span>
+            <span id="previewToggleLabel">Aperçu du contenu</span>
+          </button>
+        </div>
+        <div class="cert-preview-content" id="previewContent"></div>
       </div>
 
       <!-- Loading -->
@@ -802,8 +875,9 @@
       list.innerHTML = filtered.map(c => `
         <div class="cert-item ${selectedCert && selectedCert.id === c.id ? 'selected' : ''}"
              data-id="${c.id}" onclick="selectCert(${c.id})">
-          <span class="cert-item-rel ${c.reliability}"></span>
           <span class="cert-item-title">${esc(c.title)}</span>
+          ${c.descriptor1 ? `<span class="cert-desc-tag ${esc(c.reliability || '')}">${esc(c.descriptor1)}</span>` : ""}
+          ${c.descriptor2 ? `<span class="cert-desc-tag ${esc(c.reliability || '')}">${esc(c.descriptor2)}</span>` : ""}
           <span class="cert-item-meta">${esc(c.teacher_name || '?')}</span>
         </div>
       `).join("");
@@ -873,20 +947,81 @@
       urlEl.textContent = selectedCert.url;
       urlEl.href = selectedCert.url;
 
+      // Build the meta row: descriptors get reliability-colored tags, others stay neutral
       const metaRow = document.getElementById("summaryMeta");
-      const tags = [];
-      if (selectedCert.expert) tags.push(selectedCert.expert);
-      if (selectedCert.descriptor1) tags.push(selectedCert.descriptor1);
-      if (selectedCert.descriptor2) tags.push(selectedCert.descriptor2);
+      const rel = selectedCert.reliability || "";
       const relLabel = { good: "Fiable", mid: "Indéterminé", bad: "Pas fiable" };
-      if (selectedCert.reliability) tags.push(relLabel[selectedCert.reliability] || selectedCert.reliability);
-      if (selectedCert.teacher_name) tags.push("par " + selectedCert.teacher_name);
-      metaRow.innerHTML = tags.map(t => `<span class="cert-meta-tag">${esc(t)}</span>`).join("");
+      const parts = [];
+      if (selectedCert.expert) parts.push(`<span class="cert-meta-tag">${esc(selectedCert.expert)}</span>`);
+      if (selectedCert.descriptor1) parts.push(`<span class="cert-desc-tag ${esc(rel)}">${esc(selectedCert.descriptor1)}</span>`);
+      if (selectedCert.descriptor2) parts.push(`<span class="cert-desc-tag ${esc(rel)}">${esc(selectedCert.descriptor2)}</span>`);
+      if (rel) parts.push(`<span class="cert-meta-tag">${esc(relLabel[rel] || rel)}</span>`);
+      if (selectedCert.teacher_name) parts.push(`<span class="cert-meta-tag">déposé par ${esc(selectedCert.teacher_name)}</span>`);
+      metaRow.innerHTML = parts.join("");
+
+      // Populate the inline content preview (collapsed by default)
+      renderCertPreview(selectedCert);
+      collapsePreview();
 
       show("certSummary");
       document.getElementById("reviewBtn").disabled = false;
       renderCertList();
     }
+
+    // ── Preview rendering ──
+    function renderCertPreview(c) {
+      const el = document.getElementById("previewContent");
+      const blocks = [];
+      if (c.cert_date) {
+        blocks.push(`<p><strong>Date :</strong> ${esc(c.cert_date)}</p>`);
+      }
+      if (c.three_phrases) {
+        blocks.push(`<span class="preview-label">3 Phrases</span>`);
+        const items = String(c.three_phrases).split(/[\n;]+/).map(s => s.trim()).filter(Boolean);
+        if (items.length) {
+          blocks.push(`<ul>${items.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`);
+        } else {
+          blocks.push(`<p>${esc(c.three_phrases)}</p>`);
+        }
+      }
+      if (c.context) {
+        blocks.push(`<span class="preview-label">Contexte</span><p>${esc(c.context)}</p>`);
+      }
+      if (c.content) {
+        blocks.push(`<span class="preview-label">Contenu</span><p>${esc(c.content)}</p>`);
+      }
+      if (c.reliability_text) {
+        blocks.push(`<span class="preview-label">Fiabilité</span><p>${esc(c.reliability_text)}</p>`);
+      }
+      if (c.references_text) {
+        blocks.push(`<span class="preview-label">Références</span>`);
+        const refs = String(c.references_text).split(/[\n;]+/).map(s => s.trim()).filter(Boolean);
+        if (refs.length) {
+          blocks.push(`<ol>${refs.map(s => `<li>${esc(s)}</li>`).join("")}</ol>`);
+        } else {
+          blocks.push(`<p>${esc(c.references_text)}</p>`);
+        }
+      }
+      el.innerHTML = blocks.length
+        ? blocks.join("")
+        : `<p style="color:var(--muted);font-style:italic;">Aucun contenu à afficher.</p>`;
+    }
+
+    function collapsePreview() {
+      document.getElementById("previewContent").classList.remove("is-visible");
+      const btn = document.getElementById("previewToggleBtn");
+      btn.classList.remove("is-expanded");
+      document.getElementById("previewToggleLabel").textContent = "Aperçu du contenu";
+    }
+
+    document.getElementById("previewToggleBtn").addEventListener("click", () => {
+      const content = document.getElementById("previewContent");
+      const btn = document.getElementById("previewToggleBtn");
+      const expanded = content.classList.toggle("is-visible");
+      btn.classList.toggle("is-expanded", expanded);
+      document.getElementById("previewToggleLabel").textContent =
+        expanded ? "Masquer l'aperçu" : "Aperçu du contenu";
+    });
 
     // ── Review ──
     document.getElementById("reviewBtn").addEventListener("click", runReview);
