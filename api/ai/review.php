@@ -15,7 +15,8 @@ if (!defined('ANTHROPIC_API_KEY') || ANTHROPIC_API_KEY === '') {
 
 $data = getJsonBody();
 
-// Collect only text fields worth reviewing
+// Collect only text fields worth reviewing. references_text is included but Claude is
+// only allowed to do minimal whitespace/bullet cleanup on it (rules are in review-prompt.md).
 $reviewable = ['title', 'three_phrases', 'context', 'content', 'reliability_text', 'references_text'];
 $fields = [];
 foreach ($reviewable as $key) {

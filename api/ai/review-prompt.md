@@ -79,6 +79,24 @@ Les 3 Phrases sont strictement 3 phrases, une par ligne :
 - Les références doivent être des liens cliquables, pas des livres physiques. Pour les publications papier, utiliser WorldCat ou Google Books.
 - Choix de la source : privilégier sources officielles > sources institutionnelles > Wikipédia (accompagnée d'une autre source) > articles de journaux équilibrés.
 
+### CHAMP `references_text` — RÈGLES STRICTES
+Le champ `references_text` est une liste de références au **format texte brut, une par ligne**. Tu peux uniquement y faire un **nettoyage minimal de mise en forme** :
+
+**AUTORISÉ** (et seulement cela) :
+- Retirer les puces : `-`, `*`, `•`, `–`, `—` en début de ligne.
+- Retirer la numérotation manuelle si présente : `1.`, `1)`, `(1)`, `[1]` en début de ligne (la numérotation est gérée automatiquement après la révision).
+- Normaliser les espaces : retirer les espaces en trop, les espaces en début/fin de ligne, les lignes vides multiples.
+- Retirer un éventuel formatage Markdown parasite (`**`, `__`, etc.) qui aurait traîné.
+
+**INTERDIT** :
+- Ajouter, retirer ou réécrire des références.
+- Ajouter un libellé, un titre, une description, un commentaire à une référence (ex: ne JAMAIS transformer `https://lemonde.fr/foo` en `Article du Monde — https://lemonde.fr/foo`).
+- Reformuler, traduire, raccourcir ou enrichir une référence.
+- Changer l'ordre des références (l'ordre est ajusté automatiquement après la révision).
+- Modifier les URLs elles-mêmes.
+
+Si la liste est déjà propre (texte brut, une référence par ligne, sans puces ni espaces parasites), **ne propose AUCUNE suggestion pour ce champ**.
+
 ### STRUCTURE DE LA DÉCLARATION DE FIABILITÉ
 - **Format strict** : "X, car A" (X = jugement, A = raison).
 - **Maximum 2 phrases**, sauf cas spécifique.
