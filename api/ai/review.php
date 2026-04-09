@@ -95,23 +95,43 @@ $payload = json_encode([
     ],
 ], JSON_UNESCAPED_UNICODE);
 
-$ch = curl_init('https://api.anthropic.com/v1/messages');
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => $payload,
-    CURLOPT_HTTPHEADER     => [
-        'Content-Type: application/json',
-        'x-api-key: ' . ANTHROPIC_API_KEY,
-        'anthropic-version: 2023-06-01',
-    ],
-    CURLOPT_TIMEOUT        => 60,
-]);
+// Retry transient errors (overloaded, rate-limited, gateway issues) with exponential backoff
+$maxAttempts   = 4;
+$retryableHttp = [429, 503, 529];
+$response = null;
+$httpCode = 0;
+$curlErr  = '';
 
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlErr  = curl_error($ch);
-curl_close($ch);
+for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+    $ch = curl_init('https://api.anthropic.com/v1/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $payload,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'x-api-key: ' . ANTHROPIC_API_KEY,
+            'anthropic-version: 2023-06-01',
+        ],
+        CURLOPT_TIMEOUT        => 60,
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr  = curl_error($ch);
+    curl_close($ch);
+
+    // Success or non-retryable error → stop
+    if (!$curlErr && !in_array($httpCode, $retryableHttp, true)) {
+        break;
+    }
+    if ($attempt === $maxAttempts) {
+        break;
+    }
+    // Exponential backoff with jitter: ~1s, 2s, 4s
+    $delayMs = (int) ((1 << ($attempt - 1)) * 1000 + random_int(0, 500));
+    usleep($delayMs * 1000);
+}
 
 if ($curlErr) {
     jsonError("Claude API error: $curlErr", 502);
@@ -121,6 +141,10 @@ if ($httpCode !== 200) {
     $body = json_decode($response, true);
     $errType = $body['error']['type'] ?? 'unknown';
     $errMsg  = $body['error']['message'] ?? $response;
+    // Friendlier message for transient overload after exhausting retries
+    if (in_array($httpCode, $retryableHttp, true)) {
+        jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode, $errType) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+    }
     jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
 }
 
