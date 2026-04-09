@@ -878,7 +878,7 @@
           <span class="cert-item-title">${esc(c.title)}</span>
           ${c.descriptor1 ? `<span class="cert-desc-tag ${esc(c.reliability || '')}">${esc(c.descriptor1)}</span>` : ""}
           ${c.descriptor2 ? `<span class="cert-desc-tag ${esc(c.reliability || '')}">${esc(c.descriptor2)}</span>` : ""}
-          <span class="cert-item-meta">${esc(c.teacher_name || '?')}</span>
+          <span class="cert-item-meta">${esc(c.expert || '?')}</span>
         </div>
       `).join("");
     }
@@ -950,12 +950,10 @@
       // Build the meta row: descriptors get reliability-colored tags, others stay neutral
       const metaRow = document.getElementById("summaryMeta");
       const rel = selectedCert.reliability || "";
-      const relLabel = { good: "Fiable", mid: "Indéterminé", bad: "Pas fiable" };
       const parts = [];
       if (selectedCert.expert) parts.push(`<span class="cert-meta-tag">${esc(selectedCert.expert)}</span>`);
       if (selectedCert.descriptor1) parts.push(`<span class="cert-desc-tag ${esc(rel)}">${esc(selectedCert.descriptor1)}</span>`);
       if (selectedCert.descriptor2) parts.push(`<span class="cert-desc-tag ${esc(rel)}">${esc(selectedCert.descriptor2)}</span>`);
-      if (rel) parts.push(`<span class="cert-meta-tag">${esc(relLabel[rel] || rel)}</span>`);
       if (selectedCert.teacher_name) parts.push(`<span class="cert-meta-tag">déposé par ${esc(selectedCert.teacher_name)}</span>`);
       metaRow.innerHTML = parts.join("");
 
