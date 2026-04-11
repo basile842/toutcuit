@@ -690,7 +690,8 @@ function render(d) {
     $('contentCard').innerHTML = sectionCard('A', 'cnt', 'Contenu',
         subList('Affirmations principales', cnt.claims) +
         subList('Style et forme', cnt.style) +
-        subList('Recoupements', cnt.crosscheck)
+        subList('Recoupements — confirmes', cnt.crosscheck_confirmed) +
+        subList('Recoupements — contredits', cnt.crosscheck_contradicted)
     );
 
     const vis = d.visual || [];
@@ -756,7 +757,8 @@ function linkRefs(html) {
 function buildPlainText() {
     if (!lastData) return '';
     const d = lastData;
-    let t = '=== AIDE A L\'ANALYSE ===\n\n';
+    let t = '=== AIDE A L\'ANALYSE ===\n';
+    t += urlEl.value.trim() + '\n\n';
 
     const ctx = d.context || {};
     if (ctx.concrete?.length || ctx.thematic?.length) {
@@ -786,9 +788,14 @@ function buildPlainText() {
             cnt.style.forEach(s => { t += '  - ' + s + '\n'; });
             t += '\n';
         }
-        if (cnt.crosscheck?.length) {
-            t += 'Recoupements :\n';
-            cnt.crosscheck.forEach(s => { t += '  - ' + s + '\n'; });
+        if (cnt.crosscheck_confirmed?.length) {
+            t += 'Recoupements — confirmes :\n';
+            cnt.crosscheck_confirmed.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+        if (cnt.crosscheck_contradicted?.length) {
+            t += 'Recoupements — contredits :\n';
+            cnt.crosscheck_contradicted.forEach(s => { t += '  - ' + s + '\n'; });
             t += '\n';
         }
     }
