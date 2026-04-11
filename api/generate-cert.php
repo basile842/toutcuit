@@ -161,7 +161,7 @@ if ($isGemini) {
     $payload = json_encode([
         'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
         'contents'           => [['parts' => $parts]],
-        'generationConfig'   => ['maxOutputTokens' => 4096, 'temperature' => 0.2, 'responseMimeType' => 'application/json'],
+        'generationConfig'   => ['maxOutputTokens' => 4096, 'temperature' => 0.2],
         'tools'              => [['google_search' => new \stdClass()]],
     ], JSON_UNESCAPED_UNICODE);
 
