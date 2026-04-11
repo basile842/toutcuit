@@ -188,6 +188,60 @@
             margin-top: 1.25rem;
         }
 
+        /* ── DROP ZONE ──────────────────────────────── */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            background: var(--paper);
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent);
+            background: var(--red-bg);
+        }
+
+        .drop-zone-prompt {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .drop-zone-preview {
+            position: relative;
+            display: inline-block;
+        }
+
+        .drop-zone-preview img {
+            max-width: 100%;
+            max-height: 240px;
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .drop-zone-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: var(--ink);
+            color: var(--paper);
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-zone-remove:hover { background: var(--accent); }
+
         .field-row select {
             font-family: 'Figtree', sans-serif;
             font-size: 0.85rem;
@@ -437,6 +491,9 @@
         .refs a { color: var(--accent); text-decoration: none; word-break: break-all; }
         .refs a:hover { text-decoration: underline; }
 
+        .cite-link { color: var(--accent); text-decoration: none; font-size: 0.82em; font-weight: 600; }
+        .cite-link:hover { text-decoration: underline; }
+
         /* ── USAGE ──────────────────────────────────── */
         .usage-line {
             font-size: 0.75rem;
@@ -510,11 +567,23 @@
             <textarea id="ctxInput" placeholder="Informations supplémentaires : contexte de la demande, éléments connus, points à vérifier..."></textarea>
         </div>
 
+        <div class="field-group">
+            <label>Screenshot <span style="font-weight:400;text-transform:none;letter-spacing:0">(facultatif — coller avec Ctrl+V / Cmd+V)</span></label>
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-prompt" id="dropPrompt">Collez un screenshot ici (Ctrl+V) ou glissez-déposez une image</div>
+                <div class="drop-zone-preview" id="dropPreview" style="display:none">
+                    <img id="previewImg" alt="Screenshot">
+                    <button class="drop-zone-remove" id="removeImg" title="Supprimer">&times;</button>
+                </div>
+            </div>
+        </div>
+
         <div class="field-row">
             <div>
                 <label for="modelSelect">Modèle</label>
                 <select id="modelSelect">
                     <option value="claude-sonnet-4-6">Sonnet 4 (recommandé)</option>
+                    <option value="claude-opus-4-6">Opus 4</option>
                     <option value="claude-haiku-4-5-20251001">Haiku 4.5 (rapide)</option>
                 </select>
             </div>
@@ -573,10 +642,77 @@ const goBtn = $('goBtn');
 
 urlEl.addEventListener('input', () => { goBtn.disabled = !urlEl.value.trim(); });
 urlEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !goBtn.disabled) generate(); });
+
+const MODEL_LABELS = {
+    'claude-opus-4-6': 'opus 4',
+    'claude-sonnet-4-6': 'sonnet 4',
+    'claude-haiku-4-5-20251001': 'haiku 4.5',
+};
 $('modelSelect').addEventListener('change', () => {
-    const m = $('modelSelect').value;
-    $('modelTag').textContent = m.includes('haiku') ? 'haiku 4.5' : 'sonnet 4';
+    $('modelTag').textContent = MODEL_LABELS[$('modelSelect').value] || 'sonnet 4';
 });
+
+// ── Screenshot paste/drop ───────────────────────────────────────
+let screenshotData = null;
+const dropZone = $('dropZone');
+const dropPrompt = $('dropPrompt');
+const dropPreview = $('dropPreview');
+const previewImg = $('previewImg');
+
+function setScreenshot(dataUrl) {
+    screenshotData = dataUrl;
+    previewImg.src = dataUrl;
+    dropPrompt.style.display = 'none';
+    dropPreview.style.display = '';
+}
+
+function clearScreenshot() {
+    screenshotData = null;
+    previewImg.src = '';
+    dropPrompt.style.display = '';
+    dropPreview.style.display = 'none';
+}
+
+function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => setScreenshot(e.target.result);
+    reader.readAsDataURL(file);
+}
+
+// Paste anywhere on the page
+document.addEventListener('paste', e => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+        if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            handleImageFile(item.getAsFile());
+            return;
+        }
+    }
+});
+
+// Drag & drop on the zone
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageFile(file);
+});
+
+// Click to upload
+dropZone.addEventListener('click', () => {
+    if (screenshotData) return;
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = () => { if (inp.files[0]) handleImageFile(inp.files[0]); };
+    inp.click();
+});
+
+$('removeImg').addEventListener('click', e => { e.stopPropagation(); clearScreenshot(); });
 
 // ── Generate ─────────────────────────────────────────────────────
 async function generate() {
@@ -592,7 +728,7 @@ async function generate() {
         const res = await fetch(API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, context: ctx, model })
+            body: JSON.stringify({ url, context: ctx, model, screenshot: screenshotData || '' })
         });
 
         $('loadStep').textContent = 'Traitement de la réponse...';
@@ -614,35 +750,62 @@ async function generate() {
     }
 }
 
+// ── Parse references_text into an array of URLs ─────────────────
+function parseRefs(refsText) {
+    if (!refsText) return [];
+    return refsText.split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+// ── Render inline citations: (1) → clickable link to ref ────────
+function linkCitations(text, refs) {
+    if (!refs.length) return fmt(text);
+    return fmt(text).replace(/\((\d+(?:\s*,\s*\d+)*)\)/g, (match, nums) => {
+        const parts = nums.split(',').map(n => n.trim());
+        const linked = parts.map(n => {
+            const idx = parseInt(n, 10) - 1;
+            if (idx >= 0 && idx < refs.length) {
+                return `<a href="${esc(refs[idx])}" target="_blank" rel="noopener" class="cite-link">(${n})</a>`;
+            }
+            return `(${n})`;
+        });
+        return linked.join('');
+    });
+}
+
 // ── Render ───────────────────────────────────────────────────────
+let lastCert = null;
+
 function render(c) {
+    lastCert = c;
+    const refs = parseRefs(c.references_text);
+
     // Badges
     let bc = 'badge-indeterminee';
-    if (c.etiquette === 'fiable') bc = 'badge-fiable';
-    else if (c.etiquette === 'pas fiable') bc = 'badge-pas-fiable';
-    let bh = `<span class="badge ${bc}">${esc(c.etiquette)}</span>`;
-    (c.descripteurs || []).forEach(d => { bh += `<span class="badge badge-desc">${esc(d)}</span>`; });
+    if (c.reliability === 'fiable') bc = 'badge-fiable';
+    else if (c.reliability === 'pas fiable') bc = 'badge-pas-fiable';
+    let bh = `<span class="badge ${bc}">${esc(c.reliability)}</span>`;
+    if (c.descriptor1) bh += `<span class="badge badge-desc">${esc(c.descriptor1)}</span>`;
+    if (c.descriptor2) bh += `<span class="badge badge-desc">${esc(c.descriptor2)}</span>`;
     $('badges').innerHTML = bh;
 
     // 3 Phrases
-    const tp = c.trois_phrases || {};
-    $('threePh').innerHTML = `
-        <h3>3 Phrases</h3>
-        <div class="ph-row"><div class="ph-label">Contexte</div><div>${esc(tp.contexte||'—')}</div></div>
-        <div class="ph-row"><div class="ph-label">Contenu</div><div>${esc(tp.contenu||'—')}</div></div>
-        <div class="ph-row"><div class="ph-label">Fiabilité</div><div>${esc(tp.fiabilite||'—')}</div></div>`;
+    const lines = (c.three_phrases || '').split('\n').map(s => s.trim()).filter(Boolean);
+    const phLabels = ['Phrase 1', 'Phrase 2', 'Phrase 3'];
+    let phHtml = '<h3>3 Phrases</h3>';
+    for (let i = 0; i < 3; i++) {
+        phHtml += `<div class="ph-row"><div class="ph-label">${phLabels[i]}</div><div>${esc(lines[i]||'—')}</div></div>`;
+    }
+    $('threePh').innerHTML = phHtml;
 
     // CCF
-    const ccf = c.ccf || {};
-    $('ccfCards').innerHTML = card('C','c1','Contexte',ccf.contexte)
-                           + card('C','c2','Contenu',ccf.contenu)
-                           + card('F','c3','Fiabilité',ccf.fiabilite);
+    $('ccfCards').innerHTML = card('C','c1','Contexte', c.context, refs)
+                           + card('C','c2','Contenu', c.content, refs)
+                           + card('F','c3','Fiabilité', c.reliability_text, refs);
 
     // References
-    if (c.references && c.references.length) {
+    if (refs.length) {
         let rh = '<h4>Références</h4><ol>';
-        c.references.forEach(r => {
-            const u = r.url || '#';
+        refs.forEach(u => {
             rh += `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></li>`;
         });
         $('refsCard').innerHTML = rh + '</ol>';
@@ -660,36 +823,32 @@ function render(c) {
     $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function card(letter, cls, title, text) {
+function card(letter, cls, title, text, refs) {
     return `<div class="ccf">
         <div class="ccf-head"><div class="ccf-dot ${cls}">${letter}</div><h4>${title}</h4></div>
-        <div class="ccf-body">${fmt(text||'—')}</div></div>`;
+        <div class="ccf-body">${refs ? linkCitations(text||'—', refs) : fmt(text||'—')}</div></div>`;
 }
 
 // ── Plain text builder ───────────────────────────────────────────
 function buildPlainText() {
+    if (!lastCert) return '';
+    const c = lastCert;
     let t = '=== BROUILLON DE CERTIFICATION ===\n\n';
-    const lb = $('badges').querySelector('.badge-fiable,.badge-pas-fiable,.badge-indeterminee');
-    t += 'Étiquette : ' + (lb?.textContent||'') + '\n';
-    const descs = $('badges').querySelectorAll('.badge-desc');
-    if (descs.length) t += 'Descripteurs : ' + [...descs].map(d=>d.textContent).join(', ') + '\n';
+    t += 'Fiabilité : ' + (c.reliability || '') + '\n';
+    const descs = [c.descriptor1, c.descriptor2].filter(Boolean);
+    if (descs.length) t += 'Descripteurs : ' + descs.join(', ') + '\n';
     t += '\n--- 3 PHRASES ---\n\n';
-    $('threePh').querySelectorAll('.ph-row').forEach(r => {
-        t += r.querySelector('.ph-label').textContent + ' : ';
-        t += r.querySelector('div:last-child').textContent.trim() + '\n\n';
-    });
-    t += '--- CCF DÉTAILLÉ ---\n\n';
-    document.querySelectorAll('.ccf').forEach(c => {
-        t += c.querySelector('h4').textContent.toUpperCase() + '\n';
-        t += c.querySelector('.ccf-body').textContent.trim() + '\n\n';
-    });
-    const rc = $('refsCard');
-    if (rc.style.display !== 'none') {
-        t += '--- RÉFÉRENCES ---\n\n';
-        rc.querySelectorAll('li').forEach((li,i) => {
-            const a = li.querySelector('a');
-            t += (i+1) + '. ' + (a ? a.href : li.textContent) + '\n';
-        });
+    t += (c.three_phrases || '—') + '\n';
+    t += '\n--- CONTEXTE ---\n\n';
+    t += (c.context || '—') + '\n';
+    t += '\n--- CONTENU ---\n\n';
+    t += (c.content || '—') + '\n';
+    t += '\n--- FIABILITÉ ---\n\n';
+    t += (c.reliability_text || '—') + '\n';
+    const refs = parseRefs(c.references_text);
+    if (refs.length) {
+        t += '\n--- RÉFÉRENCES ---\n\n';
+        refs.forEach((u, i) => { t += (i+1) + '. ' + u + '\n'; });
     }
     t += '\n⚠ BROUILLON IA — À vérifier par un-e expert-e';
     return t;
@@ -718,6 +877,7 @@ function downloadTxt() {
 function reset() {
     hide('results'); show('inputCard');
     urlEl.value = ''; $('ctxInput').value = '';
+    clearScreenshot();
     goBtn.disabled = true; urlEl.focus();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
