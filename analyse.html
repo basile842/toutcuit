@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aide à l'analyse — toutcuit.ch</title>
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --panel-2: #f1f3f9;
+            --text: #1f2328;
+            --muted: #5e6673;
+            --border: #d7dbe6;
+            --accent: #6f5cf7;
+            --accent-2: #8b7cff;
+            --shadow: 0 10px 30px rgba(16,24,40,.08);
+            --radius: 14px;
+            --ring: 0 0 0 3px rgba(111,92,247,.18);
+            --good: #22c55e;
+            --mid: #f97316;
+            --bad: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background:
+                radial-gradient(1200px 700px at 50% 0%, rgba(111,92,247,.10), transparent 58%),
+                var(--bg);
+            color: var(--text);
+            font-family: 'Inter var', 'Inter', system-ui, sans-serif;
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+            font-weight: 500;
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent); }
+        a:hover { color: var(--accent-2); }
+
+        /* -- HEADER ---------------------------------------- */
+        header {
+            background: rgba(255,255,255,.88);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            color: var(--accent);
+        }
+
+        .header-sep {
+            color: var(--border);
+            font-size: 1.2rem;
+        }
+
+        .header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .header-spacer { flex: 1; }
+
+        .model-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: var(--panel-2);
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* -- LAYOUT ---------------------------------------- */
+        .app {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 24px 16px 60px;
+        }
+
+        /* -- INPUT CARD ------------------------------------ */
+        .input-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            animation: fadeUp 0.35s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-card h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .input-card .lead {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        label .opt {
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .field-group { margin-top: 18px; }
+
+        input[type="url"], textarea, select {
+            width: 100%;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 500;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        input[type="url"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: var(--ring);
+        }
+
+        textarea { resize: vertical; min-height: 72px; }
+
+        select { width: auto; cursor: pointer; }
+
+        /* -- DROP ZONE ------------------------------------- */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            background: var(--bg);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(111,92,247,.06);
+        }
+
+        .drop-zone-prompt { font-size: 0.82rem; color: var(--muted); }
+
+        .drop-zone-preview { position: relative; display: inline-block; }
+
+        .drop-zone-preview img {
+            max-width: 100%;
+            max-height: 220px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .drop-zone-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--panel);
+            background: var(--text);
+            color: var(--panel);
+            font-size: 0.9rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-zone-remove:hover { background: var(--bad); }
+
+        /* -- ACTIONS --------------------------------------- */
+        .actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        .hint { font-size: 0.78rem; color: var(--muted); }
+
+        /* -- BUTTONS --------------------------------------- */
+        .btn {
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-go {
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.95rem;
+            padding: 12px 28px;
+        }
+
+        .btn-go:hover { background: var(--accent-2); }
+        .btn-go:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+        .btn-ghost {
+            background: var(--panel-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover { background: var(--border); }
+
+        /* -- LOADING --------------------------------------- */
+        .loading { text-align: center; padding: 48px 16px; display: none; }
+        .loading.on { display: block; }
+
+        .dot-pulse { display: flex; gap: 6px; justify-content: center; margin-bottom: 16px; }
+
+        .dot-pulse span {
+            width: 10px; height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1.2s ease infinite;
+        }
+
+        .dot-pulse span:nth-child(2) { animation-delay: 0.15s; }
+        .dot-pulse span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .loading-label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+        .loading-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+        /* -- ERROR ----------------------------------------- */
+        .error-box {
+            background: rgba(239,68,68,.08);
+            border: 1px solid rgba(239,68,68,.35);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 18px;
+            font-size: 0.88rem;
+            color: #b91c1c;
+            display: none;
+        }
+
+        .error-box.on { display: block; }
+
+        /* -- RESULTS --------------------------------------- */
+        .results { display: none; }
+        .results.on { display: block; animation: fadeUp 0.4s ease; }
+
+        .result-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .result-bar h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .result-btns { display: flex; gap: 8px; }
+
+        /* -- SECTION CARDS --------------------------------- */
+        .section-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .section-head {
+            padding: 12px 18px;
+            background: var(--panel-2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .section-icon.ctx { background: var(--accent); }
+        .section-icon.cnt { background: var(--mid); }
+        .section-icon.vis { background: var(--good); }
+
+        .section-head h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .section-body {
+            padding: 16px 18px;
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        .section-body h5 {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            margin: 14px 0 6px;
+        }
+
+        .section-body h5:first-child { margin-top: 0; }
+
+        .section-body ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .section-body li {
+            margin-bottom: 5px;
+            line-height: 1.55;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .section-body li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 9px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        /* -- REFERENCES ------------------------------------ */
+        .refs {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            margin-top: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .refs h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .refs ol { padding-left: 18px; font-size: 0.82rem; }
+        .refs li { margin-bottom: 6px; line-height: 1.5; }
+        .refs a { text-decoration: none; word-break: break-all; }
+        .refs a:hover { text-decoration: underline; }
+
+        .cite-link { font-weight: 700; text-decoration: none; }
+        .cite-link:hover { text-decoration: underline; }
+
+        /* -- USAGE ----------------------------------------- */
+        .usage-line {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        /* -- WARNING --------------------------------------- */
+        .draft-warn {
+            background: rgba(249,115,22,.08);
+            border: 1px solid rgba(249,115,22,.30);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 20px;
+            font-size: 0.82rem;
+            color: #92400e;
+            line-height: 1.55;
+        }
+
+        .draft-warn strong { color: #b45309; }
+
+        /* -- FOOTER ---------------------------------------- */
+        footer {
+            text-align: center;
+            padding: 24px 16px;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* -- RESPONSIVE ------------------------------------ */
+        @media (max-width: 640px) {
+            header { padding: 12px 14px; }
+            .app { padding: 16px 12px 40px; }
+            .input-card { padding: 20px; }
+            .actions-row { flex-direction: column; gap: 10px; align-items: stretch; }
+            .actions-row .hint { text-align: center; }
+            .btn-go { width: 100%; justify-content: center; }
+            .result-bar { flex-direction: column; align-items: flex-start; }
+            .field-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="/expert" class="header-logo" style="text-decoration:none;">toutcuit</a>
+    <span class="header-sep">/</span>
+    <a href="/expert" style="text-decoration:none;color:var(--muted);font-size:0.95rem;font-weight:700;">Expert</a>
+    <span class="header-sep">/</span>
+    <span class="header-title">Aide à l'analyse</span>
+    <span class="header-spacer"></span>
+    <span class="model-tag" id="modelTag">gemini 2.5 flash</span>
+</header>
+
+<main class="app">
+
+    <!-- -- INPUT ---------------------------------------- -->
+    <div class="input-card" id="inputCard">
+        <h1>Aide à l'analyse</h1>
+        <p class="lead">Collez l'URL d'une information. L'IA fournira des éléments de contexte et de contenu pour aider votre analyse.</p>
+
+        <label for="urlInput">URL de l'information</label>
+        <input type="url" id="urlInput" placeholder="https://exemple.com/article-a-analyser" autofocus>
+
+        <div class="field-group">
+            <label for="contentInput">Contenu de la page <span class="opt">(copier-coller le texte)</span></label>
+            <textarea id="contentInput" rows="5" placeholder="Collez ici le texte de la page web si vous l'avez copié..."></textarea>
+        </div>
+
+        <div class="field-group">
+            <label>Screenshot <span class="opt">(Ctrl+V / Cmd+V ou glisser-déposer)</span></label>
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-prompt" id="dropPrompt">Collez un screenshot (Ctrl+V) ou glissez-déposez une image</div>
+                <div class="drop-zone-preview" id="dropPreview" style="display:none">
+                    <img id="previewImg" alt="Screenshot">
+                    <button class="drop-zone-remove" id="removeImg" title="Supprimer">&times;</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label for="ctxInput">Notes de l'expert <span class="opt">(points à vérifier, questions)</span></label>
+            <textarea id="ctxInput" placeholder="Éléments connus, points à vérifier, questions spécifiques..."></textarea>
+        </div>
+
+        <div class="field-row">
+            <div>
+                <label for="modelSelect">Modele</label>
+                <select id="modelSelect">
+                    <option value="gemini-2.5-flash">Gemini Flash</option>
+                    <option value="claude-sonnet-4-6">Claude Sonnet</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <span class="hint">Coût estimé : ~$0.01–0.05 par analyse</span>
+            <button class="btn btn-go" id="goBtn" onclick="generate()" disabled>Analyser</button>
+        </div>
+    </div>
+
+    <!-- -- LOADING -------------------------------------- -->
+    <div class="loading" id="loader">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        <div class="loading-label">Analyse en cours...</div>
+        <div class="loading-sub" id="loadStep">Envoi de la requete...</div>
+    </div>
+
+    <!-- -- ERROR ---------------------------------------- -->
+    <div class="error-box" id="errBox"></div>
+
+    <!-- -- RESULTS -------------------------------------- -->
+    <div class="results" id="results">
+        <div class="result-bar">
+            <h2>Éléments d'analyse</h2>
+            <div class="result-btns">
+                <button class="btn btn-ghost" onclick="copyAll()">Copier</button>
+                <button class="btn btn-ghost" onclick="downloadTxt()">Télécharger .txt</button>
+                <button class="btn btn-ghost" onclick="reset()">Nouvelle analyse</button>
+            </div>
+        </div>
+
+        <div id="contextCard"></div>
+        <div id="contentCard"></div>
+        <div id="visualCard"></div>
+        <div class="refs" id="refsCard" style="display:none"></div>
+        <div class="usage-line" id="usageLine"></div>
+
+        <div class="draft-warn">
+            <strong>Rappel :</strong> Ces éléments sont générés par IA. Ils doivent être vérifiés. L'IA ne conclut pas sur la fiabilité.
+        </div>
+    </div>
+
+</main>
+
+<footer style="text-align:center;padding:18px 12px;font-size:.7rem;color:rgba(111,92,247,.45);letter-spacing:.01em;">
+  © 2026 CERTIFY Community SA · CHE-241.821.797 · Rue de la Coulouvrenière 8, 1204 Genève
+</footer>
+
+<script>
+const API = '/api/generate-cert.php';
+const $ = id => document.getElementById(id);
+const urlEl = $('urlInput');
+const goBtn = $('goBtn');
+
+urlEl.addEventListener('input', () => { goBtn.disabled = !urlEl.value.trim(); });
+urlEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !goBtn.disabled) generate(); });
+
+const MODEL_LABELS = {
+    'gemini-2.5-flash': 'gemini 2.5 flash',
+    'claude-sonnet-4-6': 'claude sonnet 4',
+};
+$('modelSelect').addEventListener('change', () => {
+    $('modelTag').textContent = MODEL_LABELS[$('modelSelect').value] || 'gemini 2.5 flash';
+});
+
+// -- Screenshot paste/drop ----------------------------------
+let screenshotData = null;
+const dropZone = $('dropZone');
+
+function setScreenshot(dataUrl) {
+    screenshotData = dataUrl;
+    $('previewImg').src = dataUrl;
+    $('dropPrompt').style.display = 'none';
+    $('dropPreview').style.display = '';
+}
+
+function clearScreenshot() {
+    screenshotData = null;
+    $('previewImg').src = '';
+    $('dropPrompt').style.display = '';
+    $('dropPreview').style.display = 'none';
+}
+
+function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => setScreenshot(e.target.result);
+    reader.readAsDataURL(file);
+}
+
+document.addEventListener('paste', e => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'TEXTAREA' || tag === 'INPUT') return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+        if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            handleImageFile(item.getAsFile());
+            return;
+        }
+    }
+});
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]);
+});
+
+dropZone.addEventListener('click', () => {
+    if (screenshotData) return;
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = () => { if (inp.files[0]) handleImageFile(inp.files[0]); };
+    inp.click();
+});
+
+$('removeImg').addEventListener('click', e => { e.stopPropagation(); clearScreenshot(); });
+
+// -- Generate -----------------------------------------------
+async function generate() {
+    const url     = urlEl.value.trim();
+    const content = $('contentInput').value.trim();
+    const context = $('ctxInput').value.trim();
+    const model   = $('modelSelect').value;
+    if (!url) return;
+
+    show('loader'); hide('inputCard'); hide('results'); hide('errBox');
+    $('loadStep').textContent = 'Envoi de la requete...';
+
+    try {
+        const res = await fetch(API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, content, context, model, screenshot: screenshotData || '' })
+        });
+
+        $('loadStep').textContent = 'Traitement de la reponse...';
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur serveur (${res.status})`);
+        }
+
+        const data = await res.json();
+        render(data);
+    } catch (e) {
+        $('errBox').textContent = e.message;
+        show('errBox');
+        show('inputCard');
+    } finally {
+        hide('loader');
+    }
+}
+
+// -- Render -------------------------------------------------
+let lastData = null;
+
+function render(d) {
+    lastData = d;
+    const refs = d.references || [];
+
+    const ctx = d.context || {};
+    $('contextCard').innerHTML = sectionCard('C', 'ctx', 'Contexte',
+        subList('Elements concrets', ctx.concrete) +
+        subList('Elements thematiques', ctx.thematic)
+    );
+
+    const cnt = d.content || {};
+    $('contentCard').innerHTML = sectionCard('A', 'cnt', 'Contenu',
+        subList('Affirmations principales', cnt.claims) +
+        subList('Style et forme', cnt.style) +
+        subList('Recoupements — confirmes', cnt.crosscheck_confirmed) +
+        subList('Recoupements — contredits', cnt.crosscheck_contradicted)
+    );
+
+    const vis = d.visual || [];
+    if (vis.length) {
+        $('visualCard').innerHTML = sectionCard('V', 'vis', 'Analyse visuelle', bulletList(vis));
+        $('visualCard').style.display = '';
+    } else {
+        $('visualCard').innerHTML = '';
+        $('visualCard').style.display = 'none';
+    }
+
+    if (refs.length) {
+        let rh = '<h4>References</h4><ol>';
+        refs.forEach(u => {
+            rh += `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></li>`;
+        });
+        $('refsCard').innerHTML = rh + '</ol>';
+        $('refsCard').style.display = '';
+    } else {
+        $('refsCard').style.display = 'none';
+    }
+
+    if (d.usage) {
+        $('usageLine').textContent = `${d.usage.model} · ${d.usage.input_tokens} in + ${d.usage.output_tokens} out · $${d.usage.cost_usd}`;
+    }
+
+    show('results');
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function sectionCard(letter, cls, title, bodyHtml) {
+    return `<div class="section-card">
+        <div class="section-head"><div class="section-icon ${cls}">${letter}</div><h4>${title}</h4></div>
+        <div class="section-body">${bodyHtml}</div></div>`;
+}
+
+function subList(title, items) {
+    if (!items || !items.length) return '';
+    return `<h5>${esc(title)}</h5>${bulletList(items)}`;
+}
+
+function bulletList(items) {
+    if (!items || !items.length) return '';
+    return '<ul>' + items.map(item => `<li>${linkRefs(esc(item))}</li>`).join('') + '</ul>';
+}
+
+function linkRefs(html) {
+    const refs = lastData?.references || [];
+    if (!refs.length) return html;
+    return html.replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (match, nums) => {
+        const parts = nums.split(',').map(n => n.trim());
+        return parts.map(n => {
+            const idx = parseInt(n, 10) - 1;
+            if (idx >= 0 && idx < refs.length) {
+                return `<a href="${esc(refs[idx])}" target="_blank" rel="noopener" class="cite-link">[${n}]</a>`;
+            }
+            return `[${n}]`;
+        }).join('');
+    });
+}
+
+// -- Plain text builder -------------------------------------
+function buildPlainText() {
+    if (!lastData) return '';
+    const d = lastData;
+    let t = '=== AIDE A L\'ANALYSE ===\n';
+    t += urlEl.value.trim() + '\n\n';
+
+    const ctx = d.context || {};
+    if (ctx.concrete?.length || ctx.thematic?.length) {
+        t += '--- CONTEXTE ---\n\n';
+        if (ctx.concrete?.length) {
+            t += 'Elements concrets :\n';
+            ctx.concrete.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+        if (ctx.thematic?.length) {
+            t += 'Elements thematiques :\n';
+            ctx.thematic.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+    }
+
+    const cnt = d.content || {};
+    if (cnt.claims?.length || cnt.style?.length || cnt.crosscheck?.length) {
+        t += '--- CONTENU ---\n\n';
+        if (cnt.claims?.length) {
+            t += 'Affirmations principales :\n';
+            cnt.claims.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+        if (cnt.style?.length) {
+            t += 'Style et forme :\n';
+            cnt.style.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+        if (cnt.crosscheck_confirmed?.length) {
+            t += 'Recoupements — confirmes :\n';
+            cnt.crosscheck_confirmed.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+        if (cnt.crosscheck_contradicted?.length) {
+            t += 'Recoupements — contredits :\n';
+            cnt.crosscheck_contradicted.forEach(s => { t += '  - ' + s + '\n'; });
+            t += '\n';
+        }
+    }
+
+    const vis = d.visual || [];
+    if (vis.length) {
+        t += '--- ANALYSE VISUELLE ---\n\n';
+        vis.forEach(s => { t += '  - ' + s + '\n'; });
+        t += '\n';
+    }
+
+    const refs = d.references || [];
+    if (refs.length) {
+        t += '--- REFERENCES ---\n\n';
+        refs.forEach((u, i) => { t += '[' + (i + 1) + '] ' + u + '\n'; });
+        t += '\n';
+    }
+
+    t += 'Elements generes par IA — a verifier';
+    return t;
+}
+
+// -- Copy ---------------------------------------------------
+function copyAll() {
+    navigator.clipboard.writeText(buildPlainText()).then(() => {
+        const b = document.querySelector('.result-btns .btn-ghost');
+        const o = b.textContent; b.textContent = 'Copie !';
+        setTimeout(() => b.textContent = o, 1400);
+    });
+}
+
+// -- Download -----------------------------------------------
+function downloadTxt() {
+    const blob = new Blob([buildPlainText()], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'analyse-toutcuit.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// -- Reset --------------------------------------------------
+function reset() {
+    hide('results'); show('inputCard');
+    urlEl.value = '';
+    $('contentInput').value = '';
+    $('ctxInput').value = '';
+    clearScreenshot();
+    goBtn.disabled = true;
+    urlEl.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// -- Helpers ------------------------------------------------
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function show(id) {
+    const el = $(id);
+    el.style.display = '';
+    el.classList.add('on');
+}
+
+function hide(id) {
+    const el = $(id);
+    if (id === 'inputCard') el.style.display = 'none';
+    else el.classList.remove('on');
+}
+</script>
+
+</body>
+</html>
