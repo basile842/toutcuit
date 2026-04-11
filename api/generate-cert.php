@@ -127,11 +127,10 @@ Réponds en JSON valide avec cette structure exacte :
       "Observation sur le ton, le registre, les procédés rhétoriques",
       "Observation sur la structure, les sources citées ou absentes"
     ],
-    "crosscheck_confirmed": [
-      "Affirmation X : confirmée par [source] [3]"
-    ],
-    "crosscheck_contradicted": [
-      "Affirmation Y : contredite par [source] [4]"
+    "crosscheck": [
+      "Affirmation X : confirmée par [source] [3]",
+      "Affirmation Y : contredite par [source] [4]",
+      "Affirmation Z : aucune source secondaire trouvée"
     ]
   },
   "visual": [
@@ -148,7 +147,7 @@ Réponds en JSON valide avec cette structure exacte :
 ## Règles
 
 - "claims" : maximum 12 affirmations principales. Prioriser les plus importantes.
-- "crosscheck_confirmed" : affirmations confirmées par des sources externes. "crosscheck_contradicted" : affirmations contredites. Si rien trouvé pour une catégorie, tableau vide [].
+- "crosscheck" : pour chaque affirmation vérifiable, indiquer si elle est confirmée, contredite, ou non vérifiable, avec la source. Tableau vide [] si rien trouvé.
 - Style TÉLÉGRAPHIQUE : bullet points courts, pas de phrases complètes, pas de verbes inutiles.
 - Chaque élément doit être concret et vérifiable. Pas de généralités vagues.
 - Références : numérotées [1], [2], etc. dans le texte. Les URLs correspondantes dans "references" (même ordre).

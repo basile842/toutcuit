@@ -688,8 +688,7 @@ function render(d) {
     $('contentCard').innerHTML = sectionCard('A', 'cnt', 'Contenu',
         subList('Affirmations principales', cnt.claims) +
         subList('Style et forme', cnt.style) +
-        subList('Recoupements — confirmes', cnt.crosscheck_confirmed) +
-        subList('Recoupements — contredits', cnt.crosscheck_contradicted)
+        subList('Recoupements', cnt.crosscheck)
     );
 
     const vis = d.visual || [];
@@ -786,14 +785,9 @@ function buildPlainText() {
             cnt.style.forEach(s => { t += '  - ' + s + '\n'; });
             t += '\n';
         }
-        if (cnt.crosscheck_confirmed?.length) {
-            t += 'Recoupements — confirmes :\n';
-            cnt.crosscheck_confirmed.forEach(s => { t += '  - ' + s + '\n'; });
-            t += '\n';
-        }
-        if (cnt.crosscheck_contradicted?.length) {
-            t += 'Recoupements — contredits :\n';
-            cnt.crosscheck_contradicted.forEach(s => { t += '  - ' + s + '\n'; });
+        if (cnt.crosscheck?.length) {
+            t += 'Recoupements :\n';
+            cnt.crosscheck.forEach(s => { t += '  - ' + s + '\n'; });
             t += '\n';
         }
     }
