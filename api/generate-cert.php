@@ -1,6 +1,7 @@
 <?php
 // POST — Analyse assistant: context + content elements for a URL
 // Supports Claude (Anthropic) and Gemini (Google) models.
+// Fetches URL content server-side when not provided by the user.
 require_once __DIR__ . '/middleware.php';
 handleCors();
 
@@ -51,6 +52,46 @@ if ($screenshot !== '') {
         $imageData      = $imgMatch[3];
     } else {
         jsonError('Format de screenshot invalide. Utilisez une image PNG, JPEG, GIF ou WebP.');
+    }
+}
+
+// ── Fetch URL content if not provided ─────────────────────────────
+
+$fetchedContent = '';
+if ($content === '' && $url !== '') {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS      => 5,
+        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0 (compatible; ToutcuitBot/1.0)',
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+    $html = curl_exec($ch);
+    $fetchHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($html && $fetchHttpCode >= 200 && $fetchHttpCode < 400) {
+        // Strip scripts, styles, then tags, then collapse whitespace
+        $text = preg_replace('#<script[^>]*>.*?</script>#si', ' ', $html);
+        $text = preg_replace('#<style[^>]*>.*?</style>#si', ' ', $text);
+        $text = preg_replace('#<nav[^>]*>.*?</nav>#si', ' ', $text);
+        $text = preg_replace('#<footer[^>]*>.*?</footer>#si', ' ', $text);
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/[ \t]+/', ' ', $text);
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
+        $text = trim($text);
+
+        // Limit to ~8000 chars to avoid blowing up the prompt
+        if (mb_strlen($text) > 8000) {
+            $text = mb_substr($text, 0, 8000) . "\n\n[… contenu tronqué]";
+        }
+
+        if (mb_strlen($text) > 100) {
+            $fetchedContent = $text;
+        }
     }
 }
 
@@ -125,21 +166,22 @@ PROMPT;
 // ── Build user message ─────────────────────────────────────────────
 
 $textMessage = "Analyse cette information :\n\nURL : {$url}";
-if ($content !== '') {
-    $textMessage .= "\n\nContenu copié-collé depuis la page :\n{$content}";
+
+// Include page content (user-provided or auto-fetched)
+$pageContent = $content !== '' ? $content : $fetchedContent;
+if ($pageContent !== '') {
+    $source = $content !== '' ? 'copié-collé par l\'expert' : 'récupéré automatiquement';
+    $textMessage .= "\n\nContenu de la page ({$source}) :\n{$pageContent}";
 }
+
 if ($context !== '') {
     $textMessage .= "\n\nNotes de l'expert :\n{$context}";
 }
 if ($imageData) {
     $textMessage .= "\n\nUn screenshot de la page est joint. Analyse les éléments visuels : texte visible, personnes, logos, mise en page, indices visuels.";
 }
-if (!$imageData && $content === '') {
-    if ($isGemini) {
-        $textMessage .= "\n\nUtilise la recherche Google pour accéder au contenu de l'URL et vérifier les informations.";
-    } else {
-        $textMessage .= "\n\nATTENTION : tu ne peux pas naviguer sur le web. Analyse l'URL (domaine, structure) et utilise tes connaissances. Signale clairement ce que tu ne peux pas vérifier sans accès au contenu.";
-    }
+if (!$imageData && $pageContent === '') {
+    $textMessage .= "\n\nATTENTION : impossible de récupérer le contenu de l'URL. Analyse l'URL (domaine, structure) et utilise tes connaissances. Signale clairement ce que tu ne peux pas vérifier sans accès au contenu.";
 }
 
 // ── Call the appropriate API ──────────────────────────────────────
@@ -162,7 +204,6 @@ if ($isGemini) {
         'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
         'contents'           => [['parts' => $parts]],
         'generationConfig'   => ['maxOutputTokens' => 4096, 'temperature' => 0.2],
-        'tools'              => [['google_search' => new \stdClass()]],
     ], JSON_UNESCAPED_UNICODE);
 
     $response = null;
@@ -199,20 +240,10 @@ if ($isGemini) {
 
     $result = json_decode($response, true);
 
-    // With grounding, response may have multiple parts — concatenate text parts
+    // Concatenate text parts
     $text = '';
     foreach (($result['candidates'][0]['content']['parts'] ?? []) as $part) {
         if (isset($part['text'])) $text .= $part['text'];
-    }
-
-    // Extract grounding sources (URLs from Google Search)
-    $groundingSources = [];
-    $grounding = $result['candidates'][0]['groundingMetadata'] ?? [];
-    foreach (($grounding['groundingChunks'] ?? []) as $chunk) {
-        $uri = $chunk['web']['uri'] ?? '';
-        if ($uri !== '' && !in_array($uri, $groundingSources, true)) {
-            $groundingSources[] = $uri;
-        }
     }
 
     // Usage
@@ -296,22 +327,8 @@ if (!is_array($parsed) || !isset($parsed['context'])) {
         $parsed = json_decode($m[0], true);
     }
     if (!is_array($parsed) || !isset($parsed['context'])) {
-        // Debug: show full response structure
-        $debug = json_encode($result['candidates'][0] ?? $result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        jsonError('Parse error. Response: ' . mb_substr($debug, 0, 1500), 502);
+        jsonError('Impossible de parser la réponse. Réessaie.', 502);
     }
-}
-
-// ── Merge grounding sources into references (Gemini only) ─────────
-
-if ($isGemini && !empty($groundingSources)) {
-    $existingRefs = $parsed['references'] ?? [];
-    foreach ($groundingSources as $src) {
-        if (!in_array($src, $existingRefs, true)) {
-            $existingRefs[] = $src;
-        }
-    }
-    $parsed['references'] = $existingRefs;
 }
 
 // ── Attach usage & cost ────────────────────────────────────────────
