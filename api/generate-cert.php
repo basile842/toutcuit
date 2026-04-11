@@ -296,7 +296,9 @@ if (!is_array($parsed) || !isset($parsed['context'])) {
         $parsed = json_decode($m[0], true);
     }
     if (!is_array($parsed) || !isset($parsed['context'])) {
-        jsonError('Impossible de parser la réponse. Texte brut : ' . mb_substr($text, 0, 500), 502);
+        // Debug: show full response structure
+        $debug = json_encode($result['candidates'][0] ?? $result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        jsonError('Parse error. Response: ' . mb_substr($debug, 0, 1500), 502);
     }
 }
 
