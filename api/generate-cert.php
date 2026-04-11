@@ -1,15 +1,14 @@
 <?php
 // POST — Generate a draft CERT from a URL + optional context
 // Uses the same Anthropic API key as the editorial review tool.
-require_once __DIR__ . '/../middleware.php';
+require_once __DIR__ . '/middleware.php';
 handleCors();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);
 }
 
-// Load Anthropic API key from shared config
-require_once __DIR__ . '/../config.php';
+// Load Anthropic API key from shared config (already loaded by db.php via middleware.php)
 if (!defined('ANTHROPIC_API_KEY') || ANTHROPIC_API_KEY === '') {
     jsonError('ANTHROPIC_API_KEY not configured in api/config.php', 500);
 }
