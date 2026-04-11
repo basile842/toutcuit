@@ -169,7 +169,6 @@
             background: var(--bg);
             padding: 20px;
             text-align: center;
-            cursor: pointer;
             transition: border-color .15s, background .15s;
         }
 
@@ -495,7 +494,7 @@
         <div class="field-group">
             <label>Screenshot <span class="opt">(Ctrl+V / Cmd+V ou glisser-déposer)</span></label>
             <div class="drop-zone" id="dropZone">
-                <div class="drop-zone-prompt" id="dropPrompt">Collez un screenshot (Ctrl+V) ou glissez-déposez une image</div>
+                <div class="drop-zone-prompt" id="dropPrompt">Collez un screenshot (Ctrl+V), glissez-déposez, ou <button type="button" id="browseBtn" style="background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;padding:0;text-decoration:underline;">parcourir</button></div>
                 <div class="drop-zone-preview" id="dropPreview" style="display:none">
                     <img id="previewImg" alt="Screenshot">
                     <button class="drop-zone-remove" id="removeImg" title="Supprimer">&times;</button>
@@ -626,8 +625,8 @@ dropZone.addEventListener('drop', e => {
     if (e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]);
 });
 
-dropZone.addEventListener('click', () => {
-    if (screenshotData) return;
+$('browseBtn').addEventListener('click', e => {
+    e.stopPropagation();
     const inp = document.createElement('input');
     inp.type = 'file'; inp.accept = 'image/*';
     inp.onchange = () => { if (inp.files[0]) handleImageFile(inp.files[0]); };
