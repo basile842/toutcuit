@@ -296,7 +296,7 @@ if (!is_array($parsed) || !isset($parsed['context'])) {
         $parsed = json_decode($m[0], true);
     }
     if (!is_array($parsed) || !isset($parsed['context'])) {
-        jsonError('Impossible de parser la réponse. Réessaie.', 502);
+        jsonError('Impossible de parser la réponse. Texte brut : ' . mb_substr($text, 0, 500), 502);
     }
 }
 
