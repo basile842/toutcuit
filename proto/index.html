@@ -755,8 +755,10 @@ function linkRefs(html) {
 function buildPlainText() {
     if (!lastData) return '';
     const d = lastData;
+    const modelName = shortModel(d.usage?.model);
     let t = '=== AIDE A L\'ANALYSE ===\n';
-    t += urlEl.value.trim() + '\n\n';
+    t += urlEl.value.trim() + '\n';
+    t += 'Modele : ' + modelName + '\n\n';
 
     const ctx = d.context || {};
     if (ctx.concrete?.length || ctx.thematic?.length) {
@@ -821,11 +823,29 @@ function copyAll() {
 }
 
 // -- Download -----------------------------------------------
+function shortModel(m) {
+    const map = {
+        'gemini-2.5-flash': 'GeminiFlash',
+        'gemini-2.5-pro': 'GeminiPro',
+        'claude-sonnet-4-6': 'Sonnet',
+        'claude-opus-4-6': 'Opus',
+        'claude-haiku-4-5-20251001': 'Haiku',
+    };
+    return map[m] || m || 'IA';
+}
+
 function downloadTxt() {
     const blob = new Blob([buildPlainText()], { type: 'text/plain;charset=utf-8' });
+    const now = new Date();
+    const ts = now.getFullYear() + '-'
+        + String(now.getMonth()+1).padStart(2,'0') + '-'
+        + String(now.getDate()).padStart(2,'0') + '_'
+        + String(now.getHours()).padStart(2,'0') + ':'
+        + String(now.getMinutes()).padStart(2,'0');
+    const model = shortModel(lastData?.usage?.model);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'analyse-toutcuit.txt';
+    a.download = `${model}_Analyse_${ts}.txt`;
     a.click();
     URL.revokeObjectURL(a.href);
 }
