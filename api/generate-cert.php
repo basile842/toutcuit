@@ -135,7 +135,11 @@ if ($imageData) {
     $textMessage .= "\n\nUn screenshot de la page est joint. Analyse les éléments visuels : texte visible, personnes, logos, mise en page, indices visuels.";
 }
 if (!$imageData && $content === '') {
-    $textMessage .= "\n\nATTENTION : tu ne peux pas naviguer sur le web. Analyse l'URL (domaine, structure) et utilise tes connaissances. Signale clairement ce que tu ne peux pas vérifier sans accès au contenu.";
+    if ($isGemini) {
+        $textMessage .= "\n\nUtilise la recherche Google pour accéder au contenu de l'URL et vérifier les informations.";
+    } else {
+        $textMessage .= "\n\nATTENTION : tu ne peux pas naviguer sur le web. Analyse l'URL (domaine, structure) et utilise tes connaissances. Signale clairement ce que tu ne peux pas vérifier sans accès au contenu.";
+    }
 }
 
 // ── Call the appropriate API ──────────────────────────────────────
@@ -158,6 +162,7 @@ if ($isGemini) {
         'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
         'contents'           => [['parts' => $parts]],
         'generationConfig'   => ['maxOutputTokens' => 4096, 'temperature' => 0.2],
+        'tools'              => [['google_search' => new \stdClass()]],
     ], JSON_UNESCAPED_UNICODE);
 
     $response = null;
@@ -193,7 +198,22 @@ if ($isGemini) {
     }
 
     $result = json_decode($response, true);
-    $text   = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+    // With grounding, response may have multiple parts — concatenate text parts
+    $text = '';
+    foreach (($result['candidates'][0]['content']['parts'] ?? []) as $part) {
+        if (isset($part['text'])) $text .= $part['text'];
+    }
+
+    // Extract grounding sources (URLs from Google Search)
+    $groundingSources = [];
+    $grounding = $result['candidates'][0]['groundingMetadata'] ?? [];
+    foreach (($grounding['groundingChunks'] ?? []) as $chunk) {
+        $uri = $chunk['web']['uri'] ?? '';
+        if ($uri !== '' && !in_array($uri, $groundingSources, true)) {
+            $groundingSources[] = $uri;
+        }
+    }
 
     // Usage
     $usageMeta = $result['usageMetadata'] ?? [];
@@ -278,6 +298,18 @@ if (!is_array($parsed) || !isset($parsed['context'])) {
     if (!is_array($parsed) || !isset($parsed['context'])) {
         jsonError('Impossible de parser la réponse. Réessaie.', 502);
     }
+}
+
+// ── Merge grounding sources into references (Gemini only) ─────────
+
+if ($isGemini && !empty($groundingSources)) {
+    $existingRefs = $parsed['references'] ?? [];
+    foreach ($groundingSources as $src) {
+        if (!in_array($src, $existingRefs, true)) {
+            $existingRefs[] = $src;
+        }
+    }
+    $parsed['references'] = $existingRefs;
 }
 
 // ── Attach usage & cost ────────────────────────────────────────────
