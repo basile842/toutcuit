@@ -542,6 +542,7 @@
             <h2>Brouillon de certification</h2>
             <div class="result-btns">
                 <button class="btn btn-ghost" onclick="copyAll()">Copier</button>
+                <button class="btn btn-ghost" onclick="downloadTxt()">Télécharger .txt</button>
                 <button class="btn btn-ghost" onclick="reset()">Nouvelle analyse</button>
             </div>
         </div>
@@ -641,7 +642,8 @@ function render(c) {
     if (c.references && c.references.length) {
         let rh = '<h4>Références</h4><ol>';
         c.references.forEach(r => {
-            rh += `<li><a href="${esc(r.url||'#')}" target="_blank" rel="noopener">${esc(r.titre||r.url)}</a></li>`;
+            const u = r.url || '#';
+            rh += `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></li>`;
         });
         $('refsCard').innerHTML = rh + '</ol>';
         $('refsCard').style.display = '';
@@ -664,8 +666,8 @@ function card(letter, cls, title, text) {
         <div class="ccf-body">${fmt(text||'—')}</div></div>`;
 }
 
-// ── Copy ─────────────────────────────────────────────────────────
-function copyAll() {
+// ── Plain text builder ───────────────────────────────────────────
+function buildPlainText() {
     let t = '=== BROUILLON DE CERTIFICATION ===\n\n';
     const lb = $('badges').querySelector('.badge-fiable,.badge-pas-fiable,.badge-indeterminee');
     t += 'Étiquette : ' + (lb?.textContent||'') + '\n';
@@ -686,15 +688,30 @@ function copyAll() {
         t += '--- RÉFÉRENCES ---\n\n';
         rc.querySelectorAll('li').forEach((li,i) => {
             const a = li.querySelector('a');
-            t += (i+1) + '. ' + (a ? a.textContent + ' — ' + a.href : li.textContent) + '\n';
+            t += (i+1) + '. ' + (a ? a.href : li.textContent) + '\n';
         });
     }
     t += '\n⚠ BROUILLON IA — À vérifier par un-e expert-e';
-    navigator.clipboard.writeText(t).then(() => {
+    return t;
+}
+
+// ── Copy ─────────────────────────────────────────────────────────
+function copyAll() {
+    navigator.clipboard.writeText(buildPlainText()).then(() => {
         const b = document.querySelector('.result-btns .btn-ghost');
         const o = b.textContent; b.textContent = 'Copié !';
         setTimeout(() => b.textContent = o, 1400);
     });
+}
+
+// ── Download ─────────────────────────────────────────────────────
+function downloadTxt() {
+    const blob = new Blob([buildPlainText()], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'brouillon-cert.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
 }
 
 // ── Reset ────────────────────────────────────────────────────────
