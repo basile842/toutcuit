@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certify · Assistant IA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1c2127;
+            --ink-soft: #3d454f;
+            --paper: #faf9f7;
+            --paper-warm: #f0ece4;
+            --card: #ffffff;
+            --accent: #b8503a;
+            --accent-hover: #d4604a;
+            --green: #2d8a56;
+            --green-bg: #e6f4ec;
+            --amber: #c68a17;
+            --amber-bg: #fdf5e3;
+            --red-bg: #fbeae8;
+            --border: #ddd7cd;
+            --border-light: #e8e3da;
+            --muted: #8c8478;
+            --radius: 6px;
+            --radius-lg: 10px;
+            --shadow: 0 1px 4px rgba(28,33,39,0.06), 0 2px 12px rgba(28,33,39,0.04);
+            --shadow-lg: 0 4px 24px rgba(28,33,39,0.1);
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Figtree', system-ui, sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            line-height: 1.65;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── HEADER ─────────────────────────────────── */
+        header {
+            background: var(--ink);
+            color: var(--paper);
+            padding: 0.9rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .logo {
+            font-family: 'Newsreader', serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: relative;
+            top: -1px;
+        }
+
+        .logo-sub {
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 500;
+            opacity: 0.45;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .model-tag {
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.08);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            opacity: 0.7;
+        }
+
+        /* ── LAYOUT ─────────────────────────────────── */
+        .app {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        /* ── INPUT SECTION ──────────────────────────── */
+        .input-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            animation: fadeUp 0.4s var(--ease);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-card h1 {
+            font-family: 'Newsreader', serif;
+            font-size: 1.55rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.01em;
+        }
+
+        .input-card .lead {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 1.75rem;
+            max-width: 600px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .field-url {
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--paper);
+            transition: border-color 0.15s var(--ease);
+        }
+
+        .field-url:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .field-group { margin-top: 1.25rem; }
+
+        .field-group textarea {
+            width: 100%;
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.88rem;
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--paper);
+            resize: vertical;
+            min-height: 72px;
+            transition: border-color 0.15s var(--ease);
+        }
+
+        .field-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .field-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+
+        .field-row select {
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--paper);
+            cursor: pointer;
+        }
+
+        .actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .hint {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        /* ── BUTTONS ────────────────────────────────── */
+        .btn {
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.6rem 1.3rem;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.15s var(--ease);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-go {
+            background: var(--ink);
+            color: var(--paper);
+            font-size: 0.95rem;
+            padding: 0.7rem 2rem;
+        }
+
+        .btn-go:hover { background: #2e353e; }
+        .btn-go:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.6; }
+
+        .btn-ghost {
+            background: var(--paper-warm);
+            color: var(--ink-soft);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover { background: var(--border); }
+
+        /* ── LOADING ────────────────────────────────── */
+        .loading { text-align: center; padding: 3.5rem 1rem; display: none; }
+        .loading.on { display: block; }
+
+        .dot-pulse {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .dot-pulse span {
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1.2s var(--ease) infinite;
+        }
+
+        .dot-pulse span:nth-child(2) { animation-delay: 0.15s; }
+        .dot-pulse span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .loading-label {
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+        }
+
+        .loading-sub {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 0.3rem;
+        }
+
+        /* ── ERROR ──────────────────────────────────── */
+        .error-box {
+            background: var(--red-bg);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            margin-top: 1.25rem;
+            font-size: 0.88rem;
+            color: #8b2017;
+            display: none;
+        }
+
+        .error-box.on { display: block; }
+
+        /* ── RESULTS ────────────────────────────────── */
+        .results { display: none; }
+        .results.on { display: block; animation: fadeUp 0.5s var(--ease); }
+
+        .result-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .result-bar h2 {
+            font-family: 'Newsreader', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .result-btns { display: flex; gap: 0.5rem; }
+
+        /* ── BADGES ─────────────────────────────────── */
+        .badges { margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+        .badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+        }
+
+        .badge-fiable       { background: var(--green-bg); color: #1a6b3a; }
+        .badge-pas-fiable   { background: var(--red-bg); color: #8b2017; }
+        .badge-indeterminee { background: var(--amber-bg); color: #8a5d0a; }
+        .badge-desc         { background: var(--paper-warm); color: var(--muted); border: 1px solid var(--border); }
+
+        /* ── 3 PHRASES ──────────────────────────────── */
+        .three-ph {
+            background: var(--card);
+            border: 2px solid var(--ink);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .three-ph h3 {
+            font-family: 'Newsreader', serif;
+            font-size: 1.1rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .ph-row {
+            padding: 0.55rem 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.9rem;
+        }
+
+        .ph-row:last-child { border-bottom: none; }
+
+        .ph-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--muted);
+            margin-bottom: 0.15rem;
+        }
+
+        /* ── CCF CARDS ──────────────────────────────── */
+        .ccf {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            margin-bottom: 0.9rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .ccf-head {
+            padding: 0.75rem 1.25rem;
+            background: var(--paper-warm);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .ccf-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .ccf-dot.c1 { background: #4e5da0; }
+        .ccf-dot.c2 { background: #c67b30; }
+        .ccf-dot.c3 { background: #2d8a56; }
+
+        .ccf-head h4 {
+            font-family: 'Newsreader', serif;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .ccf-body {
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        /* ── REFERENCES ─────────────────────────────── */
+        .refs {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.5rem;
+            margin-top: 0.9rem;
+            box-shadow: var(--shadow);
+        }
+
+        .refs h4 {
+            font-family: 'Newsreader', serif;
+            font-size: 1rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .refs ol { padding-left: 1.2rem; font-size: 0.85rem; }
+        .refs li { margin-bottom: 0.4rem; line-height: 1.5; }
+        .refs a { color: var(--accent); text-decoration: none; word-break: break-all; }
+        .refs a:hover { text-decoration: underline; }
+
+        /* ── USAGE ──────────────────────────────────── */
+        .usage-line {
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            text-align: right;
+            margin-top: 0.6rem;
+        }
+
+        /* ── WARNING ────────────────────────────────── */
+        .draft-warn {
+            background: var(--amber-bg);
+            border: 1px solid var(--amber);
+            border-radius: var(--radius);
+            padding: 0.85rem 1.15rem;
+            margin-top: 1.5rem;
+            font-size: 0.82rem;
+            color: #5d4037;
+            line-height: 1.55;
+        }
+
+        .draft-warn strong { color: #9a5c00; }
+
+        /* ── FOOTER ─────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* ── RESPONSIVE ─────────────────────────────── */
+        @media (max-width: 640px) {
+            header { padding: 0.8rem 1rem; }
+            .app { padding: 1.25rem 1rem 3rem; }
+            .input-card { padding: 1.25rem; }
+            .actions-row { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+            .actions-row .hint { text-align: center; }
+            .btn-go { width: 100%; justify-content: center; }
+            .result-bar { flex-direction: column; align-items: flex-start; }
+            .field-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        Certify
+        <span class="logo-sub">Assistant IA</span>
+    </div>
+    <div class="header-right">
+        <span class="model-tag" id="modelTag">sonnet 4</span>
+    </div>
+</header>
+
+<main class="app">
+
+    <!-- ── INPUT ──────────────────────────────────── -->
+    <div class="input-card" id="inputCard">
+        <h1>Générer un brouillon de certification</h1>
+        <p class="lead">Collez l'URL de l'information à analyser. L'IA produira un brouillon structuré (CCF) à réviser et compléter.</p>
+
+        <label for="urlInput">URL de l'information</label>
+        <input type="url" id="urlInput" class="field-url" placeholder="https://exemple.com/article-a-analyser" autofocus>
+
+        <div class="field-group">
+            <label for="ctxInput">Contexte additionnel <span style="font-weight:400;text-transform:none;letter-spacing:0">(facultatif)</span></label>
+            <textarea id="ctxInput" placeholder="Informations supplémentaires : contexte de la demande, éléments connus, points à vérifier..."></textarea>
+        </div>
+
+        <div class="field-row">
+            <div>
+                <label for="modelSelect">Modèle</label>
+                <select id="modelSelect">
+                    <option value="claude-sonnet-4-6">Sonnet 4 (recommandé)</option>
+                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 (rapide)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <span class="hint">Coût estimé : ~$0.01–0.03 par certification</span>
+            <button class="btn btn-go" id="goBtn" onclick="generate()" disabled>Générer le brouillon</button>
+        </div>
+    </div>
+
+    <!-- ── LOADING ────────────────────────────────── -->
+    <div class="loading" id="loader">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        <div class="loading-label">Analyse en cours...</div>
+        <div class="loading-sub" id="loadStep">Envoi à l'API Claude...</div>
+    </div>
+
+    <!-- ── ERROR ──────────────────────────────────── -->
+    <div class="error-box" id="errBox"></div>
+
+    <!-- ── RESULTS ────────────────────────────────── -->
+    <div class="results" id="results">
+        <div class="result-bar">
+            <h2>Brouillon de certification</h2>
+            <div class="result-btns">
+                <button class="btn btn-ghost" onclick="copyAll()">Copier</button>
+                <button class="btn btn-ghost" onclick="reset()">Nouvelle analyse</button>
+            </div>
+        </div>
+
+        <div class="badges" id="badges"></div>
+        <div class="three-ph" id="threePh"></div>
+        <div id="ccfCards"></div>
+        <div class="refs" id="refsCard" style="display:none"></div>
+        <div class="usage-line" id="usageLine"></div>
+
+        <div class="draft-warn">
+            <strong>Rappel :</strong> Ceci est un brouillon généré par IA. Il doit être vérifié, corrigé et complété par un-e expert-e avant publication.
+        </div>
+    </div>
+
+</main>
+
+<footer>Certify · Prototype Assistant IA · toutcuit.ch</footer>
+
+<script>
+// ── API endpoint (same server) ──────────────────────────────────
+const API = '/api/generate-cert.php';
+
+// ── Init ─────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const urlEl = $('urlInput');
+const goBtn = $('goBtn');
+
+urlEl.addEventListener('input', () => { goBtn.disabled = !urlEl.value.trim(); });
+urlEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !goBtn.disabled) generate(); });
+$('modelSelect').addEventListener('change', () => {
+    const m = $('modelSelect').value;
+    $('modelTag').textContent = m.includes('haiku') ? 'haiku 4.5' : 'sonnet 4';
+});
+
+// ── Generate ─────────────────────────────────────────────────────
+async function generate() {
+    const url   = urlEl.value.trim();
+    const ctx   = $('ctxInput').value.trim();
+    const model = $('modelSelect').value;
+    if (!url) return;
+
+    show('loader'); hide('inputCard'); hide('results'); hide('errBox');
+    $('loadStep').textContent = 'Envoi à l\'API Claude...';
+
+    try {
+        const res = await fetch(API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, context: ctx, model })
+        });
+
+        $('loadStep').textContent = 'Traitement de la réponse...';
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur serveur (${res.status})`);
+        }
+
+        const cert = await res.json();
+        render(cert);
+
+    } catch (e) {
+        $('errBox').textContent = e.message;
+        show('errBox');
+        show('inputCard');
+    } finally {
+        hide('loader');
+    }
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function render(c) {
+    // Badges
+    let bc = 'badge-indeterminee';
+    if (c.etiquette === 'fiable') bc = 'badge-fiable';
+    else if (c.etiquette === 'pas fiable') bc = 'badge-pas-fiable';
+    let bh = `<span class="badge ${bc}">${esc(c.etiquette)}</span>`;
+    (c.descripteurs || []).forEach(d => { bh += `<span class="badge badge-desc">${esc(d)}</span>`; });
+    $('badges').innerHTML = bh;
+
+    // 3 Phrases
+    const tp = c.trois_phrases || {};
+    $('threePh').innerHTML = `
+        <h3>3 Phrases</h3>
+        <div class="ph-row"><div class="ph-label">Contexte</div><div>${esc(tp.contexte||'—')}</div></div>
+        <div class="ph-row"><div class="ph-label">Contenu</div><div>${esc(tp.contenu||'—')}</div></div>
+        <div class="ph-row"><div class="ph-label">Fiabilité</div><div>${esc(tp.fiabilite||'—')}</div></div>`;
+
+    // CCF
+    const ccf = c.ccf || {};
+    $('ccfCards').innerHTML = card('C','c1','Contexte',ccf.contexte)
+                           + card('C','c2','Contenu',ccf.contenu)
+                           + card('F','c3','Fiabilité',ccf.fiabilite);
+
+    // References
+    if (c.references && c.references.length) {
+        let rh = '<h4>Références</h4><ol>';
+        c.references.forEach(r => {
+            rh += `<li><a href="${esc(r.url||'#')}" target="_blank" rel="noopener">${esc(r.titre||r.url)}</a></li>`;
+        });
+        $('refsCard').innerHTML = rh + '</ol>';
+        $('refsCard').style.display = '';
+    } else {
+        $('refsCard').style.display = 'none';
+    }
+
+    // Usage
+    if (c.usage) {
+        $('usageLine').textContent = `${c.usage.model} · ${c.usage.input_tokens} in + ${c.usage.output_tokens} out · $${c.usage.cost_usd}`;
+    }
+
+    show('results');
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function card(letter, cls, title, text) {
+    return `<div class="ccf">
+        <div class="ccf-head"><div class="ccf-dot ${cls}">${letter}</div><h4>${title}</h4></div>
+        <div class="ccf-body">${fmt(text||'—')}</div></div>`;
+}
+
+// ── Copy ─────────────────────────────────────────────────────────
+function copyAll() {
+    let t = '=== BROUILLON DE CERTIFICATION ===\n\n';
+    const lb = $('badges').querySelector('.badge-fiable,.badge-pas-fiable,.badge-indeterminee');
+    t += 'Étiquette : ' + (lb?.textContent||'') + '\n';
+    const descs = $('badges').querySelectorAll('.badge-desc');
+    if (descs.length) t += 'Descripteurs : ' + [...descs].map(d=>d.textContent).join(', ') + '\n';
+    t += '\n--- 3 PHRASES ---\n\n';
+    $('threePh').querySelectorAll('.ph-row').forEach(r => {
+        t += r.querySelector('.ph-label').textContent + ' : ';
+        t += r.querySelector('div:last-child').textContent.trim() + '\n\n';
+    });
+    t += '--- CCF DÉTAILLÉ ---\n\n';
+    document.querySelectorAll('.ccf').forEach(c => {
+        t += c.querySelector('h4').textContent.toUpperCase() + '\n';
+        t += c.querySelector('.ccf-body').textContent.trim() + '\n\n';
+    });
+    const rc = $('refsCard');
+    if (rc.style.display !== 'none') {
+        t += '--- RÉFÉRENCES ---\n\n';
+        rc.querySelectorAll('li').forEach((li,i) => {
+            const a = li.querySelector('a');
+            t += (i+1) + '. ' + (a ? a.textContent + ' — ' + a.href : li.textContent) + '\n';
+        });
+    }
+    t += '\n⚠ BROUILLON IA — À vérifier par un-e expert-e';
+    navigator.clipboard.writeText(t).then(() => {
+        const b = document.querySelector('.result-btns .btn-ghost');
+        const o = b.textContent; b.textContent = 'Copié !';
+        setTimeout(() => b.textContent = o, 1400);
+    });
+}
+
+// ── Reset ────────────────────────────────────────────────────────
+function reset() {
+    hide('results'); show('inputCard');
+    urlEl.value = ''; $('ctxInput').value = '';
+    goBtn.disabled = true; urlEl.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function show(id) { $(id).classList.add('on');  if ($(id).style) $(id).style.display = ''; $(id).classList.remove('off'); }
+function hide(id) { $(id).classList.remove('on'); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmt(s) { return esc(s).replace(/\n/g,'<br>'); }
+
+// Fix show/hide for input card (not using .on class)
+function show(id) {
+    const el = $(id);
+    el.style.display = '';
+    el.classList.add('on');
+}
+function hide(id) {
+    const el = $(id);
+    if (id === 'inputCard') { el.style.display = 'none'; }
+    else { el.classList.remove('on'); }
+}
+</script>
+
+</body>
+</html>
