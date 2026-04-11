@@ -13,3 +13,6 @@ define('JWT_LIFETIME', 86400);
 
 // Anthropic API key — used by the CERT review tool (api/ai/review.php)
 define('ANTHROPIC_API_KEY', '');
+
+// Google API key — used by the analysis assistant (api/generate-cert.php) for Gemini models
+define('GOOGLE_API_KEY', '');

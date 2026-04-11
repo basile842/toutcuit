@@ -1,6 +1,6 @@
 <?php
-// POST — Generate a draft CERT from a URL + optional context
-// Uses the same Anthropic API key as the editorial review tool.
+// POST — Analyse assistant: context + content elements for a URL
+// Supports Claude (Anthropic) and Gemini (Google) models.
 require_once __DIR__ . '/middleware.php';
 handleCors();
 
@@ -8,22 +8,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);
 }
 
-// Load Anthropic API key from shared config (already loaded by db.php via middleware.php)
-if (!defined('ANTHROPIC_API_KEY') || ANTHROPIC_API_KEY === '') {
-    jsonError('ANTHROPIC_API_KEY not configured in api/config.php', 500);
-}
-
 $data = getJsonBody();
 
 $url        = trim($data['url'] ?? '');
 $context    = trim($data['context'] ?? '');
+$content    = trim($data['content'] ?? '');
 $model      = trim($data['model'] ?? 'claude-sonnet-4-6');
 $screenshot = trim($data['screenshot'] ?? '');
 
 // Whitelist allowed models
-$allowedModels = ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
+$allowedModels = [
+    'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001',
+    'gemini-2.5-flash', 'gemini-2.5-pro',
+];
 if (!in_array($model, $allowedModels, true)) {
     $model = 'claude-sonnet-4-6';
+}
+
+$isGemini = str_starts_with($model, 'gemini-');
+
+// Validate API key for the selected provider
+if ($isGemini) {
+    if (!defined('GOOGLE_API_KEY') || GOOGLE_API_KEY === '') {
+        jsonError('GOOGLE_API_KEY not configured in api/config.php', 500);
+    }
+} else {
+    if (!defined('ANTHROPIC_API_KEY') || ANTHROPIC_API_KEY === '') {
+        jsonError('ANTHROPIC_API_KEY not configured in api/config.php', 500);
+    }
 }
 
 if ($url === '') {
@@ -42,189 +54,239 @@ if ($screenshot !== '') {
     }
 }
 
-// ── System prompt with Certify guidelines ──────────────────────────
+// ── System prompt ─────────────────────────────────────────────────
 
 $systemPrompt = <<<'PROMPT'
-Tu es un assistant expert en analyse de la fiabilité de l'information pour le projet Certify.
-
-Tu dois produire un BROUILLON de certification (CERT) structuré selon le format exact utilisé dans la base de données Certify. Ce brouillon sera ensuite révisé par un-e expert-e humain-e via l'outil de révision.
+Tu es un assistant d'analyse de l'information pour toutcuit.ch (éducation aux médias). Tu aides un-e expert-e à analyser une information trouvée en ligne. Tu fournis des éléments factuels et vérifiables, jamais de conclusion définitive — c'est l'expert-e qui décide.
 
 ## Format de sortie
 
-Tu dois répondre en JSON valide avec cette structure exacte :
+Réponds en JSON valide avec cette structure exacte :
 
 {
-  "reliability": "fiable" | "pas fiable" | "indéterminée",
-  "descriptor1": "premier descripteur",
-  "descriptor2": "deuxième descripteur (ou chaîne vide)",
-  "three_phrases": "Phrase 1 (format + sujet)\nPhrase 2 (affirmation principale)\nPhrase 3 (Fiable/Pas fiable/Indéterminé, car...)",
-  "context": "Environ 500 caractères. Type d'information, contexte thématique, source, auteur, crédibilité de la source. Références inline au format (1).",
-  "content": "Environ 1000 caractères. Analyse du contenu, arguments, structure, vérifiabilité. Références inline au format (1,2).",
-  "reliability_text": "Environ 500 caractères. Évaluation finale avec justification. Commence par 'Fiable, car...' ou 'Pas fiable, car...' ou 'Indéterminé, car...'.",
-  "references_text": "https://url1.com\nhttps://url2.com\nhttps://url3.com"
+  "context": {
+    "concrete": [
+      "Auteur : Nom (courte description si pertinent) [1]",
+      "Date : JJ.MM.AAAA (ou estimation)",
+      "Type : article / vidéo / post réseau social / communiqué / etc.",
+      "Publication : nom du média ou de la plateforme [2]"
+    ],
+    "thematic": [
+      "Thème : X — sujet largement couvert / peu documenté / très spécialisé",
+      "Tendance : sujet viral actuellement / récurrent / ancien",
+      "Autre élément thématique pertinent"
+    ]
+  },
+  "content": {
+    "claims": [
+      "Affirmation 1 — brève reformulation",
+      "Affirmation 2 — brève reformulation"
+    ],
+    "style": [
+      "Observation sur le ton, le registre, les procédés rhétoriques",
+      "Observation sur la structure, les sources citées ou absentes"
+    ],
+    "crosscheck": [
+      "Affirmation X : confirmée par [source] [3]",
+      "Affirmation Y : contredite par [source] [4]",
+      "Affirmation Z : aucune source secondaire trouvée"
+    ]
+  },
+  "visual": [
+    "Description de ce qui est visible sur le screenshot",
+    "Personne reconnue : Nom (fonction) [5]",
+    "Logo ou visuel identifié : description"
+  ],
+  "references": [
+    "https://url1.com",
+    "https://url2.com"
+  ]
 }
 
-## Règles sur les champs
+## Règles
 
-### three_phrases
-Strictement 3 phrases, une par ligne (séparées par \n) :
-- **Phrase 1** : Format + "à propos de" + sujet. Le sujet DOIT être au début. Ex: "Vidéo YouTube à propos de la découverte d'une nouvelle espèce."
-- **Phrase 2** : L'affirmation principale ou le fait central, en une seule phrase.
-- **Phrase 3** : Commence TOUJOURS par "Fiable, car..." ou "Pas fiable, car..." ou "Indéterminé, car...". JAMAIS par "Cet article est fiable".
-- Les 3 phrases doivent être courtes, compréhensibles de façon autonome.
-- JAMAIS de références (1,2) dans les 3 phrases.
-
-### context, content, reliability_text
-- Les références sont insérées DANS le texte, au format inline Wikipedia : `Alessandro (1) affirme que XXX`.
-- Chaque personne, entité ou concept spécialisé doit avoir une référence.
-- Format des numéros : (3,4,5) et PAS (3-5).
-- Ne pas redire ce que l'utilisateur voit déjà (plateforme, titre de l'article).
-- Mentionner la date seulement si elle est utile à la fiabilité.
-
-### references_text
-- Une URL par ligne, texte brut, sans titre ni numérotation.
-- L'ordre correspond aux numéros utilisés dans le texte : la première URL = (1), la deuxième = (2), etc.
-- Privilégier : sources officielles > institutionnelles > Wikipédia (+ autre source) > articles de journaux.
-
-### reliability_text
-- Format strict : "X, car A" (X = jugement, A = raison). Maximum 2 phrases.
-- La fiabilité arrive à la FIN, comme conséquence de l'analyse. Ne jamais l'anticiper dans le contexte ou le contenu.
-- La déclaration doit pouvoir se lire de manière autonome.
-
-## Règles générales
-
-- Sois clair, synthétique, précis, concis et direct.
-- Voix active, pas passive. Remplacer les noms abstraits par des verbes.
-- Pas de parenthèses (sauf références), pas de contractions, pas d'émojis.
-- Pas d'adjectifs subjectifs. Toute caractérisation factuelle doit être justifiée par une référence ou un exemple concret.
-- On certifie l'INFORMATION, pas la source. JAMAIS "fiable car publié par un média de référence".
-- Utilise la lecture latérale pour évaluer la fiabilité.
-- Vérifie si l'information a déjà été analysée par une organisation de fact-checking.
-- Écris le CCF détaillé AVANT les trois phrases (mais présente three_phrases en premier dans le JSON).
-- Choisis 1 ou 2 descripteurs parmi : désinformation, satire/parodie, clickbait, opinion, contenu sponsorisé, contenu scientifique, contenu officiel, contenu généré par IA, contenu obsolète, théorie du complot, propagande, manipulation d'image, source anonyme, hors contexte — ou crée des nouveaux si nécessaire.
+- Style TÉLÉGRAPHIQUE : bullet points courts, pas de phrases complètes, pas de verbes inutiles.
+- Chaque élément doit être concret et vérifiable. Pas de généralités vagues.
+- Références : numérotées [1], [2], etc. dans le texte. Les URLs correspondantes dans "references" (même ordre).
+- Privilégier sources officielles > institutionnelles > Wikipédia > presse.
+- NE PAS conclure sur la fiabilité. Tu fournis les éléments, l'expert-e décide.
+- Le champ "visual" n'apparaît QUE si un screenshot est fourni. Si pas de screenshot, mettre un tableau vide [].
+- Si un screenshot est fourni : décrire les éléments visuels, tenter d'identifier les personnes (nom, fonction si connue), logos, graphiques, montages éventuels.
+- Pas d'émojis. Pas de markdown dans les valeurs (pas de ** ou _).
 
 ## Important
 - Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.
 - Pas de blocs markdown (```json), juste le JSON brut.
-- Si tu ne peux pas accéder au contenu de l'URL, indique-le clairement dans l'analyse et base-toi sur ce qui est disponible dans le contexte fourni.
 PROMPT;
 
 // ── Build user message ─────────────────────────────────────────────
 
-$textMessage = "Analyse cette information et produis un brouillon de certification :\n\nURL : {$url}";
+$textMessage = "Analyse cette information :\n\nURL : {$url}";
+if ($content !== '') {
+    $textMessage .= "\n\nContenu copié-collé depuis la page :\n{$content}";
+}
 if ($context !== '') {
-    $textMessage .= "\n\nContexte additionnel fourni par l'expert :\n{$context}";
+    $textMessage .= "\n\nNotes de l'expert :\n{$context}";
 }
 if ($imageData) {
-    $textMessage .= "\n\nUn screenshot de la page web est joint. Utilise-le pour analyser le contenu visible (titre, texte, images, mise en page, commentaires, etc.).";
-} else {
-    $textMessage .= "\n\nIMPORTANT : Tu ne peux pas naviguer sur le web. Analyse l'URL elle-même (domaine, structure) et utilise tes connaissances pour produire le meilleur brouillon possible.";
+    $textMessage .= "\n\nUn screenshot de la page est joint. Analyse les éléments visuels : texte visible, personnes, logos, mise en page, indices visuels.";
 }
-$textMessage .= "\n\nL'expert complètera et corrigera ensuite.";
-
-// Build content blocks (multimodal if screenshot is present)
-$contentBlocks = [];
-if ($imageData) {
-    $contentBlocks[] = [
-        'type' => 'image',
-        'source' => [
-            'type'       => 'base64',
-            'media_type' => $imageMediaType,
-            'data'       => $imageData,
-        ],
-    ];
+if (!$imageData && $content === '') {
+    $textMessage .= "\n\nATTENTION : tu ne peux pas naviguer sur le web. Analyse l'URL (domaine, structure) et utilise tes connaissances. Signale clairement ce que tu ne peux pas vérifier sans accès au contenu.";
 }
-$contentBlocks[] = ['type' => 'text', 'text' => $textMessage];
 
-// ── Call Claude API with retry logic ───────────────────────────────
-
-$payload = json_encode([
-    'model'      => $model,
-    'max_tokens' => 4096,
-    'system'     => $systemPrompt,
-    'messages'   => [
-        ['role' => 'user', 'content' => $contentBlocks],
-    ],
-], JSON_UNESCAPED_UNICODE);
+// ── Call the appropriate API ──────────────────────────────────────
 
 $maxAttempts   = 4;
 $retryableHttp = [429, 503, 529];
-$response = null;
-$httpCode = 0;
-$curlErr  = '';
 
-for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
-    $ch = curl_init('https://api.anthropic.com/v1/messages');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_HTTPHEADER     => [
-            'Content-Type: application/json',
-            'x-api-key: ' . ANTHROPIC_API_KEY,
-            'anthropic-version: 2023-06-01',
-        ],
-        CURLOPT_TIMEOUT        => 120,
-    ]);
+if ($isGemini) {
+    // ── Gemini API ────────────────────────────────────────────────
+    $geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . GOOGLE_API_KEY;
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlErr  = curl_error($ch);
-    curl_close($ch);
-
-    if (!$curlErr && !in_array($httpCode, $retryableHttp, true)) {
-        break;
+    // Build Gemini parts (multimodal)
+    $parts = [];
+    if ($imageData) {
+        $parts[] = ['inline_data' => ['mime_type' => $imageMediaType, 'data' => $imageData]];
     }
-    if ($attempt === $maxAttempts) {
-        break;
-    }
-    $delayMs = (int) ((1 << ($attempt - 1)) * 1000 + random_int(0, 500));
-    usleep($delayMs * 1000);
-}
+    $parts[] = ['text' => $textMessage];
 
-if ($curlErr) {
-    jsonError("Claude API error: $curlErr", 502);
-}
+    $payload = json_encode([
+        'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+        'contents'           => [['parts' => $parts]],
+        'generationConfig'   => ['maxOutputTokens' => 4096, 'temperature' => 0.2],
+    ], JSON_UNESCAPED_UNICODE);
 
-if ($httpCode !== 200) {
-    $body    = json_decode($response, true);
-    $errType = $body['error']['type'] ?? 'unknown';
-    $errMsg  = $body['error']['message'] ?? $response;
-    if (in_array($httpCode, $retryableHttp, true)) {
-        jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+    $response = null;
+    $httpCode = 0;
+    $curlErr  = '';
+
+    for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+        $ch = curl_init($geminiUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT        => 120,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr  = curl_error($ch);
+        curl_close($ch);
+
+        if (!$curlErr && !in_array($httpCode, $retryableHttp, true)) break;
+        if ($attempt === $maxAttempts) break;
+        usleep((int)((1 << ($attempt - 1)) * 1000 + random_int(0, 500)) * 1000);
     }
-    jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
+
+    if ($curlErr) jsonError("Gemini API error: $curlErr", 502);
+
+    if ($httpCode !== 200) {
+        $body   = json_decode($response, true);
+        $errMsg = $body['error']['message'] ?? $response;
+        jsonError("Gemini API (HTTP $httpCode): $errMsg", 502);
+    }
+
+    $result = json_decode($response, true);
+    $text   = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+    // Usage
+    $usageMeta = $result['usageMetadata'] ?? [];
+    $inputTokens  = $usageMeta['promptTokenCount'] ?? 0;
+    $outputTokens = $usageMeta['candidatesTokenCount'] ?? 0;
+
+} else {
+    // ── Claude API ────────────────────────────────────────────────
+    $contentBlocks = [];
+    if ($imageData) {
+        $contentBlocks[] = [
+            'type' => 'image',
+            'source' => ['type' => 'base64', 'media_type' => $imageMediaType, 'data' => $imageData],
+        ];
+    }
+    $contentBlocks[] = ['type' => 'text', 'text' => $textMessage];
+
+    $payload = json_encode([
+        'model'      => $model,
+        'max_tokens' => 4096,
+        'system'     => $systemPrompt,
+        'messages'   => [['role' => 'user', 'content' => $contentBlocks]],
+    ], JSON_UNESCAPED_UNICODE);
+
+    $response = null;
+    $httpCode = 0;
+    $curlErr  = '';
+
+    for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+        $ch = curl_init('https://api.anthropic.com/v1/messages');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'x-api-key: ' . ANTHROPIC_API_KEY,
+                'anthropic-version: 2023-06-01',
+            ],
+            CURLOPT_TIMEOUT        => 120,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr  = curl_error($ch);
+        curl_close($ch);
+
+        if (!$curlErr && !in_array($httpCode, $retryableHttp, true)) break;
+        if ($attempt === $maxAttempts) break;
+        usleep((int)((1 << ($attempt - 1)) * 1000 + random_int(0, 500)) * 1000);
+    }
+
+    if ($curlErr) jsonError("Claude API error: $curlErr", 502);
+
+    if ($httpCode !== 200) {
+        $body    = json_decode($response, true);
+        $errType = $body['error']['type'] ?? 'unknown';
+        $errMsg  = $body['error']['message'] ?? $response;
+        if (in_array($httpCode, $retryableHttp, true)) {
+            jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+        }
+        jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
+    }
+
+    $result = json_decode($response, true);
+    $text   = $result['content'][0]['text'] ?? '';
+
+    // Usage
+    $usage        = $result['usage'] ?? [];
+    $inputTokens  = ($usage['input_tokens'] ?? 0) + ($usage['cache_creation_input_tokens'] ?? 0);
+    $outputTokens = $usage['output_tokens'] ?? 0;
 }
 
 // ── Parse response ─────────────────────────────────────────────────
 
-$result = json_decode($response, true);
-$text   = $result['content'][0]['text'] ?? '';
-
 $parsed = json_decode($text, true);
-if (!is_array($parsed) || !isset($parsed['reliability'])) {
+if (!is_array($parsed) || !isset($parsed['context'])) {
     // Try to extract JSON from possible markdown wrapping
     if (preg_match('/\{[\s\S]*\}/', $text, $m)) {
         $parsed = json_decode($m[0], true);
     }
-    if (!is_array($parsed) || !isset($parsed['reliability'])) {
-        jsonError('Impossible de parser la réponse de Claude. Réessaie.', 502);
+    if (!is_array($parsed) || !isset($parsed['context'])) {
+        jsonError('Impossible de parser la réponse. Réessaie.', 502);
     }
 }
 
 // ── Attach usage & cost ────────────────────────────────────────────
 
-$usage        = $result['usage'] ?? [];
-$inputTokens  = ($usage['input_tokens'] ?? 0) + ($usage['cache_creation_input_tokens'] ?? 0);
-$outputTokens = $usage['output_tokens'] ?? 0;
-
-// Pricing per model (USD per million tokens)
 $pricing = [
-    'claude-opus-4-6'            => ['input' => 15.0, 'output' => 75.0],
-    'claude-sonnet-4-6'          => ['input' => 3.0, 'output' => 15.0],
-    'claude-haiku-4-5-20251001'  => ['input' => 1.0, 'output' => 5.0],
+    'claude-opus-4-6'            => ['input' => 15.0,  'output' => 75.0],
+    'claude-sonnet-4-6'          => ['input' => 3.0,   'output' => 15.0],
+    'claude-haiku-4-5-20251001'  => ['input' => 1.0,   'output' => 5.0],
+    'gemini-2.5-flash'           => ['input' => 0.15,  'output' => 0.60],
+    'gemini-2.5-pro'             => ['input' => 1.25,  'output' => 10.0],
 ];
-$rates      = $pricing[$model] ?? $pricing['claude-sonnet-4-6'];
+$rates      = $pricing[$model] ?? ['input' => 0, 'output' => 0];
 $inputCost  = $inputTokens  * $rates['input']  / 1_000_000;
 $outputCost = $outputTokens * $rates['output'] / 1_000_000;
 $totalCost  = $inputCost + $outputCost;
