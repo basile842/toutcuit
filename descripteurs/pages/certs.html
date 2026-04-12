@@ -296,6 +296,27 @@
     });
 
     /* ============================
+       Prefill from analyse tool
+    ============================ */
+    // When the user clicks "Générer une CERT" in /analyse, we stash the AI-composed
+    // fields in localStorage and open this page. Pick them up here and clear the key.
+    try {
+      const raw = localStorage.getItem("tc_cert_prefill");
+      if (raw) {
+        const p = JSON.parse(raw);
+        // Ignore stale prefills (> 10 min) to avoid surprising fills on later visits.
+        if (p && (Date.now() - (p.createdAt || 0)) < 10 * 60 * 1000) {
+          if (p.title)      document.getElementById("titleInput").value      = p.title;
+          if (p.url)        document.getElementById("urlInput").value        = p.url;
+          if (p.context)    document.getElementById("contextInput").value    = p.context;
+          if (p.content)    document.getElementById("contentInput").value    = p.content;
+          if (p.references) document.getElementById("referencesInput").value = p.references;
+        }
+        localStorage.removeItem("tc_cert_prefill");
+      }
+    } catch {}
+
+    /* ============================
        Gestion du formulaire
     ============================ */
     function showSuccess(message) {

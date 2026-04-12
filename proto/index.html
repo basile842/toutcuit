@@ -252,6 +252,14 @@
 
         .btn-ghost:hover { background: var(--border); }
 
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border: 1px solid var(--accent);
+        }
+        .btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+        .btn-primary:disabled { background: var(--border); color: var(--muted); border-color: var(--border); cursor: not-allowed; }
+
         /* -- LOADING --------------------------------------- */
         .loading { text-align: center; padding: 48px 16px; display: none; }
         .loading.on { display: block; }
@@ -591,6 +599,7 @@
                 <button class="btn btn-ghost" id="editBtn" onclick="toggleEdit()">Éditer</button>
                 <button class="btn btn-ghost" onclick="copyAll()">Copier</button>
                 <button class="btn btn-ghost" onclick="downloadRtf()">Télécharger .rtf</button>
+                <button class="btn btn-primary" id="genCertBtn" onclick="genCert()">Générer une CERT</button>
                 <button class="btn btn-ghost" onclick="reset()">Nouvelle analyse</button>
             </div>
         </div>
@@ -1043,6 +1052,45 @@ function buildRtf() {
         + '\\fs22\n'
         + body
         + '}';
+}
+
+// -- Generate CERT -----------------------------------------
+async function genCert() {
+    if (!lastData) return;
+    flushEdits();
+    const btn = $('genCertBtn');
+    if (!btn) return;
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Génération…';
+    try {
+        let model = $('modelSelect')?.value || 'claude-sonnet-4-6';
+        if (model !== 'claude-sonnet-4-6' && model !== 'gemini-2.5-flash') model = 'claude-sonnet-4-6';
+        const res = await fetch('/api/ai/compose-cert.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlEl.value.trim(), analysis: lastData, model })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur serveur (${res.status})`);
+        }
+        const out = await res.json();
+        localStorage.setItem('tc_cert_prefill', JSON.stringify({
+            title: out.title || '',
+            url: urlEl.value.trim(),
+            context: out.context || '',
+            content: out.content || '',
+            references: out.references || '',
+            createdAt: Date.now(),
+        }));
+        window.open('/descripteurs/pages/certs.html', '_blank', 'noopener');
+    } catch (e) {
+        alert('Erreur : ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+    }
 }
 
 function downloadRtf() {
