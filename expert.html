@@ -816,28 +816,53 @@
         }
 
         const REL = { good: "Fiable", mid: "Indéterminé", bad: "Non fiable" };
+        let onlySelected = false;
+        const checkedIds = new Set(assignedIds);
 
         panel.innerHTML = `
-          <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;">
-            Sélectionnez les CERTs pour cette séance :
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="font-size:.82rem;font-weight:700;color:var(--muted);flex:1;">
+              Sélectionnez les CERTs pour cette séance :
+            </div>
+            <button type="button" id="toggleOnlySelected-${sessionId}" class="btn-secondary" style="font-size:.75rem;padding:4px 10px;white-space:nowrap;">Afficher uniquement les CERTs de cette séance</button>
           </div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            ${allCerts.map(c => `
-              <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
-                <input type="checkbox" value="${c.id}" ${assignedIds.has(c.id) ? "checked" : ""} class="cert-check-${sessionId}">
-                <span style="flex:1;font-weight:600;">${esc(c.title)}</span>
-                <span style="font-size:.75rem;color:var(--muted);">${esc(REL[c.reliability] || c.reliability)}</span>
-                ${c.is_mine ? "" : '<span style="font-size:.7rem;color:var(--accent);font-weight:700;">partagé</span>'}
-              </label>
-            `).join("")}
-          </div>
+          <div id="certsList-${sessionId}" style="display:flex;flex-direction:column;gap:6px;"></div>
           <div style="margin-top:10px;">
             <button class="btn-secondary" id="saveCerts-${sessionId}">Enregistrer</button>
           </div>
         `;
 
+        function renderCertsList() {
+          const list = document.getElementById(`certsList-${sessionId}`);
+          const filtered = onlySelected ? allCerts.filter(c => checkedIds.has(c.id)) : allCerts;
+          list.innerHTML = filtered.map(c => `
+            <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);">
+              <input type="checkbox" value="${c.id}" ${checkedIds.has(c.id) ? "checked" : ""} class="cert-check-${sessionId}">
+              <span style="flex:1;font-weight:600;">${esc(c.title)}</span>
+              <span style="font-size:.75rem;color:var(--muted);">${esc(REL[c.reliability] || c.reliability)}</span>
+              ${c.is_mine ? "" : '<span style="font-size:.7rem;color:var(--accent);font-weight:700;">partagé</span>'}
+            </label>
+          `).join("");
+          list.querySelectorAll(`.cert-check-${sessionId}`).forEach(cb => {
+            cb.addEventListener("change", () => {
+              const id = parseInt(cb.value);
+              if (cb.checked) checkedIds.add(id); else checkedIds.delete(id);
+            });
+          });
+        }
+
+        document.getElementById(`toggleOnlySelected-${sessionId}`)?.addEventListener("click", (e) => {
+          onlySelected = !onlySelected;
+          e.currentTarget.textContent = onlySelected
+            ? "Afficher tous les CERTs"
+            : "Afficher uniquement les CERTs de cette séance";
+          renderCertsList();
+        });
+
+        renderCertsList();
+
         document.getElementById(`saveCerts-${sessionId}`)?.addEventListener("click", async () => {
-          const checked = [...panel.querySelectorAll(`.cert-check-${sessionId}:checked`)].map(cb => parseInt(cb.value));
+          const checked = [...checkedIds];
           try {
             const res = await authFetch(`${API}/sessions/certs.php`, {
               method: "POST",

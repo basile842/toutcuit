@@ -535,8 +535,8 @@
             </svg>
           </div>
           <div class="console-link-body">
-            <div class="console-link-name">CERTs</div>
-            <div class="console-link-desc">Sélectionner les certifications pour cette séance</div>
+            <div class="console-link-name">Sélection de CERTs</div>
+            <div class="console-link-desc">Aperçu des certifications pour cette séance</div>
           </div>
           <span class="console-link-arrow">&rarr;</span>
         </a>
@@ -859,10 +859,14 @@
 
         const REL = { good: "Fiable", mid: "Indéterminé", bad: "Non fiable" };
         let searchTerms = [];
+        let onlySelected = false;
 
         panel.innerHTML = `
-          <div style="font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;">
-            Sélectionnez les CERTs pour cette séance :
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="font-size:.82rem;font-weight:700;color:var(--muted);flex:1;">
+              Sélectionnez les CERTs pour cette séance :
+            </div>
+            <button type="button" id="toggleOnlySelectedBtn" class="btn-secondary" style="font-size:.75rem;padding:4px 10px;white-space:nowrap;">Afficher uniquement les CERTs de cette séance</button>
           </div>
           <div id="certSearchBox" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.95);margin-bottom:10px;cursor:text;">
             <input type="text" id="certSearchInput" placeholder="Rechercher par titre, descripteur..." style="flex:1 1 100px;border:none;outline:none;background:transparent;font-size:.85rem;color:var(--text);padding:4px 0;min-width:80px;" />
@@ -876,6 +880,7 @@
         function renderCertsList() {
           const list = document.getElementById("certsList");
           const filtered = allCerts.filter(c => {
+            if (onlySelected && !checkedIds.has(c.id)) return false;
             if (!searchTerms.length) return true;
             const haystack = [c.title, c.descriptor1, c.descriptor2, c.teacher_name, c.expert]
               .filter(Boolean).join(" ").toLowerCase();
@@ -939,6 +944,14 @@
 
         document.getElementById("certSearchBox").addEventListener("click", () => {
           document.getElementById("certSearchInput").focus();
+        });
+
+        document.getElementById("toggleOnlySelectedBtn")?.addEventListener("click", (e) => {
+          onlySelected = !onlySelected;
+          e.currentTarget.textContent = onlySelected
+            ? "Afficher tous les CERTs"
+            : "Afficher uniquement les CERTs de cette séance";
+          renderCertsList();
         });
 
         renderCertsList();

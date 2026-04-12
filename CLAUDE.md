@@ -18,7 +18,12 @@ Prototype avancé Certify avec backend PHP/MySQL — sessions de classe, soumiss
 ## Conventions
 
 - **Commentaires** en anglais, **contenu/labels UI** en français
+- **Écriture épicène** pour les personnes uniquement (élèves, enseignant·es…), pas pour les objets
 - `api/config.php` est **gitignored** — contient DB_HOST, DB_NAME, DB_USER, DB_PASS, JWT_SECRET, JWT_LIFETIME, ANTHROPIC_API_KEY
+
+## Tests
+
+Pas de suite de tests automatisés. Vérification manuelle uniquement : tester en local contre l'API de prod (CORS autorise localhost) avant de pousser sur `main`, qui déclenche le deploy automatique.
 
 ## Développement local
 
@@ -107,7 +112,7 @@ Tous dans `api/`, requêtes JSON, réponses JSON. `api/middleware.php` fournit `
 ```
 teachers (id, email, password_hash, name, created_at)
 schools (id, name, created_at)
-teacher_school (teacher_id, school_id)           — N:N
+teacher_school (teacher_id, school_id)           — N:N (⚠ table abandonnée, ne plus maintenir ce lien)
 certs (id, teacher_id, teacher_name, title, url, expert, cert_date,
        descriptor1, descriptor2, reliability, three_phrases, context,
        content, reliability_text, references_text, is_shared, created_at)

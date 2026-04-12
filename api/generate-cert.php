@@ -58,7 +58,7 @@ if ($screenshot !== '') {
 // ── Fetch URL content if not provided ─────────────────────────────
 
 $fetchedContent = '';
-if ($content === '' && $url !== '') {
+if ($content === '' && !$imageData && $url !== '') {
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,

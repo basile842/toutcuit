@@ -1161,44 +1161,16 @@
         return;
       }
 
-      // --- Sheet 1: Résumé (score grid) ---
-      const header = ["Élève"];
-      for (const cid of certIds) {
-        const c = certs.get(cid);
-        header.push(`L${c.position} — ${c.title}`);
-      }
-      header.push("Total", "Max", "%");
-
-      const summaryData = [header];
-      for (const userId of studentIds) {
-        const links = students.get(userId);
-        const row = [userId];
-        let sTotal = 0, sMax = 0;
-        for (const cid of certIds) {
-          const d = links.get(cid);
-          if (d) {
-            row.push(`${d.score}/3`);
-            sTotal += d.score;
-            sMax += 3;
-          } else {
-            row.push("—");
-          }
-        }
-        row.push(sTotal, sMax, sMax ? Math.round(sTotal / sMax * 100) : 0);
-        summaryData.push(row);
-      }
-
-      // --- Sheet 2: Détail (one row per student×cert with all fields) ---
       const relLabels = { good: "Fiable", mid: "Moyennement fiable", bad: "Pas fiable" };
       const fmtRel = (v) => relLabels[(v || "").toLowerCase()] || v || "";
-      const detailHeader = [
+      const header = [
         "Élève", "CERT", "Position",
         "Descripteur 1 (élève)", "Descripteur 1 (attendu)", "D1 correct",
         "Descripteur 2 (élève)", "Descripteur 2 (attendu)", "D2 correct",
         "Fiabilité (élève)", "Fiabilité (attendue)", "Fiabilité correcte",
         "Commentaire", "Score", "Date",
       ];
-      const detailData = [detailHeader];
+      const data = [header];
       for (const userId of studentIds) {
         const links = students.get(userId);
         const raws = studentBest.get(userId);
@@ -1207,10 +1179,10 @@
           const r = raws.get(cid);
           const c = certs.get(cid);
           if (!d || !r) {
-            detailData.push([userId, c.title, c.position, "", c.descriptor1, "", "", c.descriptor2, "", "", fmtRel(c.reliability), "", "", "", ""]);
+            data.push([userId, c.title, c.position, "", c.descriptor1, "", "", c.descriptor2, "", "", fmtRel(c.reliability), "", "", "", ""]);
             continue;
           }
-          detailData.push([
+          data.push([
             userId,
             c.title,
             c.position,
@@ -1230,10 +1202,8 @@
         }
       }
 
-      // Build workbook with both sheets
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "Résumé");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detailData), "Détail");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Résultats");
       const safeName = name ? name.replace(/[\/\\?%*:|"<>]/g, "_") : "resultats";
       XLSX.writeFile(wb, `${safeName}_${code}.xlsx`);
     }

@@ -370,6 +370,8 @@
         first_label: r.first_label || "",
         last_label: r.last_label || "",
         reliability: r.reliability || "",
+        comment: r.comment || "",
+        created_at: r.created_at || "",
       }));
     }
 
@@ -434,15 +436,20 @@
         throw new Error("stop");
       }
 
-      // Per-student, per-link details
+      // Per-student, per-link details (+ raw rows for export)
       const allDetails = new Map();
+      const studentRaws = new Map();
       for (const r of scoredRows) {
         const userId = String(r.user_id || "Anonyme").trim();
         const linkId = r.link_id;
         const d = scoreResult(r, certs.get(linkId));
         if (!allDetails.has(userId)) allDetails.set(userId, new Map());
+        if (!studentRaws.has(userId)) studentRaws.set(userId, new Map());
         const prev = allDetails.get(userId).get(linkId);
-        if (!prev || d.score > prev.score) allDetails.get(userId).set(linkId, d);
+        if (!prev || d.score > prev.score) {
+          allDetails.get(userId).set(linkId, d);
+          studentRaws.get(userId).set(linkId, r);
+        }
       }
 
       // All link IDs sorted by position
@@ -619,32 +626,47 @@
 
       /* ── Export Excel ── */
       document.getElementById("exportBtn").addEventListener("click", () => {
-        const header = ["Élève"];
-        for (const linkId of allLinkIds) {
-          const cert = certs.get(linkId);
-          const num = cert?.linkNumber ?? "?";
-          const title = cert?.title || "Sans titre";
-          header.push(`L${num} — ${title}`);
-        }
-        header.push("Total", "Max", "%");
+        const relLabels = { good: "Fiable", mid: "Moyennement fiable", bad: "Pas fiable" };
+        const fmtRel = (v) => relLabels[(v || "").toLowerCase()] || v || "";
 
+        const header = [
+          "Élève", "CERT", "Position",
+          "Descripteur 1 (élève)", "Descripteur 1 (attendu)", "D1 correct",
+          "Descripteur 2 (élève)", "Descripteur 2 (attendu)", "D2 correct",
+          "Fiabilité (élève)", "Fiabilité (attendue)", "Fiabilité correcte",
+          "Commentaire", "Score", "Date",
+        ];
         const data = [header];
+
         for (const userId of studentIds) {
           const links = students.get(userId);
-          const row = [userId];
-          let sTotal = 0, sMax = 0;
+          const raws = studentRaws.get(userId);
           for (const linkId of allLinkIds) {
             const d = links.get(linkId);
-            if (d) {
-              row.push(`${d.score}/3`);
-              sTotal += d.score;
-              sMax += 3;
-            } else {
-              row.push("—");
+            const r = raws?.get(linkId);
+            const cert = certs.get(linkId);
+            if (!d || !r) {
+              data.push([userId, cert?.title || "", cert?.linkNumber ?? "", "", cert?.descriptor1 || "", "", "", cert?.descriptor2 || "", "", "", fmtRel(cert?.reliability), "", "", "", ""]);
+              continue;
             }
+            data.push([
+              userId,
+              cert?.title || "",
+              cert?.linkNumber ?? "",
+              (r.first_label || "").trim(),
+              cert?.descriptor1 || "",
+              d.firstOk ? "Oui" : "Non",
+              (r.last_label || "").trim(),
+              cert?.descriptor2 || "",
+              d.lastOk ? "Oui" : "Non",
+              fmtRel(r.reliability),
+              fmtRel(cert?.reliability),
+              d.relOk ? "Oui" : "Non",
+              r.comment || "",
+              `${d.score}/3`,
+              (r.created_at || "").substring(0, 19).replace("T", " "),
+            ]);
           }
-          row.push(sTotal, sMax, sMax ? Math.round(sTotal / sMax * 100) : 0);
-          data.push(row);
         }
 
         const ws = XLSX.utils.aoa_to_sheet(data);
