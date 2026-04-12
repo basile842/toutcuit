@@ -317,7 +317,16 @@
             letter-spacing: -0.02em;
         }
 
-        .result-btns { display: flex; gap: 8px; }
+        .result-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .gencert-model {
+            background: rgba(111,92,247,.08);
+            border: 1px solid rgba(111,92,247,.35);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: .8rem;
+            font-family: inherit;
+        }
 
         /* -- SECTION CARDS --------------------------------- */
         .section-card {
@@ -599,6 +608,10 @@
                 <button class="btn btn-ghost" id="editBtn" onclick="toggleEdit()">Éditer</button>
                 <button class="btn btn-ghost" onclick="copyAll()">Copier</button>
                 <button class="btn btn-ghost" onclick="downloadRtf()">Télécharger .rtf</button>
+                <select id="genCertModel" class="gencert-model" title="Modèle utilisé pour générer la CERT">
+                    <option value="gemini-2.5-flash">Gemini Flash</option>
+                    <option value="claude-sonnet-4-6">Claude Sonnet</option>
+                </select>
                 <button class="btn btn-primary" id="genCertBtn" onclick="genCert()">Générer une CERT</button>
                 <button class="btn btn-ghost" onclick="reset()">Nouvelle analyse</button>
             </div>
@@ -1064,8 +1077,8 @@ async function genCert() {
     btn.disabled = true;
     btn.textContent = 'Génération…';
     try {
-        let model = $('modelSelect')?.value || 'claude-sonnet-4-6';
-        if (model !== 'claude-sonnet-4-6' && model !== 'gemini-2.5-flash') model = 'claude-sonnet-4-6';
+        let model = $('genCertModel')?.value || 'gemini-2.5-flash';
+        if (model !== 'claude-sonnet-4-6' && model !== 'gemini-2.5-flash') model = 'gemini-2.5-flash';
         const res = await fetch('/api/ai/compose-cert.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

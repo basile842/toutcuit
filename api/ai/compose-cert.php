@@ -174,7 +174,12 @@ if ($isGemini) {
     $payload = json_encode([
         'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
         'contents'           => [['parts' => [['text' => $userMessage]]]],
-        'generationConfig'   => ['maxOutputTokens' => 2048, 'temperature' => 0.2],
+        'generationConfig'   => [
+            'maxOutputTokens'  => 4096,
+            'temperature'      => 0.2,
+            'responseMimeType' => 'application/json',
+            'thinkingConfig'   => ['thinkingBudget' => 0],
+        ],
     ], JSON_UNESCAPED_UNICODE);
 
     for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
