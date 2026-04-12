@@ -394,6 +394,22 @@
             background: var(--border);
         }
 
+        /* -- EDIT MODE (matches review.html amber palette) --- */
+        .section-body li.editable {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 6px;
+            padding: 4px 8px 4px 20px;
+            margin-left: -4px;
+            cursor: text;
+            outline: none;
+        }
+        .section-body li.editable:focus {
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, .25);
+        }
+        .section-body li.editable::before { left: 8px; top: 13px; background: #d97706; }
+        .btn-edit-active { background: #fef3c7 !important; border-color: #fbbf24 !important; color: #92400e !important; }
+
         /* -- REFERENCES ------------------------------------ */
         .refs {
             background: var(--panel);
@@ -481,7 +497,7 @@
     <!-- -- INPUT ---------------------------------------- -->
     <div class="input-card" id="inputCard">
         <h1>Aide à l'analyse</h1>
-        <p class="lead">Collez l'URL d'une information. L'IA fournira des éléments de contexte et de contenu pour aider votre analyse.</p>
+        <p class="lead">Collez l'URL d'une information. L'IA fournira des éléments de contexte et de contenu pour vous aider dans votre analyse.</p>
 
         <label for="urlInput">URL de l'information</label>
         <input type="url" id="urlInput" placeholder="https://exemple.com/article-a-analyser" autofocus>
@@ -538,8 +554,9 @@
         <div class="result-bar">
             <h2>Éléments d'analyse</h2>
             <div class="result-btns">
+                <button class="btn btn-ghost" id="editBtn" onclick="toggleEdit()">Éditer</button>
                 <button class="btn btn-ghost" onclick="copyAll()">Copier</button>
-                <button class="btn btn-ghost" onclick="downloadTxt()">Télécharger .txt</button>
+                <button class="btn btn-ghost" onclick="downloadRtf()">Télécharger .rtf</button>
                 <button class="btn btn-ghost" onclick="reset()">Nouvelle analyse</button>
             </div>
         </div>
@@ -673,6 +690,7 @@ async function generate() {
 
 // -- Render -------------------------------------------------
 let lastData = null;
+let editMode = false;
 
 function render(d) {
     lastData = d;
@@ -680,20 +698,20 @@ function render(d) {
 
     const ctx = d.context || {};
     $('contextCard').innerHTML = sectionCard('C', 'ctx', 'Contexte',
-        subList('Elements concrets', ctx.concrete) +
-        subList('Elements thematiques', ctx.thematic)
+        subList('Elements concrets', ctx.concrete, 'context.concrete') +
+        subList('Elements thematiques', ctx.thematic, 'context.thematic')
     );
 
     const cnt = d.content || {};
     $('contentCard').innerHTML = sectionCard('C', 'cnt', 'Contenu',
-        subList('Affirmations principales', cnt.claims) +
-        subList('Style et forme', cnt.style) +
-        subList('Recoupements', cnt.crosscheck)
+        subList('Affirmations principales', cnt.claims, 'content.claims') +
+        subList('Style et forme', cnt.style, 'content.style') +
+        subList('Recoupements', cnt.crosscheck, 'content.crosscheck')
     );
 
     const vis = d.visual || [];
     if (vis.length) {
-        $('visualCard').innerHTML = sectionCard('V', 'vis', 'Analyse visuelle', bulletList(vis));
+        $('visualCard').innerHTML = sectionCard('V', 'vis', 'Analyse visuelle', bulletList(vis, 'visual'));
         $('visualCard').style.display = '';
     } else {
         $('visualCard').innerHTML = '';
@@ -725,14 +743,44 @@ function sectionCard(letter, cls, title, bodyHtml) {
         <div class="section-body">${bodyHtml}</div></div>`;
 }
 
-function subList(title, items) {
+function subList(title, items, pathPrefix) {
     if (!items || !items.length) return '';
-    return `<h5>${esc(title)}</h5>${bulletList(items)}`;
+    return `<h5>${esc(title)}</h5>${bulletList(items, pathPrefix)}`;
 }
 
-function bulletList(items) {
+function bulletList(items, pathPrefix) {
     if (!items || !items.length) return '';
-    return '<ul>' + items.map(item => `<li>${linkRefs(esc(item))}</li>`).join('') + '</ul>';
+    return '<ul>' + items.map((item, i) => {
+        const path = pathPrefix ? `${pathPrefix}.${i}` : '';
+        if (editMode && path) {
+            return `<li class="editable" contenteditable="plaintext-only" data-path="${path}" onblur="saveEdit(this)">${esc(item)}</li>`;
+        }
+        return `<li${path ? ` data-path="${path}"` : ''}>${linkRefs(esc(item))}</li>`;
+    }).join('') + '</ul>';
+}
+
+function toggleEdit() {
+    editMode = !editMode;
+    const btn = $('editBtn');
+    btn.textContent = editMode ? 'Terminer' : 'Éditer';
+    btn.classList.toggle('btn-edit-active', editMode);
+    if (lastData) render(lastData);
+}
+
+function saveEdit(el) {
+    const path = el.dataset.path;
+    if (!path || !lastData) return;
+    const parts = path.split('.');
+    let obj = lastData;
+    for (let i = 0; i < parts.length - 1; i++) {
+        obj = obj?.[parts[i]];
+        if (!obj) return;
+    }
+    const last = parts[parts.length - 1];
+    const idx = parseInt(last, 10);
+    if (Number.isFinite(idx) && Array.isArray(obj)) {
+        obj[idx] = el.textContent.trim();
+    }
 }
 
 function linkRefs(html) {
@@ -812,11 +860,20 @@ function buildPlainText() {
     return t;
 }
 
+// Commit any pending edit before export
+function flushEdits() {
+    if (editMode && document.activeElement && document.activeElement.matches('li.editable')) {
+        document.activeElement.blur();
+    }
+}
+
 // -- Copy ---------------------------------------------------
 function copyAll() {
+    flushEdits();
     navigator.clipboard.writeText(buildPlainText()).then(() => {
-        const b = document.querySelector('.result-btns .btn-ghost');
-        const o = b.textContent; b.textContent = 'Copie !';
+        const b = document.querySelector('.result-btns .btn-ghost[onclick^="copyAll"]');
+        if (!b) return;
+        const o = b.textContent; b.textContent = 'Copié !';
         setTimeout(() => b.textContent = o, 1400);
     });
 }
@@ -833,8 +890,96 @@ function shortModel(m) {
     return map[m] || m || 'IA';
 }
 
-function downloadTxt() {
-    const blob = new Blob([buildPlainText()], { type: 'text/plain;charset=utf-8' });
+// Escape a string for RTF body: backslash/braces + non-ASCII as \uN?
+function rtfEscape(str) {
+    let out = '';
+    for (const ch of String(str)) {
+        const code = ch.codePointAt(0);
+        if (ch === '\\' || ch === '{' || ch === '}') {
+            out += '\\' + ch;
+        } else if (code === 0x0A) {
+            out += '\\line ';
+        } else if (code < 128) {
+            out += ch;
+        } else if (code <= 0xFFFF) {
+            const signed = code > 32767 ? code - 65536 : code;
+            out += '\\u' + signed + '?';
+        } else {
+            // surrogate pair for code points > U+FFFF
+            const cp = code - 0x10000;
+            const hi = 0xD800 + (cp >> 10);
+            const lo = 0xDC00 + (cp & 0x3FF);
+            out += '\\u' + (hi > 32767 ? hi - 65536 : hi) + '?';
+            out += '\\u' + (lo > 32767 ? lo - 65536 : lo) + '?';
+        }
+    }
+    return out;
+}
+
+function buildRtf() {
+    if (!lastData) return '';
+    const d = lastData;
+    const modelName = shortModel(d.usage?.model);
+
+    const esc = rtfEscape;
+    const para = (txt) => esc(txt) + '\\par\n';
+    const bold = (txt) => '{\\b ' + esc(txt) + '}';
+    const boldPara = (txt) => bold(txt) + '\\par\n';
+
+    let body = '';
+    body += boldPara("Aide à l'analyse");
+    body += para(urlEl.value.trim());
+    body += para('Modèle : ' + modelName);
+    body += '\\par\n';
+
+    const addList = (title, items) => {
+        if (!items?.length) return;
+        body += boldPara(title);
+        items.forEach(s => { body += para('\u2022  ' + s); });
+        body += '\\par\n';
+    };
+
+    const ctx = d.context || {};
+    if (ctx.concrete?.length || ctx.thematic?.length) {
+        body += boldPara('— Contexte —');
+        addList('Éléments concrets', ctx.concrete);
+        addList('Éléments thématiques', ctx.thematic);
+    }
+
+    const cnt = d.content || {};
+    if (cnt.claims?.length || cnt.style?.length || cnt.crosscheck?.length) {
+        body += boldPara('— Contenu —');
+        addList('Affirmations principales', cnt.claims);
+        addList('Style et forme', cnt.style);
+        addList('Recoupements', cnt.crosscheck);
+    }
+
+    const vis = d.visual || [];
+    if (vis.length) {
+        body += boldPara('— Analyse visuelle —');
+        vis.forEach(s => { body += para('\u2022  ' + s); });
+        body += '\\par\n';
+    }
+
+    const refs = d.references || [];
+    if (refs.length) {
+        body += boldPara('— Références —');
+        refs.forEach((u, i) => { body += para('[' + (i + 1) + '] ' + u); });
+        body += '\\par\n';
+    }
+
+    body += '{\\i ' + esc('Éléments générés par IA — à vérifier') + '}\\par\n';
+
+    return '{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0'
+        + '{\\fonttbl{\\f0 Helvetica;}}'
+        + '\\fs22\n'
+        + body
+        + '}';
+}
+
+function downloadRtf() {
+    flushEdits();
+    const blob = new Blob([buildRtf()], { type: 'application/rtf;charset=utf-8' });
     const now = new Date();
     const ts = now.getFullYear() + '-'
         + String(now.getMonth()+1).padStart(2,'0') + '-'
@@ -844,13 +989,16 @@ function downloadTxt() {
     const model = shortModel(lastData?.usage?.model);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${model}_Analyse_${ts}.txt`;
+    a.download = `${model}_Analyse_${ts}.rtf`;
     a.click();
     URL.revokeObjectURL(a.href);
 }
 
 // -- Reset --------------------------------------------------
 function reset() {
+    editMode = false;
+    const eb = $('editBtn');
+    if (eb) { eb.textContent = 'Éditer'; eb.classList.remove('btn-edit-active'); }
     hide('results'); show('inputCard');
     urlEl.value = '';
     $('contentInput').value = '';
