@@ -396,18 +396,53 @@
 
         /* -- EDIT MODE (matches review.html amber palette) --- */
         .section-body li.editable {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
             background: #fef3c7;
             border: 1px solid #fbbf24;
             border-radius: 6px;
-            padding: 4px 8px 4px 20px;
-            margin-left: -4px;
-            cursor: text;
+            padding: 4px 8px;
+            margin-bottom: 5px;
+            padding-left: 8px;
+        }
+        .section-body li.editable::before { display: none; }
+        .section-body li.editable .edit-text {
+            flex: 1;
             outline: none;
+            cursor: text;
+            padding: 2px 4px;
+            border-radius: 4px;
+            min-height: 1.5em;
         }
-        .section-body li.editable:focus {
-            box-shadow: 0 0 0 3px rgba(251, 191, 36, .25);
+        .section-body li.editable .edit-text:focus {
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, .35);
+            background: #fffbeb;
         }
-        .section-body li.editable::before { left: 8px; top: 13px; background: #d97706; }
+        .item-del {
+            flex: 0 0 auto;
+            background: transparent;
+            border: none;
+            color: #92400e;
+            cursor: pointer;
+            font-size: 1.15rem;
+            line-height: 1;
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+        .item-del:hover { background: rgba(146, 64, 14, .12); }
+        .item-add {
+            margin: 4px 0 6px;
+            background: transparent;
+            border: 1px dashed #fbbf24;
+            color: #92400e;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: .82rem;
+            font-weight: 600;
+        }
+        .item-add:hover { background: #fef3c7; }
         .btn-edit-active { background: #fef3c7 !important; border-color: #fbbf24 !important; color: #92400e !important; }
 
         /* -- REFERENCES ------------------------------------ */
@@ -710,7 +745,7 @@ function render(d) {
     );
 
     const vis = d.visual || [];
-    if (vis.length) {
+    if (vis.length || editMode) {
         $('visualCard').innerHTML = sectionCard('V', 'vis', 'Analyse visuelle', bulletList(vis, 'visual'));
         $('visualCard').style.display = '';
     } else {
@@ -744,19 +779,27 @@ function sectionCard(letter, cls, title, bodyHtml) {
 }
 
 function subList(title, items, pathPrefix) {
-    if (!items || !items.length) return '';
-    return `<h5>${esc(title)}</h5>${bulletList(items, pathPrefix)}`;
+    if (!editMode && (!items || !items.length)) return '';
+    return `<h5>${esc(title)}</h5>${bulletList(items || [], pathPrefix)}`;
 }
 
 function bulletList(items, pathPrefix) {
-    if (!items || !items.length) return '';
-    return '<ul>' + items.map((item, i) => {
+    if (!editMode && (!items || !items.length)) return '';
+    const arr = items || [];
+    const lis = arr.map((item, i) => {
         const path = pathPrefix ? `${pathPrefix}.${i}` : '';
         if (editMode && path) {
-            return `<li class="editable" contenteditable="plaintext-only" data-path="${path}" onblur="saveEdit(this)">${esc(item)}</li>`;
+            return `<li class="editable" data-path="${path}">
+                <span class="edit-text" contenteditable="plaintext-only" onblur="saveEditFromSpan(this)">${esc(item)}</span>
+                <button type="button" class="item-del" onclick="removeItem('${path}')" aria-label="Supprimer">×</button>
+            </li>`;
         }
         return `<li${path ? ` data-path="${path}"` : ''}>${linkRefs(esc(item))}</li>`;
-    }).join('') + '</ul>';
+    }).join('');
+    const addBtn = editMode && pathPrefix
+        ? `<button type="button" class="item-add" onclick="addItem('${pathPrefix}')">+ Ajouter</button>`
+        : '';
+    return `<ul>${lis}</ul>${addBtn}`;
 }
 
 function toggleEdit() {
@@ -767,20 +810,48 @@ function toggleEdit() {
     if (lastData) render(lastData);
 }
 
-function saveEdit(el) {
-    const path = el.dataset.path;
-    if (!path || !lastData) return;
-    const parts = path.split('.');
+function getArrayAtPrefix(prefix) {
+    if (!lastData) return null;
+    const parts = prefix.split('.');
     let obj = lastData;
-    for (let i = 0; i < parts.length - 1; i++) {
-        obj = obj?.[parts[i]];
-        if (!obj) return;
+    for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const last = i === parts.length - 1;
+        if (obj[p] == null) obj[p] = last ? [] : {};
+        obj = obj[p];
     }
-    const last = parts[parts.length - 1];
-    const idx = parseInt(last, 10);
-    if (Number.isFinite(idx) && Array.isArray(obj)) {
-        obj[idx] = el.textContent.trim();
-    }
+    return Array.isArray(obj) ? obj : null;
+}
+
+function saveEditFromSpan(span) {
+    const li = span.closest('li');
+    if (!li) return;
+    const path = li.dataset.path;
+    if (!path) return;
+    const parts = path.split('.');
+    const idx = parseInt(parts.pop(), 10);
+    const arr = getArrayAtPrefix(parts.join('.'));
+    if (arr && Number.isFinite(idx)) arr[idx] = span.textContent.trim();
+}
+
+function removeItem(path) {
+    const parts = path.split('.');
+    const idx = parseInt(parts.pop(), 10);
+    const arr = getArrayAtPrefix(parts.join('.'));
+    if (!arr || !Number.isFinite(idx)) return;
+    arr.splice(idx, 1);
+    render(lastData);
+}
+
+function addItem(prefix) {
+    const arr = getArrayAtPrefix(prefix);
+    if (!arr) return;
+    arr.push('');
+    render(lastData);
+    setTimeout(() => {
+        const el = document.querySelector(`li[data-path="${prefix}.${arr.length - 1}"] .edit-text`);
+        if (el) { el.focus(); }
+    }, 0);
 }
 
 function linkRefs(html) {
@@ -862,9 +933,8 @@ function buildPlainText() {
 
 // Commit any pending edit before export
 function flushEdits() {
-    if (editMode && document.activeElement && document.activeElement.matches('li.editable')) {
-        document.activeElement.blur();
-    }
+    const a = document.activeElement;
+    if (editMode && a && a.classList && a.classList.contains('edit-text')) a.blur();
 }
 
 // -- Copy ---------------------------------------------------
