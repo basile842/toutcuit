@@ -128,9 +128,9 @@
       </p>
 
       <div class="import-zone" id="importZone">
-        <input type="file" id="importFile" accept=".docx" />
+        <input type="file" id="importFile" accept=".docx,.rtf" />
         <div class="import-zone-label">
-          <strong>Importer un fichier Word</strong> — glisser-déposer ou cliquer pour sélectionner un .docx téléchargé depuis CERTools
+          <strong>Importer un fichier</strong> — glisser-déposer ou cliquer pour sélectionner un .docx (CERTools) ou un .rtf (toutcuit.ch)
         </div>
         <div class="import-status" id="importStatus"></div>
       </div>
@@ -255,6 +255,7 @@
 
           <div class="btn-row">
             <button class="btn" type="submit">Ajouter le lien</button>
+            <button class="btn" type="button" id="downloadRtfBtn">Télécharger RTF</button>
             <button class="btn" type="button" id="resetBtn">Réinitialiser</button>
           </div>
         </form>
@@ -308,6 +309,8 @@
         if (p && (Date.now() - (p.createdAt || 0)) < 10 * 60 * 1000) {
           if (p.title)      document.getElementById("titleInput").value      = p.title;
           if (p.url)        document.getElementById("urlInput").value        = p.url;
+          if (p.expert)     document.getElementById("expertInput").value     = p.expert;
+          if (p.date)       document.getElementById("dateInput").value       = p.date;
           if (p.context)    document.getElementById("contextInput").value    = p.context;
           if (p.content)    document.getElementById("contentInput").value    = p.content;
           if (p.references) document.getElementById("referencesInput").value = p.references;
@@ -432,20 +435,22 @@
       e.preventDefault();
       importZone.classList.remove("dragover");
       const file = e.dataTransfer?.files?.[0];
-      if (file) processDocx(file);
+      if (file) processImport(file);
     });
     importFile.addEventListener("change", () => {
       const file = importFile.files?.[0];
-      if (file) processDocx(file);
+      if (file) processImport(file);
     });
 
-    async function processDocx(file) {
-      if (!file.name.endsWith(".docx")) {
-        importStatus.textContent = "Fichier non supporté. Utilisez un .docx.";
-        importStatus.className = "import-status err";
-        return;
-      }
+    async function processImport(file) {
+      const name = (file.name || "").toLowerCase();
+      if (name.endsWith(".rtf")) return processRtf(file);
+      if (name.endsWith(".docx")) return processDocx(file);
+      importStatus.textContent = "Fichier non supporté. Utilisez un .docx ou un .rtf.";
+      importStatus.className = "import-status err";
+    }
 
+    async function processDocx(file) {
       importStatus.textContent = "Lecture du fichier...";
       importStatus.className = "import-status";
 
@@ -453,6 +458,25 @@
         const zip = await JSZip.loadAsync(file);
         const xmlText = await zip.file("word/document.xml").async("text");
         const parsed = parseDocxXml(xmlText);
+        fillForm(parsed);
+
+        importStatus.textContent = `Import réussi : "${parsed.title || '(sans titre)'}"`;
+        importStatus.className = "import-status ok";
+      } catch (err) {
+        console.error("Import error:", err);
+        importStatus.textContent = "Erreur lors de l'import : " + err.message;
+        importStatus.className = "import-status err";
+      }
+    }
+
+    async function processRtf(file) {
+      importStatus.textContent = "Lecture du fichier...";
+      importStatus.className = "import-status";
+
+      try {
+        const text = await file.text();
+        const plain = rtfToText(text);
+        const parsed = parseCertRtf(plain);
         fillForm(parsed);
 
         importStatus.textContent = `Import réussi : "${parsed.title || '(sans titre)'}"`;
@@ -671,6 +695,180 @@
         }
       }
     }
+
+    /* ============================
+       RTF export / import (shared format with /review)
+    ============================ */
+    // Escape a string for RTF body: backslash/braces + non-ASCII as \uN?
+    function rtfEscape(str) {
+      let out = "";
+      for (const ch of String(str)) {
+        const code = ch.codePointAt(0);
+        if (ch === "\\" || ch === "{" || ch === "}") {
+          out += "\\" + ch;
+        } else if (code === 0x0A) {
+          out += "\\line ";
+        } else if (code < 128) {
+          out += ch;
+        } else if (code <= 0xFFFF) {
+          const signed = code > 32767 ? code - 65536 : code;
+          out += "\\u" + signed + "?";
+        } else {
+          const cp = code - 0x10000;
+          const hi = 0xD800 + (cp >> 10);
+          const lo = 0xDC00 + (cp & 0x3FF);
+          out += "\\u" + (hi > 32767 ? hi - 65536 : hi) + "?";
+          out += "\\u" + (lo > 32767 ? lo - 65536 : lo) + "?";
+        }
+      }
+      return out;
+    }
+
+    function buildCertRtf(data) {
+      const esc = rtfEscape;
+      const bold = (t) => "{\\b " + esc(t) + "}";
+      const line = (label, val) => bold(label) + " : " + esc(val || "") + "\\par\n";
+      const block = (label, val) => {
+        let s = bold(label) + " :\\par\n";
+        const text = String(val || "");
+        if (text) {
+          // Preserve internal newlines as \line
+          s += esc(text) + "\\par\n";
+        } else {
+          s += "\\par\n";
+        }
+        return s + "\\par\n";
+      };
+      let body = "";
+      body += line("Titre", data.title);
+      body += line("URL", data.url);
+      body += line("Expert", data.expert);
+      body += line("Date", data.date);
+      body += line("Descripteur 1", data.descriptor1);
+      body += line("Descripteur 2", data.descriptor2);
+      body += line("Fiabilité", data.reliability);
+      body += "\\par\n";
+      body += block("3 phrases", data.threePhrases);
+      body += block("Contexte", data.context);
+      body += block("Contenu", data.content);
+      body += block("Fiabilité (explication)", data.reliabilityText);
+      body += block("Références", data.references);
+      return "{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0"
+        + "{\\fonttbl{\\f0 Helvetica;}}"
+        + "\\fs22\n" + body + "}";
+    }
+
+    // Minimal RTF → plaintext extractor. Handles our own exports; not a general parser.
+    function rtfToText(rtf) {
+      let s = String(rtf);
+      // Strip well-known header groups
+      s = s.replace(/\{\\\*?\\(?:fonttbl|colortbl|stylesheet|info|generator|listtable|listoverridetable|rsidtbl)[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g, "");
+      // Replace paragraph / line breaks
+      s = s.replace(/\\par\b\s?/g, "\n");
+      s = s.replace(/\\line\b\s?/g, "\n");
+      s = s.replace(/\\tab\b\s?/g, "\t");
+      // Unicode escapes \uN? (signed 16-bit)
+      s = s.replace(/\\u(-?\d+)\??/g, (_, n) => {
+        let code = parseInt(n, 10);
+        if (code < 0) code += 65536;
+        return String.fromCharCode(code);
+      });
+      // Hex escapes \'XX (windows-1252 fallback — fine for ASCII-ish; non-ASCII handled via \u)
+      s = s.replace(/\\'([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+      // Escaped literals
+      s = s.replace(/\\([\\{}])/g, "$1");
+      // Strip remaining control words (\word optionally followed by signed digits, then optional space)
+      s = s.replace(/\\[a-zA-Z]+-?\d*\s?/g, "");
+      // Strip braces
+      s = s.replace(/[{}]/g, "");
+      return s;
+    }
+
+    function parseCertRtf(plain) {
+      const labelMap = {
+        "titre": "title",
+        "url": "url",
+        "expert": "expert",
+        "date": "date",
+        "descripteur 1": "descriptor1",
+        "descripteur 2": "descriptor2",
+        "fiabilité": "reliability",
+        "fiabilite": "reliability",
+        "3 phrases": "threePhrases",
+        "contexte": "context",
+        "contenu": "content",
+        "fiabilité (explication)": "reliabilityText",
+        "fiabilite (explication)": "reliabilityText",
+        "références": "references",
+        "references": "references",
+      };
+      const singleLine = new Set(["title","url","expert","date","descriptor1","descriptor2","reliability"]);
+      const lines = plain.split(/\r?\n/);
+      const out = {};
+      let currentKey = null;
+      let buf = [];
+      const flush = () => {
+        if (currentKey && !singleLine.has(currentKey)) {
+          out[currentKey] = buf.join("\n").replace(/\n+$/, "").trim();
+        }
+        buf = [];
+      };
+      for (const raw of lines) {
+        const line = raw;
+        const m = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
+        let matchedLabel = false;
+        if (m) {
+          const label = m[1].toLowerCase().trim();
+          const key = labelMap[label];
+          if (key) {
+            matchedLabel = true;
+            flush();
+            if (singleLine.has(key)) {
+              out[key] = m[2].trim();
+              currentKey = null;
+            } else {
+              currentKey = key;
+              if (m[2].trim()) buf.push(m[2]);
+            }
+          }
+        }
+        if (!matchedLabel && currentKey) buf.push(line);
+      }
+      flush();
+      return out;
+    }
+
+    function collectFormData() {
+      return {
+        title: document.getElementById("titleInput").value.trim(),
+        url: document.getElementById("urlInput").value.trim(),
+        expert: document.getElementById("expertInput").value.trim(),
+        date: document.getElementById("dateInput").value.trim(),
+        descriptor1: document.getElementById("descriptor1Input").value,
+        descriptor2: document.getElementById("descriptor2Input").value,
+        reliability: document.getElementById("reliabilityInput").value,
+        threePhrases: document.getElementById("threePhrasesInput").value,
+        context: document.getElementById("contextInput").value,
+        content: document.getElementById("contentInput").value,
+        reliabilityText: document.getElementById("reliabilityTextInput").value,
+        references: document.getElementById("referencesInput").value,
+      };
+    }
+
+    function sanitizeFilename(s) {
+      return String(s || "CERT").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 60) || "CERT";
+    }
+
+    document.getElementById("downloadRtfBtn").addEventListener("click", () => {
+      const data = collectFormData();
+      const rtf = buildCertRtf(data);
+      const blob = new Blob([rtf], { type: "application/rtf;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "CERT_" + sanitizeFilename(data.title) + ".rtf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
   </script>
 <footer style="text-align:center;padding:18px 12px;font-size:.7rem;color:rgba(111,92,247,.45);letter-spacing:.01em;">
   © 2026 CERTIFY Community SA · CHE-241.821.797 · Rue de la Coulouvrenière 8, 1204 Genève

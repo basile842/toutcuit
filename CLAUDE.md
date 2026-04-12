@@ -21,26 +21,24 @@ Prototype avancé Certify avec backend PHP/MySQL — sessions de classe, soumiss
 - **Écriture épicène** pour les personnes uniquement (élèves, enseignant·es…), pas pour les objets
 - `api/config.php` est **gitignored** — contient DB_HOST, DB_NAME, DB_USER, DB_PASS, JWT_SECRET, JWT_LIFETIME, ANTHROPIC_API_KEY
 
-## Tests
+## Commandes
 
-Pas de suite de tests automatisés. Vérification manuelle uniquement : tester en local contre l'API de prod (CORS autorise localhost) avant de pousser sur `main`, qui déclenche le deploy automatique.
-
-## Développement local
-
-Pas de build. Servir avec un serveur HTTP local (nécessaire pour les ES modules) :
+Pas de build, pas de package manager, pas de tests automatisés. Les seules commandes utiles :
 
 ```bash
-npx serve .          # ou python3 -m http.server 8000
+npx serve .                     # sert le frontend sur :3000 (ou python3 -m http.server 8000)
+git push origin main            # ⚠ déclenche le deploy prod FTPS immédiat
 ```
 
-Le frontend tourne en local mais l'API pointe vers `https://toutcuit.ch/api/` (CORS whiteliste tout localhost en dev). Pour tester l'API en local, il faut un PHP + MySQL local avec son propre `api/config.php`.
+Le frontend tourne en local mais l'API pointe vers `https://toutcuit.ch/api/` (CORS whiteliste tout localhost en dev). Pour tester `api/ai/review.php` ou autres endpoints en local, il faut un PHP + MySQL local avec son propre `api/config.php`.
+
+Vérification toujours manuelle — tester en local contre l'API de prod avant de pousser.
 
 ## Déploiement
 
 - GitHub Actions → FTPS vers Infomaniak (`.github/workflows/deploy.yml`)
-- Push sur `main` déclenche le deploy automatique
-- Redirection www → non-www (`.htaccess`)
-- Gzip activé (`.user.ini`)
+- **Push sur `main` = deploy prod immédiat**, site utilisé par des enseignants en séance. Toujours demander confirmation avant `git push` ou `git commit` sur `main`.
+- Redirection www → non-www (`.htaccess`), gzip via `.user.ini`
 
 ## Routage URL
 
@@ -95,7 +93,7 @@ Tous dans `api/`, requêtes JSON, réponses JSON. `api/middleware.php` fournit `
 
 ### AI (`api/ai/`)
 - `review.php` [POST] — envoie les champs texte d'une CERT à Claude Sonnet pour révision éditoriale. Si `three_phrases` est vide, demande à Claude de le générer. Clé API dans `config.php` (`ANTHROPIC_API_KEY`).
-- `review-prompt.md` — template du prompt système, chargé par `review.php` via `file_get_contents()` puis `strtr()` sur les placeholders `{{METADATA}}`, `{{FIELDS}}`, `{{GENERATE_BLOCK}}`. **Édite ce fichier pour modifier les règles de révision** sans toucher au PHP. Bloqué en HTTP par `api/.htaccess` (`<FilesMatch "\.md$">`).
+- **`review-prompt.md`** — template du prompt système, chargé par `review.php` via `file_get_contents()` puis `strtr()` sur les placeholders `{{METADATA}}`, `{{FIELDS}}`, `{{GENERATE_BLOCK}}`. **C'est le point d'édition principal pour modifier le comportement de la révision IA** — éditer ce fichier plutôt que `review.php`. Bloqué en HTTP par `api/.htaccess` (`<FilesMatch "\.md$">`).
 
 ### Schools (`api/schools/`)
 - `list.php` [GET], `save.php` [POST]
@@ -131,7 +129,7 @@ Points clés : `dedup_key` empêche les soumissions en double, `is_shared` sur c
 
 ### Éditeur (`editor.html`)
 
-Console password-protected (pas de JWT, mot de passe frontend) avec vues :
+Console password-protected (pas de JWT, mot de passe hardcodé frontend dans `editor.html` — constante `PASSWORD`) avec vues :
 - **Home** : liens vers Enseignants, Séances, Stock de CERTs, et outils (Révision)
 - **Enseignants** : créer, lister, supprimer des comptes
 - **Séances** : lister avec détail dépliable (CERTs, stats, feed, dupliquer, télécharger Excel)

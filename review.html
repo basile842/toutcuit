@@ -762,6 +762,7 @@
               <span class="cost-amount" id="costAmount"></span>
               <span class="cost-tokens" id="costTokens"></span>
             </span>
+            <button class="btn-review" id="downloadRtfBtn" style="background:transparent;color:var(--accent);border:1px solid var(--accent);" title="Télécharger au format RTF">RTF</button>
             <button class="btn-review" id="reviewBtn">Analyser</button>
           </div>
         </div>
@@ -1405,6 +1406,107 @@
       d.textContent = s;
       return d.innerHTML;
     }
+
+    // ── RTF export (shared format with /descripteurs/pages/certs) ──
+    function rtfEscape(str) {
+      let out = "";
+      for (const ch of String(str)) {
+        const code = ch.codePointAt(0);
+        if (ch === "\\" || ch === "{" || ch === "}") {
+          out += "\\" + ch;
+        } else if (code === 0x0A) {
+          out += "\\line ";
+        } else if (code < 128) {
+          out += ch;
+        } else if (code <= 0xFFFF) {
+          const signed = code > 32767 ? code - 65536 : code;
+          out += "\\u" + signed + "?";
+        } else {
+          const cp = code - 0x10000;
+          const hi = 0xD800 + (cp >> 10);
+          const lo = 0xDC00 + (cp & 0x3FF);
+          out += "\\u" + (hi > 32767 ? hi - 65536 : hi) + "?";
+          out += "\\u" + (lo > 32767 ? lo - 65536 : lo) + "?";
+        }
+      }
+      return out;
+    }
+
+    function buildCertRtf(data) {
+      const e = rtfEscape;
+      const bold = (t) => "{\\b " + e(t) + "}";
+      const line = (label, val) => bold(label) + " : " + e(val || "") + "\\par\n";
+      const block = (label, val) => bold(label) + " :\\par\n" + e(String(val || "")) + "\\par\n\\par\n";
+      let body = "";
+      body += line("Titre", data.title);
+      body += line("URL", data.url);
+      body += line("Expert", data.expert);
+      body += line("Date", data.date);
+      body += line("Descripteur 1", data.descriptor1);
+      body += line("Descripteur 2", data.descriptor2);
+      body += line("Fiabilité", data.reliability);
+      body += "\\par\n";
+      body += block("3 phrases", data.threePhrases);
+      body += block("Contexte", data.context);
+      body += block("Contenu", data.content);
+      body += block("Fiabilité (explication)", data.reliabilityText);
+      body += block("Références", data.references);
+      return "{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0"
+        + "{\\fonttbl{\\f0 Helvetica;}}"
+        + "\\fs22\n" + body + "}";
+    }
+
+    function reliabilityToFr(val) {
+      const v = String(val || "").toLowerCase();
+      if (v === "good") return "Fiable";
+      if (v === "mid") return "Indéterminé";
+      if (v === "bad") return "Pas fiable";
+      return val || "";
+    }
+
+    function isoToFrDate(val) {
+      if (!val) return "";
+      const m = String(val).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+      return val;
+    }
+
+    function sanitizeFilename(s) {
+      return String(s || "CERT").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 60) || "CERT";
+    }
+
+    // Export current CERT — uses final values (respecting accept/edit decisions) when available.
+    function downloadCurrentRtf() {
+      if (!selectedCert) return;
+      const fv = (key) => {
+        // getFinalValue is defined later; fall back to raw field if no decision machinery ran yet.
+        try { return typeof getFinalValue === "function" ? getFinalValue(key) : (selectedCert[key] || ""); }
+        catch { return selectedCert[key] || ""; }
+      };
+      const data = {
+        title: fv("title") || selectedCert.title || "",
+        url: selectedCert.url || "",
+        expert: selectedCert.expert || "",
+        date: isoToFrDate(selectedCert.cert_date),
+        descriptor1: selectedCert.descriptor1 || "",
+        descriptor2: selectedCert.descriptor2 || "",
+        reliability: reliabilityToFr(selectedCert.reliability),
+        threePhrases: fv("three_phrases") || selectedCert.three_phrases || "",
+        context: fv("context") || selectedCert.context || "",
+        content: fv("content") || selectedCert.content || "",
+        reliabilityText: fv("reliability_text") || selectedCert.reliability_text || "",
+        references: fv("references_text") || selectedCert.references_text || "",
+      };
+      const rtf = buildCertRtf(data);
+      const blob = new Blob([rtf], { type: "application/rtf;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "CERT_" + sanitizeFilename(data.title) + ".rtf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById("downloadRtfBtn").addEventListener("click", downloadCurrentRtf);
   </script>
 
 </body>
