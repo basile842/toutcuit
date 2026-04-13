@@ -565,7 +565,7 @@
     <!-- -- INPUT ---------------------------------------- -->
     <div class="input-card" id="inputCard">
         <h1>Aide à l'analyse</h1>
-        <p class="lead">Collez l'URL d'une information. L'IA fournira des éléments de contexte et de contenu pour vous aider dans votre analyse.</p>
+        <p class="lead">Collez l'URL d'une information. S'il s'agit d'un texte, copiez-collez le également. S'il s'agit d'une vidéo, copiez-collez une photo d'écran avec des visuels explicites. L'IA fournira des éléments de contexte et de contenu pour vous aider dans votre analyse.</p>
 
         <label for="urlInput">URL de l'information</label>
         <input type="url" id="urlInput" placeholder="https://exemple.com/article-a-analyser" autofocus>
@@ -633,7 +633,7 @@
                 </button>
                 <button class="btn btn-ghost btn-icon" onclick="downloadRtf()" title="Télécharger au format RTF">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span>RTF</span>
+                    <span>Télécharger .rtf</span>
                 </button>
                 <span class="sep" aria-hidden="true"></span>
                 <select id="genCertModel" class="gencert-model" title="Modèle utilisé pour générer la CERT">
@@ -1230,8 +1230,10 @@ async function genCert() {
             url: urlEl.value.trim(),
             expert: expertName,
             date: todayFr,
+            threePhrases: out.three_phrases || '',
             context: out.context || '',
             content: out.content || '',
+            reliabilityText: out.reliability_text || '',
             references: out.references || '',
             createdAt: Date.now(),
         }));

@@ -103,8 +103,10 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant/après, sans blocs markdown
 
 {
   "title": "Titre exact de la source",
+  "three_phrases": "Phrase 1\nPhrase 2\nPhrase 3",
   "context": "…",
   "content": "…",
+  "reliability_text": "…",
   "references": "…"
 }
 
@@ -114,6 +116,16 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant/après, sans blocs markdown
 - Reprendre le **titre original de la source** (tel qu'il apparaît sur la page, copier-coller). Ne pas reformuler, ne pas résumer.
 - Si le titre n'est pas déterminable depuis les éléments fournis, chaîne vide "".
 - Pas de point final.
+
+### three_phrases
+- Exactement 3 phrases, une par ligne (séparateur `\n`).
+- **Phrase 1** : Format + « à propos de » + sujet. Le sujet de l'information DOIT être au début. Ex : « Article à propos de la technique chirurgicale OOKP publié sur Sciencepost. » — PAS : « Article publié sur Sciencepost qui relate… ».
+- **Phrase 2** : L'affirmation ou le fait central en une seule phrase (pas de liste, pas d'énumération de sources).
+- **Phrase 3** : Commence TOUJOURS par « Fiable, car… », « Pas fiable, car… » ou « Indéterminé, car… ». JAMAIS « Cet article est fiable » ou « Le contenu est fiable ».
+- Phrases COURTES : 1 verbe = 1 phrase. Compter les verbes.
+- JAMAIS de références [1], [2]… dans les 3 phrases.
+- JAMAIS d'attribution détaillée de source ou d'auteur dans les 3 phrases (ces infos vont dans le Contexte).
+- Le verdict de la phrase 3 doit s'appuyer sur les éléments de crosscheck fournis : confirmations multiples → « Fiable » ; contradictions claires ou absence de preuves → « Pas fiable » ; éléments insuffisants ou contradictoires → « Indéterminé ».
 
 ### context
 - 1 à 3 phrases. Identifie la source sans juger.
@@ -128,6 +140,13 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant/après, sans blocs markdown
 - **NE PAS** terminer par une phrase de verdict de fiabilité ("Cet article est fiable, car…"). Cette phrase va dans un autre champ que l'expert·e remplira.
 - Tonalité : "Cette vidéo / Cet article / Ce post / Cette plateforme". Utiliser "semble", "peut-être", "demeure" pour signaler l'incertitude quand elle existe.
 - Ne pas inventer d'informations absentes des éléments fournis.
+
+### reliability_text
+- Reprend la **phrase 3** des 3 Phrases, mais avec le sujet explicite au lieu de la forme courte.
+- Patron : « Cet article / Cette vidéo / Ce post / Cette plateforme **est fiable** / **n'est pas fiable** / **a une fiabilité indéterminée**, car… ».
+- Même verdict (Fiable / Pas fiable / Indéterminé) que la phrase 3.
+- La justification peut être légèrement développée par rapport à la phrase 3, en reprenant un ou deux éléments concrets du `content` (confirmations, contradictions, absence de preuves), mais SANS références [n].
+- Une à deux phrases maximum. Pas de markdown, pas d'émojis.
 
 ### references
 - Reprendre les URLs fournies, une par ligne, au format exact avec tabulation :
@@ -144,16 +163,42 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant/après, sans blocs markdown
 - Pas de verdict ni d'adjectif évaluatif ("excellent", "douteux"…). Tu décris, l'expert·e juge.
 - Si un champ ne peut pas être rempli (éléments insuffisants), retourner "".
 
-## Exemple de sortie bien calibrée
+## Exemples de sortie bien calibrée
 
-Pour une vidéo YouTube de la chaîne Trash listant 10 lieux inaccessibles (références [1] = chaîne Trash, [2] = catalogue "les 10", [3] = article Monde sur Nord-Sentinelle, [4] = article Temps sur Tristan da Cunha, [5] = article Geo sur K2, [6] = article Geo sur canyon Denman, [7] = article Temps sur Challenger Deep) :
+### Exemple 1 — article scientifique (fiable)
 
 {
-  "title": "10 LIEUX INACCESSIBLES où vous n'irez JAMAIS",
-  "context": "Vidéo YouTube publiée par Trash [1], une chaîne qui publie des vidéos sous la forme de : « les 10 xxx » [2]. Dans cette vidéo, dix lieux sont décrits comme étant inaccessibles pour le commun des mortels.",
-  "content": "Dix lieux sont listés, considérés par Trash comme inaccessibles : des îles, dont l'île de Nord-Sentinelle [3] et l'archipel de Tristan da Cunha [4], des montagnes, comme le K2 [5] et des espaces sous-marins, tels que le Canyon du glacier de Denman [6] et le Challenger Deep [7]. Chacun des lieux est situé sur des cartes et les raisons de l'inaccessibilité sont explicitées. Les commentaires sont assortis d'images, dont certaines sont fictives ou hors contexte. Le titre est optimisé pour augmenter le trafic : certains lieux sont effectivement inaccessibles, comme le Canyon du glacier de Denman, mais d'autres le sont moins, comme Challenger Deep ou l'île Tristan da Cunha.",
-  "references": "1.\thttps://www.youtube.com/@trash/videos \n2.\thttps://www.youtube.com/@trash/search?query=les%2010 \n3.\thttps://www.lemonde.fr/culture/article/2023/03/22/la-derniere-sentinelle-sur-france-2-une-ile-entre-le-ciel-et-l-enfer_6166580_3246.html \n4.\thttps://www.letemps.ch/societe/sciences-humaines/desoles-lile-plus-reculee-monde \n5.\thttps://www.geo.fr/aventure/alpinisme-k2-le-sommet-de-la-terreur-206026 \n6.\thttps://www.geo.fr/environnement/en-antarctique-des-scientifiques-decouvrent-le-canyon-terrestre-le-plus-profond-au-monde-199087 \n7.\thttps://www.letemps.ch/sciences/abysses-challenger-deep "
+  "title": "Titre de l'article Sciencepost sur l'OOKP",
+  "three_phrases": "Article à propos de la technique chirurgicale de l'ostéo-odonto-kératoprothèse (OOKP) publié sur le magazine Sciencepost.\nL'équipe du professeur Daïen au CHU de Montpellier a fait des progrès avec la technique OOKP même s'il y a des contraintes et des risques associés.\nFiable, car les informations sont confirmées par des publications scientifiques.",
+  "context": "Article du magazine de vulgarisation scientifique Sciencepost [1, 2]. L'article présente la technique chirurgicale de l'ostéo-odonto-kératoprothèse (OOKP) [3].",
+  "content": "L'article reprend un entretien au professeur Vincent Daïen [4] publié par le quotidien Midi Libre [5] et présente les progrès de la technique OOKP au sein du CHU de Montpellier [6]. Les informations publiées sont correctes et sont confirmées par d'autres sources journalistiques [7, 8, 9] ainsi que par des publications scientifiques [10].",
+  "reliability_text": "L'article est fiable, car les informations sont confirmées par des publications scientifiques et reportées aussi par d'autres sources journalistiques.",
+  "references": "…"
 }
+
+### Exemple 2 — vidéo courte informative (fiable)
+
+{
+  "title": "Titre du TikTok Brut sur le TPO",
+  "three_phrases": "TikTok à propos de l'interdiction d'utiliser les produits contenant du TPO, qui se trouve dans des durcisseurs pour vernis d'ongle.\nLa vidéo fait le point sur la loi du 01/09/25 qui interdit l'emploi et la mise en commerce des produits qui contiennent du TPO (Trimethylbenzoyl Diphenylphosphine Oxide) en UE, Norvège et Suisse.\nFiable, car les faits sont documentés par des arrêts de loi officiels.",
+  "context": "TikTok à propos de l'interdiction d'utiliser les produits contenant du TPO. Le TikTok a été publié par la plateforme d'information Brut [1, 2] le 04/09/2025.",
+  "content": "La vidéo fait le point sur l'entrée en vigueur du règlement UE n°2025/977. Cette loi interdit l'emploi et la mise en commerce des produits qui contiennent du TPO (Trimethylbenzoyl Diphenylphosphine Oxide) à partir du 01/09/2025 en UE et Norvège [3]. L'Office fédéral de la sécurité alimentaire et des affaires vétérinaires (OSAV) a imposé la même interdiction en Suisse [4]. Parmi les produits cosmétiques concernés on retrouve les durcisseurs pour vernis d'ongle semi-permanents. La vidéo et les informations sont en accord avec d'autres sources d'information fiables [5-7].",
+  "reliability_text": "Le post est fiable, car les faits sont documentés par des arrêts de loi officiels.",
+  "references": "…"
+}
+
+### Exemple 3 — vidéo humoristique présentée comme complot (pas fiable)
+
+{
+  "title": "Le complot — Star Wars",
+  "three_phrases": "YouTube à propos de Star Wars et son implication dans un complot imaginaire.\nLa vidéo se moque du complotisme.\nPas fiable, car il s'agit d'une vidéo humoristique et n'apporte pas de preuves.",
+  "context": "Vidéo YouTube publiée par le compte officiel de Le Before du Grand Journal [1], une émission TV humoristique diffusée sur la chaîne française Canal+ [2]. La vidéo fait partie d'une série de capsules appelées Le complot [3], diffusée entre 2013 et 2015.",
+  "content": "La vidéo avance l'hypothèse que la saga de Star Wars est partie d'un complot organisé par les pays arabes, dont le but n'est pas précisé. Pour faire semblant d'étayer cette thèse, la vidéo propose des coïncidences qui sont fait passer par des preuves : des anagrammes [4], des assonances entre le nom des lieux galactiques et celui de certaines villes du Maroc, des rappels aux coutumes du Maghreb dans des scènes de la saga. La vidéo exploite un biais du cerveau humain : on a du mal à accepter les coïncidences et on essaie de leur donner du sens [5, 6, 7]. D'un point de vue scientifique, ces preuves n'ont pas de valeur, car elles ne sont pas falsifiables [8]. Le but de l'émission est d'amuser les téléspectateurs en utilisant l'humour, pas de les convaincre sur la solidité de la théorie du complot présentée.",
+  "reliability_text": "Cette vidéo n'est pas fiable, car elle n'apporte pas de preuves et se base uniquement sur des coïncidences qui ne peuvent être confirmées par aucune source scientifique.",
+  "references": "…"
+}
+
+Note : dans ces exemples, le champ `references` est abrégé « … » pour la lisibilité. Dans la vraie sortie, respecte scrupuleusement le format numéroté avec tabulation défini plus haut.
 PROMPT;
 
 $userMessage = "Voici les éléments d'analyse à transformer en champs CERT :\n\n" . $summary;
@@ -204,6 +249,9 @@ if ($isGemini) {
     if ($httpCode !== 200) {
         $body   = json_decode($response, true);
         $errMsg = $body['error']['message'] ?? $response;
+        if (in_array($httpCode, $retryableHttp, true)) {
+            jsonError("L'API Gemini est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+        }
         jsonError("Gemini API (HTTP $httpCode): $errMsg", 502);
     }
 
@@ -252,7 +300,7 @@ if ($isGemini) {
         $errType = $body['error']['type'] ?? 'unknown';
         $errMsg  = $body['error']['message'] ?? $response;
         if (in_array($httpCode, $retryableHttp, true)) {
-            jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode). Réessaie dans quelques instants.", 503);
+            jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
         }
         jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
     }
@@ -286,10 +334,12 @@ $rates     = $pricing[$model] ?? ['input' => 0, 'output' => 0];
 $totalCost = ($inputTokens * $rates['input'] + $outputTokens * $rates['output']) / 1_000_000;
 
 jsonResponse([
-    'title'      => (string)($parsed['title'] ?? ''),
-    'context'    => (string)($parsed['context'] ?? ''),
-    'content'    => (string)($parsed['content'] ?? ''),
-    'references' => (string)($parsed['references'] ?? ''),
+    'title'            => (string)($parsed['title'] ?? ''),
+    'three_phrases'    => (string)($parsed['three_phrases'] ?? ''),
+    'context'          => (string)($parsed['context'] ?? ''),
+    'content'          => (string)($parsed['content'] ?? ''),
+    'reliability_text' => (string)($parsed['reliability_text'] ?? ''),
+    'references'       => (string)($parsed['references'] ?? ''),
     'usage' => [
         'model'         => $model,
         'input_tokens'  => $inputTokens,

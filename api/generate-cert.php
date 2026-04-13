@@ -235,6 +235,9 @@ if ($isGemini) {
     if ($httpCode !== 200) {
         $body   = json_decode($response, true);
         $errMsg = $body['error']['message'] ?? $response;
+        if (in_array($httpCode, $retryableHttp, true)) {
+            jsonError("L'API Gemini est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+        }
         jsonError("Gemini API (HTTP $httpCode): $errMsg", 502);
     }
 

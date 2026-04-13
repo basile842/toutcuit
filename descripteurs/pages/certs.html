@@ -255,7 +255,7 @@
 
           <div class="btn-row">
             <button class="btn" type="submit">Ajouter le lien</button>
-            <button class="btn" type="button" id="downloadRtfBtn">Télécharger RTF</button>
+            <button class="btn" type="button" id="downloadRtfBtn">Télécharger .rtf</button>
             <button class="btn" type="button" id="resetBtn">Réinitialiser</button>
           </div>
         </form>
@@ -311,8 +311,10 @@
           if (p.url)        document.getElementById("urlInput").value        = p.url;
           if (p.expert)     document.getElementById("expertInput").value     = p.expert;
           if (p.date)       document.getElementById("dateInput").value       = p.date;
+          if (p.threePhrases) document.getElementById("threePhrasesInput").value = p.threePhrases;
           if (p.context)    document.getElementById("contextInput").value    = p.context;
           if (p.content)    document.getElementById("contentInput").value    = p.content;
+          if (p.reliabilityText) document.getElementById("reliabilityTextInput").value = p.reliabilityText;
           if (p.references) document.getElementById("referencesInput").value = p.references;
         }
         localStorage.removeItem("tc_cert_prefill");
