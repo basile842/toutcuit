@@ -15,6 +15,7 @@ requireFields($data, ['session_id', 'target_teacher_id']);
 $sessionId       = (int) $data['session_id'];
 $targetTeacherId = (int) $data['target_teacher_id'];
 $newName         = trim($data['name'] ?? '');
+$newSchoolName   = trim($data['school_name'] ?? '');
 
 // Validate target teacher exists
 $stmt = $db->prepare('SELECT id, name FROM teachers WHERE id = ?');
@@ -43,6 +44,21 @@ if (!$newName) {
     $newName = $original['name'] . ' (copie)';
 }
 
+// Resolve school_id from school_name (find existing case-insensitive match, otherwise create)
+$schoolId = $original['school_id'];
+if ($newSchoolName !== '' && strcasecmp($newSchoolName, (string) $original['school_name']) !== 0) {
+    $stmt = $db->prepare('SELECT id FROM schools WHERE LOWER(name) = LOWER(?) LIMIT 1');
+    $stmt->execute([$newSchoolName]);
+    $existing = $stmt->fetch();
+    if ($existing) {
+        $schoolId = (int) $existing['id'];
+    } else {
+        $stmt = $db->prepare('INSERT INTO schools (name) VALUES (?)');
+        $stmt->execute([$newSchoolName]);
+        $schoolId = (int) $db->lastInsertId();
+    }
+}
+
 // Generate unique session code
 $code = '';
 $attempts = 0;
@@ -67,7 +83,7 @@ try {
     ');
     $stmt->execute([
         $targetTeacherId,
-        $original['school_id'],
+        $schoolId,
         $newName,
         $code,
         $original['is_open'],

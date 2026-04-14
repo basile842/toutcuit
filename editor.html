@@ -1092,7 +1092,7 @@
           ${certsHtml}
           <div class="session-detail-actions">
             <button class="btn-action" onclick="window.open('/global-feed.html?sessions=${encodeURIComponent(s.code)}','_blank')">Ouvrir le feed</button>
-            <button class="btn-action" onclick="showDuplicateModal(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}')">Dupliquer</button>
+            <button class="btn-action" onclick="showDuplicateModal(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.school_name || "").replace(/'/g, "\\'")}')">Dupliquer</button>
             <button class="btn-action" onclick="downloadSessionExcel('${esc(s.code).replace(/'/g, "\\'")}', '${esc(s.name).replace(/'/g, "\\'")}')">Télécharger Excel</button>
           </div>
         `;
@@ -1208,7 +1208,7 @@
       XLSX.writeFile(wb, `${safeName}_${code}.xlsx`);
     }
 
-    function showDuplicateModal(sessionId, sessionName) {
+    function showDuplicateModal(sessionId, sessionName, schoolName) {
       const overlay = document.createElement("div");
       overlay.className = "confirm-dialog";
 
@@ -1229,6 +1229,10 @@
               <label>Nom de la nouvelle séance</label>
               <input type="text" id="dupName" value="${esc(sessionName)} (copie)" />
             </div>
+            <div class="field">
+              <label>Nom de l'école</label>
+              <input type="text" id="dupSchool" value="${esc(schoolName || "")}" placeholder="Nom de l'école" />
+            </div>
           </div>
           <div id="dupError" class="error-msg" style="margin-top:8px;"></div>
           <div class="confirm-actions" style="margin-top:14px;">
@@ -1245,6 +1249,7 @@
       overlay.querySelector("#dupConfirm").addEventListener("click", async () => {
         const teacherId = parseInt(document.getElementById("dupTeacher").value);
         const name = document.getElementById("dupName").value.trim();
+        const schoolName = document.getElementById("dupSchool").value.trim();
         const errEl = document.getElementById("dupError");
         errEl.style.display = "none";
 
@@ -1258,7 +1263,7 @@
           const res = await fetch(`${API}/admin/duplicate-session.php`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_id: sessionId, target_teacher_id: teacherId, name })
+            body: JSON.stringify({ session_id: sessionId, target_teacher_id: teacherId, name, school_name: schoolName })
           });
           const data = await res.json();
 
