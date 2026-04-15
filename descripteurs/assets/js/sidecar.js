@@ -69,18 +69,17 @@ export function renderSidecarToggle(container, { label = "Sidecar" } = {}) {
     console.log("[sidecar] paint, on =", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
     btn.textContent = `${label} : ${on ? "ON" : "OFF"}`;
-    btn.style.cssText = [
-      "font-size:.78rem",
-      "font-weight:600",
-      "cursor:pointer",
-      "border-radius:999px",
-      "padding:4px 12px",
-      "margin-right:14px",
-      "transition:all .15s",
-      on
-        ? "background:var(--accent);color:#fff;border:1px solid var(--accent);"
-        : "background:transparent;color:var(--muted);border:1px solid var(--border);",
-    ].join(";");
+    const s = btn.style;
+    s.fontSize = ".78rem";
+    s.fontWeight = "600";
+    s.cursor = "pointer";
+    s.borderRadius = "999px";
+    s.padding = "4px 12px";
+    s.marginRight = "14px";
+    s.transition = "all .15s";
+    s.background = on ? "#6f5cf7" : "transparent";
+    s.color = on ? "#ffffff" : "#5e6673";
+    s.border = on ? "1px solid #6f5cf7" : "1px solid #d7dbe6";
   };
   btn.addEventListener("click", () => {
     const next = !isSidecarOn();
