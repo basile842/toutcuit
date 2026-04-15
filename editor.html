@@ -33,6 +33,12 @@
     body.is-sidecar #certError { display: none !important; }
     body.is-sidecar #viewCerts main.console-main { padding-top: 16px; }
     body.is-sidecar .cert-row.is-sidecar-hidden { display: none !important; }
+    /* Sidecar layout: title on its own line, descriptors (and meta) wrap to
+       the next line. Hide the expand chevron and keep the detail always open. */
+    body.is-sidecar .cert-row-header { flex-wrap: wrap; }
+    body.is-sidecar .cert-row-title { flex-basis: 100%; }
+    body.is-sidecar .cert-toggle { display: none !important; }
+    body.is-sidecar .cert-detail { display: block !important; }
 
     html, body {
       min-height: 100vh;
