@@ -112,12 +112,23 @@
     <nav style="display:flex;align-items:center;gap:6px;">
       <span style="font-weight:900;letter-spacing:-0.02em;color:var(--accent);">toutcuit</span>
       <span style="color:var(--border);">/</span>
-      <a href="/expert.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Expert</a>
+      <a id="breadcrumbBack" href="/expert.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Expert</a>
       <span style="flex:1;"></span>
       <span id="userName" style="font-size:.82rem;color:var(--muted);"></span>
       <button id="logoutBtn" style="font-size:.82rem;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600;">Déconnexion</button>
     </nav>
   </header>
+  <script>
+    // When arriving from /editor, point the breadcrumb back to /editor so the
+    // user stays in the editor context.
+    (() => {
+      const from = new URLSearchParams(location.search).get("from");
+      if (from === "editor") {
+        const link = document.getElementById("breadcrumbBack");
+        if (link) { link.href = "/editor"; link.textContent = "Éditeur"; }
+      }
+    })();
+  </script>
 
   <main>
     <!-- Section principale (cachée par défaut, requiert auth admin) -->
@@ -127,8 +138,10 @@
         <span id="sidecarToggleSlot"></span>
       </div>
       <script type="module">
-        import { renderSidecarToggle, openCertSidecar } from "/descripteurs/assets/js/sidecar.js";
+        import { renderSidecarToggle, openCertSidecar, isSidecarOn } from "/descripteurs/assets/js/sidecar.js";
         renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
+        window.tcOpenCertSidecar = openCertSidecar;
+        window.tcIsSidecarOn = isSidecarOn;
         // When Sidecar gets checked and the URL field already has a value,
         // stash the current form state and open the two popups (URL left,
         // pre-filled certs.html right).
@@ -346,6 +359,18 @@
           if (p.content)    document.getElementById("contentInput").value    = p.content;
           if (p.reliabilityText) document.getElementById("reliabilityTextInput").value = p.reliabilityText;
           if (p.references) document.getElementById("referencesInput").value = p.references;
+          // Selects: only apply if the option exists (e.g. imported from RTF/docx).
+          const setSel = (id, v) => {
+            if (!v) return;
+            const el = document.getElementById(id);
+            if (!el) return;
+            for (const opt of el.options) {
+              if (opt.value.toLowerCase() === String(v).toLowerCase()) { el.value = opt.value; return; }
+            }
+          };
+          setSel("descriptor1Input", p.descriptor1);
+          setSel("descriptor2Input", p.descriptor2);
+          setSel("reliabilityInput", p.reliability);
         }
         localStorage.removeItem("tc_cert_prefill");
       }
@@ -715,6 +740,30 @@
       setSelectIfValid("descriptor1Input", data.descriptor1);
       setSelectIfValid("descriptor2Input", data.descriptor2);
       setSelectIfValid("reliabilityInput", data.reliability);
+
+      // If Sidecar is ON and the import gave us a URL, open the 2-window
+      // layout automatically. Skip if we're already in the sidecar popup.
+      const inSidecar = new URLSearchParams(location.search).get("mode") === "sidecar";
+      const url = (data.url || "").trim();
+      if (!inSidecar && url && window.tcIsSidecarOn && window.tcIsSidecarOn()) {
+        const pf = {
+          title: data.title || "",
+          url,
+          expert: data.expert || "",
+          date: data.date || "",
+          threePhrases: data.threePhrases || "",
+          context: data.context || "",
+          content: data.content || "",
+          reliabilityText: data.reliabilityText || "",
+          references: data.references || "",
+          descriptor1: data.descriptor1 || "",
+          descriptor2: data.descriptor2 || "",
+          reliability: data.reliability || "",
+          createdAt: Date.now(),
+        };
+        try { localStorage.setItem("tc_cert_prefill", JSON.stringify(pf)); } catch {}
+        window.tcOpenCertSidecar(url, "/descripteurs/pages/certs.html?mode=sidecar");
+      }
     }
 
     function setSelectIfValid(id, value) {
