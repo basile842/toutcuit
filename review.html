@@ -716,11 +716,18 @@
       <span class="login-logo">toutcuit</span>
       <span class="login-title">Outil de révision</span>
       <div class="login-field">
-        <label for="pwInput">Mot de passe</label>
-        <input type="password" id="pwInput" class="search-input" required autofocus>
+        <label for="emailInput">Email</label>
+        <input type="email" id="emailInput" class="search-input" required autofocus>
       </div>
-      <div class="login-error" id="loginError">Mot de passe incorrect.</div>
+      <div class="login-field">
+        <label for="pwInput">Mot de passe</label>
+        <input type="password" id="pwInput" class="search-input" required>
+      </div>
+      <div class="login-error" id="loginError" style="display:none"></div>
       <button class="btn-primary" type="submit">Entrer</button>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:6px;text-align:center;">
+        Réservé aux éditeur·ices.
+      </div>
     </form>
   </div>
 
@@ -810,23 +817,67 @@
 
   <script>
     const API = "/api";
-    const SA_KEY = "tc_superadmin";
-    const PASSWORD = "certify2026!";
+    const TOKEN_KEY = "tc_token";
+    const TEACHER_KEY = "tc_teacher";
 
     // ── Auth ──
     const loginPage = document.getElementById("loginPage");
     const appContent = document.getElementById("appContent");
+    const loginErrorEl = document.getElementById("loginError");
 
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+    function clearAuth() {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TEACHER_KEY);
+    }
+    function showLoginError(msg) {
+      loginErrorEl.textContent = msg;
+      loginErrorEl.style.display = "block";
+    }
+
+    async function authFetch(url, options = {}) {
+      const token = getToken();
+      if (!token) { forceLogout(); throw new Error("Non connecté"); }
+      options.headers = { ...(options.headers || {}), "Authorization": `Bearer ${token}` };
+      const res = await fetch(url, options);
+      if (res.status === 401) { forceLogout(); throw new Error("Session expirée"); }
+      if (res.status === 403) {
+        clearAuth();
+        appContent.style.display = "none";
+        loginPage.style.display = "flex";
+        showLoginError("Accès réservé aux éditeur·ices.");
+        throw new Error("Accès refusé");
+      }
+      return res;
+    }
+
+    function forceLogout() {
+      clearAuth();
+      appContent.style.display = "none";
+      loginPage.style.display = "flex";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const pw = document.getElementById("pwInput");
-      if (pw.value === PASSWORD) {
-        sessionStorage.setItem(SA_KEY, "true");
+      loginErrorEl.style.display = "none";
+      const email = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("pwInput").value;
+      try {
+        const res = await fetch(`${API}/auth/login.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error) return showLoginError(data.error);
+        if (data.teacher?.role !== "editor") {
+          return showLoginError("Accès réservé aux éditeur·ices.");
+        }
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(TEACHER_KEY, JSON.stringify(data.teacher));
         unlock();
-      } else {
-        document.getElementById("loginError").style.display = "block";
-        pw.value = "";
-        pw.focus();
+      } catch (err) {
+        showLoginError("Erreur réseau : " + err.message);
       }
     });
 
@@ -836,7 +887,25 @@
       loadCerts();
     }
 
-    if (sessionStorage.getItem(SA_KEY) === "true") unlock();
+    // Auto-unlock if a valid editor token already exists in localStorage.
+    (async function bootstrapAuth() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(`${API}/auth/me.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.status === 401) { clearAuth(); return; }
+        const me = await res.json();
+        if (!me || me.error) { clearAuth(); return; }
+        if (me.role !== "editor") {
+          showLoginError("Ce compte n'a pas les droits Éditeur·ice.");
+          return;
+        }
+        localStorage.setItem(TEACHER_KEY, JSON.stringify(me));
+        unlock();
+      } catch { /* leave login visible */ }
+    })();
 
     // ── State ──
     let allCerts = [];
@@ -857,7 +926,7 @@
     // ── Load certs ──
     async function loadCerts() {
       try {
-        const res = await fetch(`${API}/admin/certs.php`);
+        const res = await authFetch(`${API}/admin/certs.php`);
         allCerts = await res.json();
         renderCertList();
       } catch (err) {
@@ -1360,7 +1429,7 @@
       }
 
       try {
-        const res = await fetch(`${API}/admin/certs.php`, {
+        const res = await authFetch(`${API}/admin/certs.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
