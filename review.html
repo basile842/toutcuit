@@ -276,30 +276,22 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      justify-content: flex-end;
     }
     .cert-preview-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px 6px 10px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: .82rem;
-      font-weight: 600;
+      flex-shrink: 0;
       cursor: pointer;
-      transition: all .15s;
-      font-family: inherit;
-    }
-    .cert-preview-btn:hover { color: var(--accent); border-color: rgba(111,92,247,.3); background: rgba(111,92,247,.06); }
-    .cert-preview-btn .arrow {
-      display: inline-block;
-      transition: transform .2s;
-      font-size: 1rem;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 1.1rem;
+      padding: 6px 10px;
+      border-radius: 8px;
       line-height: 1;
+      font-family: inherit;
+      transition: all .15s;
     }
-    .cert-preview-btn.is-expanded .arrow { transform: rotate(180deg); }
+    .cert-preview-btn:hover { background: rgba(111,92,247,.08); color: var(--accent); }
     .cert-preview-content {
       display: none;
       margin-top: 14px;
@@ -795,10 +787,7 @@
           </div>
         </div>
         <div class="cert-preview-toggle">
-          <button type="button" class="cert-preview-btn" id="previewToggleBtn">
-            <span class="arrow">&#9662;</span>
-            <span id="previewToggleLabel">Aperçu du contenu</span>
-          </button>
+          <button type="button" class="cert-preview-btn" id="previewToggleBtn" title="Aperçu du contenu" aria-label="Aperçu du contenu">&#9662;</button>
         </div>
         <div class="cert-preview-content" id="previewContent"></div>
       </div>
@@ -1120,7 +1109,7 @@
       document.getElementById("previewContent").classList.remove("is-visible");
       const btn = document.getElementById("previewToggleBtn");
       btn.classList.remove("is-expanded");
-      document.getElementById("previewToggleLabel").textContent = "Aperçu du contenu";
+      btn.textContent = "\u25BE";
     }
 
     document.getElementById("previewToggleBtn").addEventListener("click", () => {
@@ -1128,8 +1117,7 @@
       const btn = document.getElementById("previewToggleBtn");
       const expanded = content.classList.toggle("is-visible");
       btn.classList.toggle("is-expanded", expanded);
-      document.getElementById("previewToggleLabel").textContent =
-        expanded ? "Masquer l'aperçu" : "Aperçu du contenu";
+      btn.textContent = expanded ? "\u25B4" : "\u25BE";
     });
 
     // ── Review ──

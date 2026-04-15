@@ -24,6 +24,16 @@
 
     html { scrollbar-gutter: stable; }
 
+    /* Sidecar popup: strip the editor chrome so only the targeted CERT row
+       (with its edit form) remains visible. */
+    body.is-sidecar .console-header,
+    body.is-sidecar #viewCerts .view-toolbar,
+    body.is-sidecar #viewCerts .search-box,
+    body.is-sidecar #certSuccess,
+    body.is-sidecar #certError { display: none !important; }
+    body.is-sidecar #viewCerts main.console-main { padding-top: 16px; }
+    body.is-sidecar .cert-row.is-sidecar-hidden { display: none !important; }
+
     html, body {
       min-height: 100vh;
       background:
@@ -1657,6 +1667,10 @@
       document.body.classList.add("is-sidecar");
       showView("certs");
       const row = document.getElementById(`cert-row-${id}`);
+      // Hide every other CERT row so only the target preview remains.
+      document.querySelectorAll(".cert-row").forEach(r => {
+        if (r !== row) r.classList.add("is-sidecar-hidden");
+      });
       if (row) {
         row.classList.add("is-expanded");
         const tgl = row.querySelector(".cert-toggle");
