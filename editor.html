@@ -33,11 +33,12 @@
     body.is-sidecar #certError { display: none !important; }
     body.is-sidecar #viewCerts main.console-main { padding-top: 16px; }
     body.is-sidecar .cert-row.is-sidecar-hidden { display: none !important; }
-    /* Single-CERT target mode: title on its own line, drop chevron, detail open. */
-    body.is-sidecar .cert-row.is-sidecar-target .cert-row-header { flex-wrap: wrap; }
-    body.is-sidecar .cert-row.is-sidecar-target .cert-row-title { flex-basis: 100%; }
-    body.is-sidecar .cert-row.is-sidecar-target .cert-toggle { display: none !important; }
-    body.is-sidecar .cert-row.is-sidecar-target .cert-detail { display: block !important; }
+    /* Sidecar layout: title on its own line, descriptors (and meta) wrap to
+       the next line. Hide the expand chevron and keep the detail always open. */
+    body.is-sidecar .cert-row-header { flex-wrap: wrap; }
+    body.is-sidecar .cert-row-title { flex-basis: 100%; }
+    body.is-sidecar .cert-toggle { display: none !important; }
+    body.is-sidecar .cert-detail { display: block !important; }
 
     html, body {
       min-height: 100vh;
@@ -715,16 +716,6 @@
         <script type="module">
           import { renderSidecarToggle } from "/descripteurs/assets/js/sidecar.js";
           renderSidecarToggle(document.getElementById("sidecarToggleSlotCerts"));
-          // Ticking the Sidecar toggle while on Stock de CERTs opens the
-          // 2-window layout: blank URL popup on the left, the full CERT list
-          // in sidecar mode on the right. Launcher returns to /editor home.
-          document.addEventListener("tc-sidecar-change", (e) => {
-            if (!e.detail?.on) return;
-            if (new URLSearchParams(location.search).get("mode") === "sidecar") return;
-            if (typeof window.tcOpenCertSidecar !== "function") return;
-            window.tcOpenCertSidecar("", "/editor?mode=sidecar");
-            setTimeout(() => { window.location.href = "/editor"; }, 150);
-          });
         </script>
       </main>
     </div>
@@ -1658,46 +1649,43 @@
       `;
     }
 
-    // In Stock de CERTs, Modifier just toggles the inline form. The Sidecar
-    // layout is now driven by the toggle itself (opens 2 popups with the
-    // full list on the right).
-    function editCertFromRow(id) { toggleCertEdit(id); }
+    // When "Modifier" is clicked, honour the Sidecar checkbox: if checked,
+    // open the two popups (URL left + dedicated editor window right). Otherwise
+    // fall back to the inline edit form.
+    function editCertFromRow(id) {
+      if (window.tcIsSidecarOn && window.tcIsSidecarOn()) {
+        const c = allCertsData.find(x => x.id === id);
+        if (c && c.url) {
+          const side = `/editor?sidecar_cert=${encodeURIComponent(id)}&mode=sidecar`;
+          window.tcOpenCertSidecar(c.url, side);
+          return;
+        }
+        if (c && !c.url) { alert("Cette CERT n'a pas d'URL."); return; }
+      }
+      toggleCertEdit(id);
+    }
     window.editCertFromRow = editCertFromRow;
 
     // Called once loadCerts() has populated allCertsData in sidecar mode.
     function enterSidecarModeIfRequested() {
       const qp = new URLSearchParams(location.search);
       if (qp.get("mode") !== "sidecar") return;
+      const id = parseInt(qp.get("sidecar_cert"), 10);
+      if (!id) return;
       document.body.classList.add("is-sidecar");
       showView("certs");
-
-      // Intercept clicks on CERT URLs to route them to the left URL popup.
-      const list = document.getElementById("certsList");
-      list.addEventListener("click", (e) => {
-        const a = e.target.closest('a[href^="http"]');
-        if (!a) return;
-        e.preventDefault();
-        const w = window.open(a.href, "cert_sidecar_main",
-          "popup=yes,resizable=yes,scrollbars=yes");
-        try { w?.focus(); } catch {}
+      const row = document.getElementById(`cert-row-${id}`);
+      // Hide every other CERT row so only the target preview remains.
+      document.querySelectorAll(".cert-row").forEach(r => {
+        if (r !== row) r.classList.add("is-sidecar-hidden");
       });
-
-      // Legacy: if a sidecar_cert=ID is present (e.g. bookmarked URL), open
-      // just that CERT's edit form.
-      const id = parseInt(qp.get("sidecar_cert"), 10);
-      if (id) {
-        const row = document.getElementById(`cert-row-${id}`);
-        document.querySelectorAll(".cert-row").forEach(r => {
-          if (r !== row) r.classList.add("is-sidecar-hidden");
-        });
-        if (row) {
-          row.classList.add("is-expanded", "is-sidecar-target");
-          const tgl = row.querySelector(".cert-toggle");
-          if (tgl) tgl.textContent = "\u25B4";
-        }
-        toggleCertEdit(id);
-        row?.scrollIntoView({ block: "start" });
+      if (row) {
+        row.classList.add("is-expanded");
+        const tgl = row.querySelector(".cert-toggle");
+        if (tgl) tgl.textContent = "\u25B4";
       }
+      toggleCertEdit(id);
+      row?.scrollIntoView({ block: "start" });
     }
     window.enterSidecarModeIfRequested = enterSidecarModeIfRequested;
 

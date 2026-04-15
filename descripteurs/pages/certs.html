@@ -104,13 +104,6 @@
     }
     .import-status.ok{ color: var(--good); font-weight: 600; }
     .import-status.err{ color: var(--bad); font-weight: 600; }
-
-    /* Sidecar popup: strip top chrome and jump straight to the form. */
-    body.is-sidecar header,
-    body.is-sidecar .certs-intro,
-    body.is-sidecar .certs-intro-lead,
-    body.is-sidecar #importZone { display: none !important; }
-    body.is-sidecar #linkForm.is-hidden { display: none !important; }
   </style>
 </head>
 
@@ -140,7 +133,7 @@
   <main>
     <!-- Section principale (cachée par défaut, requiert auth admin) -->
     <section id="certsContent">
-      <div class="certs-intro" style="display:flex;align-items:center;gap:12px;">
+      <div style="display:flex;align-items:center;gap:12px;">
         <h1 style="flex:1;margin-bottom:0;">CERTs — Gestion des liens</h1>
         <span id="sidecarToggleSlot"></span>
       </div>
@@ -149,11 +142,6 @@
         renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
         window.tcOpenCertSidecar = openCertSidecar;
         window.tcIsSidecarOn = isSidecarOn;
-        // Flag the sidecar popup so the layout can strip chrome.
-        if (new URLSearchParams(location.search).get("mode") === "sidecar") {
-          document.body.classList.add("is-sidecar");
-          window.tcInSidecar = true;
-        }
         // After the two popups are open, send the launcher window back to
         // /editor so the user doesn't end up with the same form duplicated.
         // Skipped when the current window IS the sidecar popup.
@@ -187,7 +175,7 @@
           window.tcLauncherReturnToEditor();
         });
       </script>
-      <p class="page-lead certs-intro-lead">
+      <p class="page-lead">
         Ajoutez des liens et leurs descripteurs pour les élèves.
       </p>
 
@@ -465,13 +453,7 @@
           showError(result.error);
         } else {
           showSuccess("CERT ajouté avec succès !");
-          if (window.tcInSidecar) {
-            // In the sidecar popup, the user is expected to close the window
-            // and go back to /expert or /editor — don't reset the form.
-            linkForm.classList.add("is-hidden");
-          } else {
-            linkForm.reset();
-          }
+          linkForm.reset();
         }
       } catch (error) {
         showError("Erreur lors de l'ajout : " + error.message);
