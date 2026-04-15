@@ -751,12 +751,30 @@ $('browseBtn').addEventListener('click', e => {
 $('removeImg').addEventListener('click', e => { e.stopPropagation(); clearScreenshot(); });
 
 // -- Generate -----------------------------------------------
+const ANALYSE_STASH_KEY = 'tc_analyse_stash';
+
 async function generate() {
     const url     = urlEl.value.trim();
     const content = $('contentInput').value.trim();
     const context = $('ctxInput').value.trim();
     const model   = $('modelSelect').value;
     if (!url) return;
+
+    // If Sidecar is ticked and we are NOT already in a sidecar popup, open
+    // two windows (URL left, a new analyse.html in sidecar mode right) that
+    // pick up this form state via localStorage and auto-run the analysis.
+    const inSidecar = new URLSearchParams(location.search).get('mode') === 'sidecar';
+    if (!inSidecar && window.tcIsSidecarOn && window.tcIsSidecarOn()) {
+        try {
+            localStorage.setItem(ANALYSE_STASH_KEY, JSON.stringify({
+                url, content, context, model,
+                screenshot: screenshotData || '',
+                createdAt: Date.now(),
+            }));
+        } catch {}
+        window.tcOpenCertSidecar(url, '/analyse?mode=sidecar');
+        return;
+    }
 
     show('loader'); hide('inputCard'); hide('results'); hide('errBox');
     $('loadStep').textContent = 'Envoi de la requete...';
@@ -1296,6 +1314,35 @@ function hide(id) {
     if (id === 'inputCard') el.style.display = 'none';
     else el.classList.remove('on');
 }
+
+// When landed in sidecar mode, pick up the stashed form state and auto-run
+// the analysis so the right-hand popup shows "Éléments d'analyse" directly.
+(function bootSidecar(){
+    if (new URLSearchParams(location.search).get('mode') !== 'sidecar') return;
+    let s = null;
+    try {
+        const raw = localStorage.getItem(ANALYSE_STASH_KEY);
+        if (raw) s = JSON.parse(raw);
+        localStorage.removeItem(ANALYSE_STASH_KEY);
+    } catch {}
+    if (!s || !s.url) return;
+    if (Date.now() - (s.createdAt || 0) > 10 * 60 * 1000) return;
+
+    document.body.classList.add('is-sidecar');
+
+    urlEl.value = s.url;
+    $('contentInput').value = s.content || '';
+    $('ctxInput').value = s.context || '';
+    if (s.model) {
+        const sel = $('modelSelect');
+        const opt = Array.from(sel.options).find(o => o.value === s.model);
+        if (opt) sel.value = s.model;
+        $('modelTag').textContent = MODEL_LABELS[sel.value] || '';
+    }
+    if (s.screenshot) setScreenshot(s.screenshot);
+    $('goBtn').disabled = false;
+    setTimeout(() => generate(), 50);
+})();
 </script>
 
 </body>
