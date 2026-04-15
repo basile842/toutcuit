@@ -31,6 +31,20 @@ function getTeacherId(): int {
     return $teacherId;
 }
 
+// Require caller to be an editor. Role is re-read from DB on every call so a
+// demoted editor loses access immediately, even if their JWT still says 'editor'.
+function requireEditor(): int {
+    $teacherId = getTeacherId();
+    $db = getDB();
+    $stmt = $db->prepare('SELECT role FROM teachers WHERE id = ?');
+    $stmt->execute([$teacherId]);
+    $row = $stmt->fetch();
+    if (!$row || ($row['role'] ?? 'expert') !== 'editor') {
+        jsonError('Accès réservé aux éditeur·ices.', 403);
+    }
+    return $teacherId;
+}
+
 // Handle CORS preflight — called by .htaccess or at the top of endpoints
 function handleCors(): void {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

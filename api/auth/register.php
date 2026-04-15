@@ -1,7 +1,8 @@
 <?php
-// POST — Teacher registration
+// POST — Teacher registration (editor only — account creation is an admin action)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);

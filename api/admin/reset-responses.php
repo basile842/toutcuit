@@ -3,6 +3,7 @@
 // No auth (teacher-only page is sufficient gate)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);

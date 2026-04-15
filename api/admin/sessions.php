@@ -2,6 +2,7 @@
 // GET — List all sessions across all teachers (superadmin)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonError('Method not allowed', 405);

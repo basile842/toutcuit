@@ -3,6 +3,7 @@
 // ?sessions=CODE1,CODE2,CODE3
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonError('Method not allowed', 405);

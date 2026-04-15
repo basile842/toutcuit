@@ -277,6 +277,9 @@
     }
     .list-row-name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .list-row-meta { color: var(--muted); font-size: 0.82rem; }
+    .role-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: .02em; }
+    .role-badge.role-editor { background: rgba(111,92,247,.12); color: var(--accent); border: 1px solid rgba(111,92,247,.25); }
+    .role-badge.role-expert { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
     .list-row-date { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
     .list-row-code { font-size: .75rem; color: var(--muted); font-family: monospace; font-weight: 800; }
 
@@ -478,17 +481,24 @@
   <div class="login-page" id="loginPage">
     <div class="login-card">
       <div class="login-logo">toutcuit</div>
-      <div class="login-title">Éditeur</div>
+      <div class="login-title">Éditeur·ice</div>
       <form id="loginForm">
+        <div class="field" style="margin-bottom:10px;">
+          <label for="emailInput">Email</label>
+          <input type="email" id="emailInput" placeholder="votre@email.ch" autofocus required>
+        </div>
         <div class="field" style="margin-bottom:12px;">
           <label for="pwInput">Mot de passe</label>
-          <input type="password" id="pwInput" placeholder="Mot de passe éditeur" autofocus required>
+          <input type="password" id="pwInput" placeholder="Mot de passe" required>
         </div>
-        <div id="loginError" class="error-msg" style="margin-top:10px;">Mot de passe incorrect.</div>
+        <div id="loginError" class="error-msg" style="margin-top:10px;"></div>
         <div style="margin-top:14px;">
           <button class="btn-primary" type="submit">Accéder</button>
         </div>
       </form>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:6px;text-align:center;">
+        Même identifiants que <a href="/expert" style="color:var(--accent);font-weight:600;">/expert</a>. L'accès éditeur·ice est réservé aux comptes autorisés.
+      </div>
     </div>
   </div>
 
@@ -503,6 +513,8 @@
         <span class="console-header-title" id="breadcrumbLeaf" style="display:none"></span>
       </nav>
       <span class="console-header-spacer"></span>
+      <span class="console-header-user" id="userName" style="font-size:.82rem;color:var(--muted);margin-right:14px;"></span>
+      <a href="/expert" class="console-header-logout" id="switchToExpertBtn" style="text-decoration:none;margin-right:14px;">Mode Expert</a>
       <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
     </header>
 
@@ -625,8 +637,8 @@
 
   <script>
     const API = "/api";
-    const SA_KEY = "tc_superadmin";
-    const PASSWORD = "certify2026!";
+    const TOKEN_KEY = "tc_token";
+    const TEACHER_KEY = "tc_teacher";
 
     // ── View system ──
 
@@ -649,26 +661,76 @@
       window.scrollTo(0, 0);
     }
 
-    // ── Login ──
+    // ── Login & auth ──
 
     const loginPage = document.getElementById("loginPage");
     const consoleContent = document.getElementById("consoleContent");
+    const loginError = document.getElementById("loginError");
 
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+    function getTeacher() {
+      try { return JSON.parse(localStorage.getItem(TEACHER_KEY)); } catch { return null; }
+    }
+    function clearAuth() {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TEACHER_KEY);
+    }
+    function showLoginError(msg) {
+      loginError.textContent = msg;
+      loginError.style.display = "block";
+    }
+
+    // All admin/* calls go through this so the Bearer token is sent and 401/403
+    // kick the user back to the login screen instead of silently failing.
+    async function authFetch(url, options = {}) {
+      const token = getToken();
+      if (!token) { forceLogout(); throw new Error("Non connecté"); }
+      options.headers = { ...(options.headers || {}), "Authorization": `Bearer ${token}` };
+      const res = await fetch(url, options);
+      if (res.status === 401) { forceLogout(); throw new Error("Session expirée"); }
+      if (res.status === 403) { forceAccessDenied(); throw new Error("Accès refusé"); }
+      return res;
+    }
+
+    function forceLogout() {
+      clearAuth();
+      consoleContent.style.display = "none";
+      loginPage.style.display = "flex";
+    }
+    function forceAccessDenied() {
+      clearAuth();
+      consoleContent.style.display = "none";
+      loginPage.style.display = "flex";
+      showLoginError("Accès réservé aux éditeur·ices.");
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const pw = document.getElementById("pwInput");
-      if (pw.value === PASSWORD) {
-        sessionStorage.setItem(SA_KEY, "true");
-        unlock();
-      } else {
-        document.getElementById("loginError").style.display = "block";
-        pw.value = "";
-        pw.focus();
+      loginError.style.display = "none";
+      const email = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("pwInput").value;
+
+      try {
+        const res = await fetch(`${API}/auth/login.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error) return showLoginError(data.error);
+        if (data.teacher?.role !== "editor") {
+          return showLoginError("Accès réservé aux éditeur·ices. Ce compte n'a que les droits Expert.");
+        }
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(TEACHER_KEY, JSON.stringify(data.teacher));
+        unlock(data.teacher);
+      } catch (err) {
+        showLoginError("Erreur réseau : " + err.message);
       }
     });
 
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      sessionStorage.removeItem(SA_KEY);
+      clearAuth();
       location.reload();
     });
 
@@ -680,15 +742,41 @@
     let certSearchTerms = [];
     let globalFeedSelectedCodes = new Set();
 
-    function unlock() {
+    function unlock(teacher) {
       loginPage.style.display = "none";
       consoleContent.style.display = "block";
+      const name = teacher?.name || teacher?.email || "";
+      document.getElementById("userName").textContent = name;
       loadTeachers();
       loadSessions();
       loadCerts();
     }
 
-    if (sessionStorage.getItem(SA_KEY) === "true") unlock();
+    // Auto-unlock if a valid token is already in localStorage and its owner is
+    // an editor. Role is re-validated server-side via /auth/me so demotions in
+    // the DB take effect on the next page load.
+    (async function bootstrapAuth() {
+      const token = getToken();
+      if (!token) return; // stays on login page
+      try {
+        const res = await fetch(`${API}/auth/me.php`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.status === 401) { clearAuth(); return; }
+        const me = await res.json();
+        if (!me || me.error) { clearAuth(); return; }
+        if (me.role !== "editor") {
+          // Token valid but account is not editor — keep token so /expert still
+          // works, just block /editor and show a helpful message.
+          showLoginError("Ce compte n'a pas les droits Éditeur·ice. Connectez-vous avec un compte autorisé.");
+          return;
+        }
+        localStorage.setItem(TEACHER_KEY, JSON.stringify(me));
+        unlock(me);
+      } catch {
+        // Network error — leave login page visible, user can retry.
+      }
+    })();
 
     // ── Create teacher ──
 
@@ -710,7 +798,7 @@
       }
 
       try {
-        const res = await fetch(`${API}/auth/register.php`, {
+        const res = await authFetch(`${API}/auth/register.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password, name })
@@ -736,7 +824,7 @@
 
     async function loadTeachers() {
       try {
-        const res = await fetch(`${API}/admin/teachers.php`);
+        const res = await authFetch(`${API}/admin/teachers.php`);
         allTeachersData = await res.json();
         if (!Array.isArray(allTeachersData)) allTeachersData = [];
       } catch { allTeachersData = []; }
@@ -758,14 +846,52 @@
         return;
       }
 
-      list.innerHTML = filtered.map(t => `
+      const me = getTeacher();
+      const myId = me?.id;
+      list.innerHTML = filtered.map(t => {
+        const isEditor = t.role === "editor";
+        const isSelf = myId && t.id === myId;
+        const roleBadge = `<span class="role-badge role-${isEditor ? "editor" : "expert"}">${isEditor ? "Éditeur·ice" : "Expert·e"}</span>`;
+        // Self-demotion is blocked server-side too; hide the button rather than show an error.
+        const roleBtn = isSelf
+          ? ""
+          : `<button class="btn-edit" onclick="toggleRole(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}', '${isEditor ? "expert" : "editor"}')">${isEditor ? "Retirer Éditeur·ice" : "Promouvoir Éditeur·ice"}</button>`;
+        return `
         <div class="list-row">
           <span class="list-row-name">${esc(t.name)}</span>
           <span class="list-row-meta">${esc(t.email)}</span>
+          ${roleBadge}
           <span class="list-row-date">${esc(t.created_at?.substring(0, 10) || "")}</span>
+          ${roleBtn}
           <button class="btn-delete" onclick="confirmDelete(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}', '${esc(t.email).replace(/'/g, "\\'")}')">Supprimer</button>
-        </div>
-      `).join("");
+        </div>`;
+      }).join("");
+    }
+
+    async function toggleRole(id, name, newRole) {
+      const verb = newRole === "editor" ? "promouvoir" : "retirer le statut d'éditeur·ice à";
+      if (!confirm(`Voulez-vous ${verb} ${name} ?`)) return;
+      const createError = document.getElementById("createError");
+      const createSuccess = document.getElementById("createSuccess");
+      createError.style.display = "none";
+      createSuccess.style.display = "none";
+      try {
+        const res = await authFetch(`${API}/admin/set-role.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teacher_id: id, role: newRole })
+        });
+        const data = await res.json();
+        if (data.error) { createError.textContent = data.error; createError.style.display = "block"; return; }
+        createSuccess.textContent = newRole === "editor"
+          ? `${name} est maintenant éditeur·ice.`
+          : `${name} n'est plus éditeur·ice.`;
+        createSuccess.style.display = "block";
+        loadTeachers();
+      } catch (err) {
+        createError.textContent = "Erreur : " + err.message;
+        createError.style.display = "block";
+      }
     }
 
     document.getElementById("teacherSearchInput").addEventListener("input", (e) => {
@@ -797,7 +923,7 @@
         deleteSuccess.style.display = "none";
         deleteError.style.display = "none";
         try {
-          const res = await fetch(`${API}/admin/delete-teacher.php`, {
+          const res = await authFetch(`${API}/admin/delete-teacher.php`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ teacher_id: id })
@@ -818,7 +944,7 @@
 
     async function loadSessions() {
       try {
-        const res = await fetch(`${API}/admin/sessions.php`);
+        const res = await authFetch(`${API}/admin/sessions.php`);
         allSessionsData = await res.json();
         if (!Array.isArray(allSessionsData)) allSessionsData = [];
       } catch { allSessionsData = []; }
@@ -887,7 +1013,7 @@
       btn.disabled = true;
       btn.textContent = "...";
       try {
-        const res = await fetch(`${API}/admin/update-session.php`, {
+        const res = await authFetch(`${API}/admin/update-session.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_id: id, is_open: newVal })
@@ -971,7 +1097,7 @@
       overlay.querySelector("#confirmDelS").addEventListener("click", async () => {
         overlay.remove();
         try {
-          const res = await fetch(`${API}/admin/delete-session.php`, {
+          const res = await authFetch(`${API}/admin/delete-session.php`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ session_id: id })
@@ -1053,7 +1179,7 @@
       detail.innerHTML = '<span style="color:var(--muted);font-size:.82rem;">Chargement…</span>';
 
       try {
-        const res = await fetch(`${API}/admin/session-detail.php?session_id=${id}`);
+        const res = await authFetch(`${API}/admin/session-detail.php?session_id=${id}`);
         const data = await res.json();
         if (data.error) { detail.innerHTML = `<span style="color:#b91c1c;">${esc(data.error)}</span>`; return; }
 
@@ -1260,7 +1386,7 @@
         btn.textContent = "Duplication…";
 
         try {
-          const res = await fetch(`${API}/admin/duplicate-session.php`, {
+          const res = await authFetch(`${API}/admin/duplicate-session.php`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ session_id: sessionId, target_teacher_id: teacherId, name, school_name: schoolName })
@@ -1297,7 +1423,7 @@
 
     async function loadCerts() {
       try {
-        const res = await fetch(`${API}/admin/certs.php`);
+        const res = await authFetch(`${API}/admin/certs.php`);
         allCertsData = await res.json();
         if (!Array.isArray(allCertsData)) allCertsData = [];
       } catch { allCertsData = []; }
@@ -1439,7 +1565,7 @@
       const payload = { action: "update", id };
       form.querySelectorAll("[data-field]").forEach(el => { payload[el.dataset.field] = el.value; });
       try {
-        const res = await fetch(`${API}/admin/certs.php`, {
+        const res = await authFetch(`${API}/admin/certs.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -1455,7 +1581,7 @@
       certError.style.display = "none";
       try {
         // Check for student responses first
-        const checkRes = await fetch(`${API}/admin/certs.php`, {
+        const checkRes = await authFetch(`${API}/admin/certs.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "check_delete", id })
@@ -1469,7 +1595,7 @@
         }
         if (!confirm(msg)) return;
 
-        const res = await fetch(`${API}/admin/certs.php`, {
+        const res = await authFetch(`${API}/admin/certs.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "delete", id })

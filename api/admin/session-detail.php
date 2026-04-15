@@ -2,6 +2,7 @@
 // GET — Aggregated session detail for superadmin (certs, responses count, collected count)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonError('Method not allowed', 405);

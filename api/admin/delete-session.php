@@ -3,6 +3,7 @@
 // Removes: session, session_certs, student_responses, collected_links
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);

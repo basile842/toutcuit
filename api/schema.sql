@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS teachers (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
+    role ENUM('expert','editor') NOT NULL DEFAULT 'expert',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

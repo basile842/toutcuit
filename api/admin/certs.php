@@ -3,6 +3,7 @@
 // POST — Update or delete a CERT (superadmin)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 $db = getDB();
 

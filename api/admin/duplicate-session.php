@@ -2,6 +2,7 @@
 // POST — Duplicate a session to another teacher, including student responses & collected links
 require_once __DIR__ . '/../middleware.php';
 handleCors();
+requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);

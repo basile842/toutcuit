@@ -15,7 +15,7 @@ $password = $data['password'];
 
 $db = getDB();
 
-$stmt = $db->prepare('SELECT id, email, name, password_hash FROM teachers WHERE email = ?');
+$stmt = $db->prepare('SELECT id, email, name, password_hash, role FROM teachers WHERE email = ?');
 $stmt->execute([$email]);
 $teacher = $stmt->fetch();
 
@@ -23,9 +23,12 @@ if (!$teacher || !password_verify($password, $teacher['password_hash'])) {
     jsonError('Invalid email or password', 401);
 }
 
+$role = $teacher['role'] ?? 'expert';
+
 $token = jwtCreate([
     'teacher_id' => (int) $teacher['id'],
     'email'      => $teacher['email'],
+    'role'       => $role,
 ]);
 
 jsonResponse([
@@ -34,5 +37,6 @@ jsonResponse([
         'id'    => (int) $teacher['id'],
         'email' => $teacher['email'],
         'name'  => $teacher['name'],
+        'role'  => $role,
     ],
 ]);
