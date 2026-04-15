@@ -96,6 +96,10 @@
     }
     /* In the sidecar popup the CERT is already preselected; hide the picker. */
     body.is-sidecar .selector-card { display: none; }
+    /* Narrow sidecar width: stack the summary title over the action row instead
+       of squeezing the title into a narrow column next to the buttons. */
+    body.is-sidecar .cert-summary-header { flex-direction: column; align-items: stretch; }
+    body.is-sidecar .cert-summary-header > div:last-child { flex-wrap: wrap; }
     .selector-title {
       font-family: 'Inter var', 'Inter', system-ui, sans-serif;
       font-size: 1.35rem;
