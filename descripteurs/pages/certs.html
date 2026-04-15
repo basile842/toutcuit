@@ -142,9 +142,17 @@
         renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
         window.tcOpenCertSidecar = openCertSidecar;
         window.tcIsSidecarOn = isSidecarOn;
+        // After the two popups are open, send the launcher window back to
+        // /editor so the user doesn't end up with the same form duplicated.
+        // Skipped when the current window IS the sidecar popup.
+        window.tcLauncherReturnToEditor = () => {
+          const inSidecar = new URLSearchParams(location.search).get("mode") === "sidecar";
+          if (inSidecar) return;
+          setTimeout(() => { window.location.href = "/editor"; }, 150);
+        };
         // When Sidecar gets checked and the URL field already has a value,
         // stash the current form state and open the two popups (URL left,
-        // pre-filled certs.html right).
+        // pre-filled certs.html right), then send the launcher back to /editor.
         document.addEventListener("tc-sidecar-change", (e) => {
           if (!e.detail?.on) return;
           const urlInput = document.getElementById("urlInput");
@@ -164,6 +172,7 @@
           };
           try { localStorage.setItem("tc_cert_prefill", JSON.stringify(pf)); } catch {}
           openCertSidecar(url, "/descripteurs/pages/certs.html?mode=sidecar");
+          window.tcLauncherReturnToEditor();
         });
       </script>
       <p class="page-lead">
@@ -763,6 +772,7 @@
         };
         try { localStorage.setItem("tc_cert_prefill", JSON.stringify(pf)); } catch {}
         window.tcOpenCertSidecar(url, "/descripteurs/pages/certs.html?mode=sidecar");
+        if (typeof window.tcLauncherReturnToEditor === "function") window.tcLauncherReturnToEditor();
       }
     }
 
