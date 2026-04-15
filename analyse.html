@@ -557,21 +557,27 @@
     <span class="header-sep">/</span>
     <span class="header-title">Aide à l'analyse</span>
     <span class="header-spacer"></span>
-    <span id="sidecarToggleSlot"></span>
     <span class="model-tag" id="modelTag">gemini 2.5 flash</span>
 </header>
 <script type="module">
   import { renderSidecarToggle, openCertSidecar, isSidecarOn } from "/descripteurs/assets/js/sidecar.js";
-  renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
   window.tcOpenCertSidecar = openCertSidecar;
   window.tcIsSidecarOn = isSidecarOn;
+  window.tcRenderSidecarToggle = renderSidecarToggle;
 </script>
 
 <main class="app">
 
     <!-- -- INPUT ---------------------------------------- -->
     <div class="input-card" id="inputCard">
-        <h1>Aide à l'analyse</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <h1 style="flex:1;margin-bottom:0;">Aide à l'analyse</h1>
+            <span id="sidecarToggleSlot"></span>
+        </div>
+        <script type="module">
+          import { renderSidecarToggle } from "/descripteurs/assets/js/sidecar.js";
+          renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
+        </script>
         <p class="lead">Collez l'URL d'une information. S'il s'agit d'un texte, copiez-collez le également. S'il s'agit d'une vidéo, copiez-collez une photo d'écran avec des visuels explicites. L'IA fournira des éléments de contexte et de contenu pour vous aider dans votre analyse.</p>
 
         <label for="urlInput">URL de l'information</label>

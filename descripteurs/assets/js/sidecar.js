@@ -3,8 +3,6 @@
 // a blank "main" popup on the left shows the CERT URL, and a sidecar popup
 // on the right hosts the edit/review form.
 
-console.log("[sidecar] module loaded");
-
 const SIDECAR_KEY = "tc_sidecar_mode";
 const SIDECAR_MAIN_NAME = "cert_sidecar_main";
 const SIDECAR_SIDE_NAME = "cert_sidecar_side";
@@ -57,40 +55,29 @@ export function openCertSidecar(urlToOpen, sidecarPageUrl) {
   return true;
 }
 
-// Renders a persistent pill-style toggle into a container.
+// Renders a persistent checkbox into a container.
 // Reflects state across tabs via the `storage` event.
 export function renderSidecarToggle(container, { label = "Sidecar" } = {}) {
   if (!container) return;
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "sidecar-toggle";
-  const paint = () => {
-    const on = isSidecarOn();
-    console.log("[sidecar] paint, on =", on);
-    btn.setAttribute("aria-pressed", on ? "true" : "false");
-    btn.textContent = `${label} : ${on ? "ON" : "OFF"}`;
-    const s = btn.style;
-    s.fontSize = ".78rem";
-    s.fontWeight = "600";
-    s.cursor = "pointer";
-    s.borderRadius = "999px";
-    s.padding = "4px 12px";
-    s.marginRight = "14px";
-    s.transition = "all .15s";
-    s.background = on ? "#6f5cf7" : "transparent";
-    s.color = on ? "#ffffff" : "#5e6673";
-    s.border = on ? "1px solid #6f5cf7" : "1px solid #d7dbe6";
-  };
-  btn.addEventListener("click", () => {
-    const next = !isSidecarOn();
-    console.log("[sidecar] toggle click →", next);
-    setSidecarOn(next);
-  });
-  container.appendChild(btn);
-  paint();
+  const wrap = document.createElement("label");
+  wrap.className = "sidecar-toggle";
+  wrap.style.cssText = "display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:#5e6673;cursor:pointer;user-select:none;";
 
-  window.addEventListener("storage", (e) => { if (e.key === SIDECAR_KEY) paint(); });
-  document.addEventListener("tc-sidecar-change", paint);
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.checked = isSidecarOn();
+  cb.style.cssText = "accent-color:#6f5cf7;cursor:pointer;margin:0;";
+  cb.addEventListener("change", () => setSidecarOn(cb.checked));
 
-  return btn;
+  const txt = document.createElement("span");
+  txt.textContent = label;
+
+  wrap.appendChild(cb);
+  wrap.appendChild(txt);
+  container.appendChild(wrap);
+
+  window.addEventListener("storage", (e) => { if (e.key === SIDECAR_KEY) cb.checked = isSidecarOn(); });
+  document.addEventListener("tc-sidecar-change", () => { cb.checked = isSidecarOn(); });
+
+  return wrap;
 }

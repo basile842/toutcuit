@@ -319,21 +319,6 @@
     }
     .btn-edit:hover { color: var(--accent); border-color: rgba(111,92,247,.3); background: rgba(111,92,247,.06); }
 
-    .btn-sidecar {
-      display: none;
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 7px;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 4px 10px;
-      transition: all .15s;
-    }
-    .btn-sidecar:hover { color: var(--accent); border-color: rgba(111,92,247,.3); background: rgba(111,92,247,.06); }
-    body.sidecar-on .btn-sidecar { display: inline-flex; }
-
     /* ── Cert rows ── */
     .cert-row {
       display: flex;
@@ -538,21 +523,16 @@
         <span class="console-header-title" id="breadcrumbLeaf" style="display:none"></span>
       </nav>
       <span class="console-header-spacer"></span>
-      <span id="sidecarToggleSlot"></span>
       <span class="console-header-user" id="userName" style="font-size:.82rem;color:var(--muted);margin-right:14px;"></span>
       <a href="/expert" class="console-header-logout" id="switchToExpertBtn" style="text-decoration:none;margin-right:14px;">Mode Expert</a>
       <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
     </header>
     <script type="module">
       import { renderSidecarToggle, openCertSidecar, isSidecarOn } from "/descripteurs/assets/js/sidecar.js";
-      renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
-      // Expose for inline handlers in this file.
-      window.tcOpenCertSidecar = openCertSidecar;
+      // Exposed for inline handlers in this file (Modifier, loadCerts, etc.).
       window.tcIsSidecarOn = isSidecarOn;
-      document.addEventListener("tc-sidecar-change", () => {
-        document.body.classList.toggle("sidecar-on", isSidecarOn());
-      });
-      document.body.classList.toggle("sidecar-on", isSidecarOn());
+      window.tcOpenCertSidecar = openCertSidecar;
+      window.tcRenderSidecarToggle = renderSidecarToggle;
     </script>
 
     <!-- ════ HOME VIEW ════ -->
@@ -707,6 +687,7 @@
         <div class="view-toolbar">
           <span class="view-title">Stock de CERTs</span>
           <span class="view-count" id="certsCount"></span>
+          <span id="sidecarToggleSlotCerts"></span>
         </div>
         <div class="search-box" id="certSearchBox">
           <input type="text" id="certSearchInput" placeholder="Rechercher par titre, descripteur, enseignant-e..." />
@@ -714,6 +695,10 @@
         <div id="certSuccess" class="success-msg"></div>
         <div id="certError" class="error-msg"></div>
         <div class="list-container" id="certsList"></div>
+        <script type="module">
+          import { renderSidecarToggle } from "/descripteurs/assets/js/sidecar.js";
+          renderSidecarToggle(document.getElementById("sidecarToggleSlotCerts"));
+        </script>
       </main>
     </div>
 
@@ -1551,8 +1536,7 @@
             ${c.reliability_text ? `<p>${esc(c.reliability_text)}</p>` : ""}
             ${c.references_text ? `<ol style="margin:6px 0;padding-left:22px;">${esc(c.references_text).split(/[\n;]+/).filter(s => s.trim()).map(s => '<li>' + s.trim() + '</li>').join("")}</ol>` : ""}
             <div class="cert-actions">
-              <button class="btn-edit" onclick="toggleCertEdit(${c.id})">Modifier</button>
-              <button class="btn-sidecar" onclick="openCertEditSidecar(${c.id})">Sidecar</button>
+              <button class="btn-edit" onclick="editCertFromRow(${c.id})">Modifier</button>
               <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>
             </div>
             <div class="cert-edit-form" id="cert-edit-${c.id}"></div>
@@ -1645,16 +1629,22 @@
       `;
     }
 
-    // Sidecar: open the CERT URL in a left popup and a self-targeted sidecar
-    // editor window on the right, using the exact openFeed2 mechanics.
-    function openCertEditSidecar(id) {
-      const c = allCertsData.find(x => x.id === id);
-      if (!c) return;
-      if (!c.url) { alert("Cette CERT n'a pas d'URL."); return; }
-      const side = `/editor?sidecar_cert=${encodeURIComponent(id)}&mode=sidecar`;
-      window.tcOpenCertSidecar && window.tcOpenCertSidecar(c.url, side);
+    // When "Modifier" is clicked, honour the Sidecar checkbox: if checked,
+    // open the two popups (URL left + dedicated editor window right). Otherwise
+    // fall back to the inline edit form.
+    function editCertFromRow(id) {
+      if (window.tcIsSidecarOn && window.tcIsSidecarOn()) {
+        const c = allCertsData.find(x => x.id === id);
+        if (c && c.url) {
+          const side = `/editor?sidecar_cert=${encodeURIComponent(id)}&mode=sidecar`;
+          window.tcOpenCertSidecar(c.url, side);
+          return;
+        }
+        if (c && !c.url) { alert("Cette CERT n'a pas d'URL."); return; }
+      }
+      toggleCertEdit(id);
     }
-    window.openCertEditSidecar = openCertEditSidecar;
+    window.editCertFromRow = editCertFromRow;
 
     // Called once loadCerts() has populated allCertsData in sidecar mode.
     function enterSidecarModeIfRequested() {
