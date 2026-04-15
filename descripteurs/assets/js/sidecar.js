@@ -66,6 +66,7 @@ export function renderSidecarToggle(container, { label = "Sidecar" } = {}) {
   btn.className = "sidecar-toggle";
   const paint = () => {
     const on = isSidecarOn();
+    console.log("[sidecar] paint, on =", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
     btn.textContent = `${label} : ${on ? "ON" : "OFF"}`;
     btn.style.cssText = [
