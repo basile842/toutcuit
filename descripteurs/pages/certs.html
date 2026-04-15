@@ -127,8 +127,31 @@
         <span id="sidecarToggleSlot"></span>
       </div>
       <script type="module">
-        import { renderSidecarToggle } from "/descripteurs/assets/js/sidecar.js";
+        import { renderSidecarToggle, openCertSidecar } from "/descripteurs/assets/js/sidecar.js";
         renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
+        // When Sidecar gets checked and the URL field already has a value,
+        // stash the current form state and open the two popups (URL left,
+        // pre-filled certs.html right).
+        document.addEventListener("tc-sidecar-change", (e) => {
+          if (!e.detail?.on) return;
+          const urlInput = document.getElementById("urlInput");
+          const url = urlInput?.value.trim();
+          if (!url) return;
+          const pf = {
+            title: document.getElementById("titleInput")?.value || "",
+            url,
+            expert: document.getElementById("expertInput")?.value || "",
+            date: document.getElementById("dateInput")?.value || "",
+            threePhrases: document.getElementById("threePhrasesInput")?.value || "",
+            context: document.getElementById("contextInput")?.value || "",
+            content: document.getElementById("contentInput")?.value || "",
+            reliabilityText: document.getElementById("reliabilityTextInput")?.value || "",
+            references: document.getElementById("referencesInput")?.value || "",
+            createdAt: Date.now(),
+          };
+          try { localStorage.setItem("tc_cert_prefill", JSON.stringify(pf)); } catch {}
+          openCertSidecar(url, "/descripteurs/pages/certs.html?mode=sidecar");
+        });
       </script>
       <p class="page-lead">
         Ajoutez des liens et leurs descripteurs pour les élèves.
