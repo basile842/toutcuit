@@ -55,33 +55,36 @@ export function openCertSidecar(urlToOpen, sidecarPageUrl) {
   return true;
 }
 
-// Renders a persistent toggle (checkbox + label) into a container.
+// Renders a persistent pill-style toggle into a container.
 // Reflects state across tabs via the `storage` event.
 export function renderSidecarToggle(container, { label = "Sidecar" } = {}) {
   if (!container) return;
-  const wrap = document.createElement("label");
-  wrap.className = "sidecar-toggle";
-  wrap.style.cssText = "display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);cursor:pointer;user-select:none;margin-right:14px;";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "sidecar-toggle";
+  const paint = () => {
+    const on = isSidecarOn();
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.textContent = `${label} : ${on ? "ON" : "OFF"}`;
+    btn.style.cssText = [
+      "font-size:.78rem",
+      "font-weight:600",
+      "cursor:pointer",
+      "border-radius:999px",
+      "padding:4px 12px",
+      "margin-right:14px",
+      "transition:all .15s",
+      on
+        ? "background:var(--accent);color:#fff;border:1px solid var(--accent);"
+        : "background:transparent;color:var(--muted);border:1px solid var(--border);",
+    ].join(";");
+  };
+  btn.addEventListener("click", () => setSidecarOn(!isSidecarOn()));
+  container.appendChild(btn);
+  paint();
 
-  const cb = document.createElement("input");
-  cb.type = "checkbox";
-  cb.checked = isSidecarOn();
-  cb.style.cssText = "accent-color:var(--accent);cursor:pointer;";
-  cb.addEventListener("change", () => setSidecarOn(cb.checked));
+  window.addEventListener("storage", (e) => { if (e.key === SIDECAR_KEY) paint(); });
+  document.addEventListener("tc-sidecar-change", paint);
 
-  const txt = document.createElement("span");
-  txt.textContent = label;
-
-  wrap.appendChild(cb);
-  wrap.appendChild(txt);
-  container.appendChild(wrap);
-
-  window.addEventListener("storage", (e) => {
-    if (e.key === SIDECAR_KEY) cb.checked = isSidecarOn();
-  });
-  document.addEventListener("tc-sidecar-change", (e) => {
-    cb.checked = !!e.detail?.on;
-  });
-
-  return wrap;
+  return btn;
 }
