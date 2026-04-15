@@ -3,6 +3,8 @@
 // a blank "main" popup on the left shows the CERT URL, and a sidecar popup
 // on the right hosts the edit/review form.
 
+console.log("[sidecar] module loaded");
+
 const SIDECAR_KEY = "tc_sidecar_mode";
 const SIDECAR_MAIN_NAME = "cert_sidecar_main";
 const SIDECAR_SIDE_NAME = "cert_sidecar_side";
@@ -79,7 +81,11 @@ export function renderSidecarToggle(container, { label = "Sidecar" } = {}) {
         : "background:transparent;color:var(--muted);border:1px solid var(--border);",
     ].join(";");
   };
-  btn.addEventListener("click", () => setSidecarOn(!isSidecarOn()));
+  btn.addEventListener("click", () => {
+    const next = !isSidecarOn();
+    console.log("[sidecar] toggle click →", next);
+    setSidecarOn(next);
+  });
   container.appendChild(btn);
   paint();
 
