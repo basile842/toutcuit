@@ -269,29 +269,28 @@
     }
 
     /* ── Cert preview (toggle + content) ── */
-    .cert-preview-toggle {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--border);
+    .cert-meta-row-wrap {
       display: flex;
       align-items: center;
       gap: 10px;
-      justify-content: flex-end;
+      margin-top: 10px;
     }
+    .cert-meta-row-wrap > .cert-meta-row { flex: 1; margin-top: 0; }
     .cert-preview-btn {
       flex-shrink: 0;
       cursor: pointer;
-      background: var(--panel);
-      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border: none;
       color: var(--muted);
-      font-size: 1.1rem;
-      padding: 6px 10px;
-      border-radius: 8px;
-      line-height: 1;
+      font-size: .78rem;
+      padding: 3px 10px;
+      border-radius: 6px;
+      line-height: 1.2;
       font-family: inherit;
+      font-weight: 600;
       transition: all .15s;
     }
-    .cert-preview-btn:hover { background: rgba(111,92,247,.08); color: var(--accent); }
+    .cert-preview-btn:hover { background: rgba(111,92,247,.12); color: var(--accent); }
     .cert-preview-content {
       display: none;
       margin-top: 14px;
@@ -775,7 +774,10 @@
           <div class="cert-summary-info">
             <div class="cert-summary-title" id="summaryTitle"></div>
             <a class="cert-summary-url" id="summaryUrl" href="#" target="_blank"></a>
-            <div class="cert-meta-row" id="summaryMeta"></div>
+            <div class="cert-meta-row-wrap">
+              <div class="cert-meta-row" id="summaryMeta"></div>
+              <button type="button" class="cert-preview-btn" id="previewToggleBtn" title="Aperçu du contenu" aria-label="Aperçu du contenu">&#9662;</button>
+            </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
             <span class="cost-badge" id="costBadge">
@@ -785,9 +787,6 @@
             <button class="btn-review" id="downloadRtfBtn" style="background:transparent;color:var(--accent);border:1px solid var(--accent);" title="Télécharger au format RTF">Télécharger .rtf</button>
             <button class="btn-review" id="reviewBtn">Analyser</button>
           </div>
-        </div>
-        <div class="cert-preview-toggle">
-          <button type="button" class="cert-preview-btn" id="previewToggleBtn" title="Aperçu du contenu" aria-label="Aperçu du contenu">&#9662;</button>
         </div>
         <div class="cert-preview-content" id="previewContent"></div>
       </div>
@@ -1062,7 +1061,14 @@
       collapsePreview();
 
       show("certSummary");
-      document.getElementById("reviewBtn").disabled = false;
+      const rBtn = document.getElementById("reviewBtn");
+      rBtn.disabled = false;
+      rBtn.style.display = "";
+      // Put the preview chevron back next to the meta row in case a previous
+      // save moved it into the action row.
+      const arrow = document.getElementById("previewToggleBtn");
+      const metaWrap = document.querySelector(".cert-meta-row-wrap");
+      if (arrow && metaWrap && arrow.parentElement !== metaWrap) metaWrap.appendChild(arrow);
       renderCertList();
     }
 
@@ -1182,6 +1188,9 @@
         }
 
         renderReview();
+        // Analysis done: no reason to re-run it, hide the button until the
+        // user picks another CERT.
+        btn.style.display = "none";
       } catch (err) {
         showError(err.message);
       } finally {
@@ -1486,6 +1495,16 @@
 
         // Refresh display
         selectCert(selectedCert.id);
+
+        // Post-save layout: hide Analyser (nothing to re-analyse), move the
+        // chevron next to "Télécharger .rtf" and auto-expand the preview.
+        const reviewBtn = document.getElementById("reviewBtn");
+        reviewBtn.style.display = "none";
+        const arrow = document.getElementById("previewToggleBtn");
+        const actionRow = reviewBtn.parentElement;
+        if (arrow && actionRow) actionRow.appendChild(arrow);
+        const preview = document.getElementById("previewContent");
+        if (preview && !preview.classList.contains("is-visible")) arrow.click();
       } catch (err) {
         status.className = "save-status error";
         status.textContent = err.message;

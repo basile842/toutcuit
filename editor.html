@@ -1633,13 +1633,15 @@
           <option value="bad" ${c.reliability === "bad" ? "selected" : ""}>Pas fiable</option>
         </select>
         <label>3 phrases</label>
-        <textarea data-field="three_phrases" rows="2">${esc(c.three_phrases || "")}</textarea>
+        <textarea data-field="three_phrases" rows="6">${esc(c.three_phrases || "")}</textarea>
         <label>Contexte</label>
-        <textarea data-field="context" rows="2">${esc(c.context || "")}</textarea>
+        <textarea data-field="context" rows="6">${esc(c.context || "")}</textarea>
+        <label>Contenu</label>
+        <textarea data-field="content" rows="6">${esc(c.content || "")}</textarea>
         <label>Fiabilité (explication)</label>
-        <textarea data-field="reliability_text" rows="2">${esc(c.reliability_text || "")}</textarea>
+        <textarea data-field="reliability_text" rows="4">${esc(c.reliability_text || "")}</textarea>
         <label>Références</label>
-        <textarea data-field="references_text" rows="2">${esc(c.references_text || "")}</textarea>
+        <textarea data-field="references_text" rows="4">${esc(c.references_text || "")}</textarea>
         <div class="cert-edit-btns">
           <button class="btn-save" onclick="saveCertAdmin(${id})">Enregistrer</button>
           <button onclick="document.getElementById('cert-edit-${id}').style.display='none'">Annuler</button>
