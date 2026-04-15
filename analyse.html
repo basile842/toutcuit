@@ -557,8 +557,15 @@
     <span class="header-sep">/</span>
     <span class="header-title">Aide à l'analyse</span>
     <span class="header-spacer"></span>
+    <span id="sidecarToggleSlot"></span>
     <span class="model-tag" id="modelTag">gemini 2.5 flash</span>
 </header>
+<script type="module">
+  import { renderSidecarToggle, openCertSidecar, isSidecarOn } from "/descripteurs/assets/js/sidecar.js";
+  renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
+  window.tcOpenCertSidecar = openCertSidecar;
+  window.tcIsSidecarOn = isSidecarOn;
+</script>
 
 <main class="app">
 
@@ -1237,7 +1244,11 @@ async function genCert() {
             references: out.references || '',
             createdAt: Date.now(),
         }));
-        window.open('/descripteurs/pages/certs.html', '_blank', 'noopener');
+        if (window.tcIsSidecarOn && window.tcIsSidecarOn()) {
+            window.tcOpenCertSidecar(urlEl.value.trim(), '/descripteurs/pages/certs.html?mode=sidecar');
+        } else {
+            window.open('/descripteurs/pages/certs.html', '_blank', 'noopener');
+        }
     } catch (e) {
         alert('Erreur : ' + e.message);
     } finally {

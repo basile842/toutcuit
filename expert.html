@@ -453,10 +453,15 @@
       <span class="console-header-sep">/</span>
       <span class="console-header-title">Expert</span>
       <span class="console-header-spacer"></span>
+      <span id="sidecarToggleSlot"></span>
       <span class="console-header-user" id="userName"></span>
       <a href="/editor" class="console-header-logout" id="switchToEditorBtn" style="display:none;text-decoration:none;margin-left:14px;">Mode Éditeur·ice</a>
       <button class="console-header-logout" id="logoutBtn">Déconnexion</button>
     </header>
+    <script type="module">
+      import { renderSidecarToggle } from "/descripteurs/assets/js/sidecar.js";
+      renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
+    </script>
 
     <main class="console-main">
 

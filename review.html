@@ -333,6 +333,8 @@
       flex-shrink: 0;
     }
     .btn-review:hover { background: var(--accent-hover); }
+    .btn-sidecar { display: none; }
+    body.sidecar-on .btn-sidecar { display: inline-flex; }
     .btn-review:disabled {
       opacity: .5;
       cursor: not-allowed;
@@ -741,7 +743,17 @@
       <span class="header-sep">/</span>
       <span class="header-title">Révision des CERTs</span>
       <span class="header-spacer"></span>
+      <span id="sidecarToggleSlot"></span>
     </header>
+    <script type="module">
+      import { renderSidecarToggle, openCertSidecar, isSidecarOn } from "/descripteurs/assets/js/sidecar.js";
+      renderSidecarToggle(document.getElementById("sidecarToggleSlot"));
+      window.tcOpenCertSidecar = openCertSidecar;
+      window.tcIsSidecarOn = isSidecarOn;
+      const sync = () => document.body.classList.toggle("sidecar-on", isSidecarOn());
+      document.addEventListener("tc-sidecar-change", sync);
+      sync();
+    </script>
 
     <main class="main">
 
@@ -769,6 +781,7 @@
               <span class="cost-amount" id="costAmount"></span>
               <span class="cost-tokens" id="costTokens"></span>
             </span>
+            <button class="btn-review btn-sidecar" id="sidecarBtn" style="background:transparent;color:var(--accent);border:1px solid var(--accent);">Sidecar</button>
             <button class="btn-review" id="downloadRtfBtn" style="background:transparent;color:var(--accent);border:1px solid var(--accent);" title="Télécharger au format RTF">Télécharger .rtf</button>
             <button class="btn-review" id="reviewBtn">Analyser</button>
           </div>
@@ -929,10 +942,24 @@
         const res = await authFetch(`${API}/admin/certs.php`);
         allCerts = await res.json();
         renderCertList();
+        maybeEnterSidecar();
       } catch (err) {
         document.getElementById("certList").innerHTML =
           '<div class="empty-state">Erreur de chargement.</div>';
       }
+    }
+
+    // Auto-select + auto-run review when landed in sidecar mode.
+    function maybeEnterSidecar() {
+      const qp = new URLSearchParams(location.search);
+      if (qp.get("mode") !== "sidecar") return;
+      const id = parseInt(qp.get("sidecar_cert"), 10);
+      if (!id) return;
+      document.body.classList.add("is-sidecar");
+      const target = allCerts.find(c => c.id === id);
+      if (!target) return;
+      selectCert(id);
+      runReview();
     }
 
     function renderCertList() {
@@ -1099,6 +1126,14 @@
 
     // ── Review ──
     document.getElementById("reviewBtn").addEventListener("click", runReview);
+
+    // Sidecar: open the CERT URL on the left and a dedicated review window on the right.
+    document.getElementById("sidecarBtn").addEventListener("click", () => {
+      if (!selectedCert) return;
+      if (!selectedCert.url) { alert("Cette CERT n'a pas d'URL."); return; }
+      const side = `/review?sidecar_cert=${encodeURIComponent(selectedCert.id)}&mode=sidecar`;
+      window.tcOpenCertSidecar && window.tcOpenCertSidecar(selectedCert.url, side);
+    });
 
     async function runReview() {
       if (!selectedCert) return;
