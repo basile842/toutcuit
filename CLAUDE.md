@@ -60,10 +60,13 @@ Le `.htaccess` racine fait deux choses qu'il faut connaître avant de toucher au
 | `reset.html` | `/reset` | Reset mot de passe |
 | `editor.html` | `/editor` | Console éditeur (password-protected, gestion enseignants/sessions/CERTs + outils) — anciennement `superadmin.html` |
 | `review.html` | `/review` | Outil de révision éditoriale des CERTs via Claude API |
+| `analyse.html` | `/analyse` | Outil d'aide à l'analyse d'une URL pour les expert·es (Claude + Gemini, screenshot optionnel) |
 
-## API (~37 endpoints)
+## API (~40 endpoints)
 
 Tous dans `api/`, requêtes JSON, réponses JSON. `api/middleware.php` fournit `handleCors()`, `requireAuth()`, `getTeacherId()`, `jsonResponse()`, `jsonError()`, `getJsonBody()`. `api/db.php` expose `db()` (PDO singleton). `api/.htaccess` bloque `config.php` et tous les `.md`.
+
+Note : `api/generate-cert.php` est à la **racine de `api/`** (et non dans `api/ai/`) pour des raisons historiques. Les trois endpoints AI sont donc répartis entre `api/ai/` (review, compose-cert) et `api/` (generate-cert).
 
 ### Auth (`api/auth/`)
 - `login.php` [POST] — email + password → JWT token + teacher data
@@ -91,9 +94,30 @@ Tous dans `api/`, requêtes JSON, réponses JSON. `api/middleware.php` fournit `
 - `update-session.php` [POST], `delete-session.php` [DELETE], `delete-teacher.php` [DELETE], `reset-responses.php` [POST]
 - `duplicate-session.php` [POST] — clone côté éditeur (distinct de `sessions/duplicate.php` côté enseignant)
 
-### AI (`api/ai/`)
-- `review.php` [POST] — envoie les champs texte d'une CERT à Claude Sonnet pour révision éditoriale. Si `three_phrases` est vide, demande à Claude de le générer. Clé API dans `config.php` (`ANTHROPIC_API_KEY`).
-- **`review-prompt.md`** — template du prompt système, chargé par `review.php` via `file_get_contents()` puis `strtr()` sur les placeholders `{{METADATA}}`, `{{FIELDS}}`, `{{GENERATE_BLOCK}}`. **C'est le point d'édition principal pour modifier le comportement de la révision IA** — éditer ce fichier plutôt que `review.php`. Bloqué en HTTP par `api/.htaccess` (`<FilesMatch "\.md$">`).
+### AI (3 endpoints — `api/ai/` + `api/generate-cert.php`)
+
+Trois outils AI partagent des conventions communes (voir « Parité AI » plus bas) :
+
+- **`api/ai/review.php`** [POST] — Révision éditoriale d'une CERT existante par Claude Sonnet. Si `three_phrases` est vide, demande à Claude de le générer. Sert `review.html`.
+- **`api/generate-cert.php`** [POST] — Analyse d'une URL par Claude ou Gemini (multimodal : screenshot optionnel). Récupère le HTML server-side si l'utilisateur ne colle pas le contenu. Sort un JSON structuré `{context, content, visual, references}`. Sert `analyse.html`.
+- **`api/ai/compose-cert.php`** [POST] — Prend la sortie de `generate-cert.php` et la transforme en champs CERT prêts à coller (`title`, `three_phrases`, `context`, `content`, `reliability_text`, `references`). Sert le bouton « Générer une CERT » de `analyse.html`.
+
+Prompts système :
+- **`api/ai/review-prompt.md`** — template externe chargé par `review.php` via `file_get_contents()` + `strtr()` sur `{{METADATA}}`, `{{FIELDS}}`, `{{GENERATE_BLOCK}}`. **Point d'édition principal** pour `review.php`. Bloqué en HTTP par `api/.htaccess` (`<FilesMatch "\.md$">`).
+- Les prompts de `generate-cert.php` et `compose-cert.php` sont **inline** dans le PHP (heredoc `<<<'PROMPT'`). Incohérence à garder en tête — les éditer directement dans le fichier PHP.
+
+Clés API dans `config.php` : `ANTHROPIC_API_KEY` (Claude), `GOOGLE_API_KEY` (Gemini).
+
+#### Parité AI
+
+Les trois endpoints AI doivent rester cohérents sur ces trois points :
+1. **Retry** : `$maxAttempts = 4`, `$retryableHttp = [429, 503, 529]`, backoff exponentiel ~1s/2s/4s avec jitter. Sur échec final, message `"L'API {Claude|Gemini} est temporairement surchargée (HTTP N) après 4 tentatives. Réessaie dans quelques instants."` (503).
+2. **Libellé du bouton de téléchargement RTF** : `Télécharger .rtf` (pas juste `RTF`) dans les trois UI : `review.html`, `analyse.html`, `descripteurs/pages/certs.html`.
+3. **Prompt de génération des 3 Phrases** : règles identiques dans `review-prompt.md` et dans le heredoc de `compose-cert.php` (format + sujet / fait central / verdict « Fiable / Pas fiable / Indéterminé, car… », pas de références, phrases courtes).
+
+#### Flow analyse → CERT
+
+L'outil `analyse.html` transmet ses résultats à `descripteurs/pages/certs.html` via `localStorage['tc_cert_prefill']` (TTL 10 min, effacé après lecture). **Quand on renomme un champ côté `compose-cert.php`, le répercuter dans deux autres endroits** : le bloc qui pose la clé dans `analyse.html` (`genCert()`), et le bloc qui la lit dans `certs.html` (section « Prefill from analyse tool »). Tout oubli rend le champ silencieusement vide.
 
 ### Schools (`api/schools/`)
 - `list.php` [GET], `save.php` [POST]
@@ -147,6 +171,15 @@ Outil de révision éditoriale des CERTs via Claude API. Flow :
 5. Sauvegarder envoie les modifications à `api/admin/certs.php` (action: update)
 
 Palette UI : violet (accent) pour "Claude", gris pour "Original", ambre pour "Éditer". Le rouge et le vert sont réservés aux indicateurs de fiabilité.
+
+### Analyse (`analyse.html`)
+
+Outil d'aide à l'analyse d'une URL pour les expert·es (accès libre, pas d'auth). Flow :
+1. Coller une URL (+ optionnellement un texte copié-collé et/ou un screenshot)
+2. Choisir un modèle (Claude Opus/Sonnet/Haiku, Gemini Flash/Pro) → Analyser (appel `api/generate-cert.php`)
+3. Le résultat s'affiche en sections éditables : Contexte (concret/thématique), Contenu (claims/style/crosscheck), Visuel (si screenshot), Références numérotées
+4. Mode édition inline pour ajuster les bullets, export `.rtf`
+5. Bouton « Générer une CERT » → appel `api/ai/compose-cert.php` → ouverture de `descripteurs/pages/certs.html` avec les champs pré-remplis
 
 ## Descripteurs
 
