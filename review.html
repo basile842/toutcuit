@@ -705,6 +705,150 @@
       font-family: inherit;
     }
     .btn-bulk:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Review-assignment panel ── */
+    .assign-panel {
+      display: none;
+      padding: 14px 16px;
+      background: rgba(111,92,247,.06);
+      border: 1px solid rgba(111,92,247,.28);
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .assign-panel.is-active { display: block; }
+    .assign-panel-title {
+      font-weight: 800;
+      color: var(--accent);
+      font-size: .88rem;
+      margin-bottom: 6px;
+    }
+    .assign-panel-note {
+      font-size: .85rem;
+      color: var(--text);
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+    .assign-panel-note em {
+      color: var(--muted);
+      font-style: italic;
+    }
+    .assign-panel-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .assign-panel-actions button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      font-family: inherit;
+    }
+    .assign-panel-actions .btn-assign-complete {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .assign-panel-actions .btn-assign-complete:hover { background: var(--accent-hover); }
+    .assign-panel-actions .btn-assign-return {
+      border-color: rgba(245,158,11,.45);
+      color: #92400e;
+    }
+    .assign-panel-actions .btn-assign-return:hover {
+      background: rgba(245,158,11,.1);
+    }
+    .assign-panel-actions .btn-assign-redirect:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Review-status badges shown in cert list */
+    .review-chip {
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      margin-left: 6px;
+    }
+    .review-chip.pending {
+      background: rgba(111,92,247,.15);
+      color: var(--accent);
+      border: 1px solid rgba(111,92,247,.3);
+    }
+    .review-chip.done {
+      background: rgba(34,197,94,.15);
+      color: #166534;
+      border: 1px solid rgba(34,197,94,.3);
+    }
+    .review-chip.returned {
+      background: rgba(245,158,11,.15);
+      color: #92400e;
+      border: 1px solid rgba(245,158,11,.3);
+    }
+
+    /* Modals (redirect + return) */
+    .tc-modal {
+      position: fixed; inset: 0; z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.35); backdrop-filter: blur(4px);
+    }
+    .tc-modal.is-open { display: flex; }
+    .tc-modal-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 480px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .tc-modal-card h3 { font-size: 1rem; font-weight: 700; }
+    .tc-modal-card label {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .tc-modal-card select,
+    .tc-modal-card textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: .9rem;
+      background: var(--panel);
+      color: var(--text);
+      outline: none;
+      font-family: inherit;
+    }
+    .tc-modal-card textarea { resize: vertical; min-height: 100px; }
+    .tc-modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+    .tc-modal-actions button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .tc-modal-actions .btn-primary-m {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .tc-modal-actions .btn-primary-m:hover { background: var(--accent-hover); }
   </style>
 </head>
 <body>
@@ -791,6 +935,17 @@
         <div class="cert-preview-content" id="previewContent"></div>
       </div>
 
+      <!-- Assignment panel: shown when the selected cert is assigned to the current editor -->
+      <div class="assign-panel" id="assignPanel">
+        <div class="assign-panel-title" id="assignPanelTitle">Cette CERT vous est assignée pour édition</div>
+        <div class="assign-panel-note" id="assignPanelNote"></div>
+        <div class="assign-panel-actions">
+          <button type="button" class="btn-assign-complete" id="completeReviewBtn">Valider l'édition</button>
+          <button type="button" class="btn-assign-redirect" id="redirectReviewBtn">Rediriger…</button>
+          <button type="button" class="btn-assign-return" id="returnReviewBtn">Renvoyer à l'expert…</button>
+        </div>
+      </div>
+
       <!-- Loading -->
       <div class="loading-bar" id="loadingBar">
         <div class="spinner"></div>
@@ -820,6 +975,36 @@
       <button class="btn-save" id="saveBtn" onclick="saveCert()">Sauvegarder</button>
       <span class="save-hint">L'ordre des références sera ajusté si besoin.</span>
       <span class="save-status" id="saveStatus"></span>
+    </div>
+
+    <!-- Modal: redirect to another editor -->
+    <div class="tc-modal" id="redirectModal">
+      <div class="tc-modal-card">
+        <h3>Rediriger vers un·e autre éditeur·ice</h3>
+        <div>
+          <label for="redirectEditorSelect">Éditeur·ice</label>
+          <select id="redirectEditorSelect"></select>
+        </div>
+        <div class="tc-modal-actions">
+          <button type="button" id="redirectCancelBtn">Annuler</button>
+          <button type="button" class="btn-primary-m" id="redirectSubmitBtn">Rediriger</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: return to the expert with a required comment -->
+    <div class="tc-modal" id="returnModal">
+      <div class="tc-modal-card">
+        <h3>Renvoyer la CERT à l'expert</h3>
+        <div>
+          <label for="returnCommentInput">Commentaire (obligatoire)</label>
+          <textarea id="returnCommentInput" placeholder="Ce qui doit être revu avant la validation…"></textarea>
+        </div>
+        <div class="tc-modal-actions">
+          <button type="button" id="returnCancelBtn">Annuler</button>
+          <button type="button" class="btn-primary-m" id="returnSubmitBtn">Renvoyer à l'expert</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -893,7 +1078,22 @@
     function unlock() {
       loginPage.style.display = "none";
       appContent.style.display = "block";
+      loadCurrentTeacherId();
+      loadEditors();
       loadCerts();
+    }
+
+    async function loadEditors() {
+      try {
+        const res = await authFetch(`${API}/teachers/editors.php`);
+        const data = await res.json();
+        editorsList = Array.isArray(data) ? data : [];
+        const select = document.getElementById("redirectEditorSelect");
+        select.innerHTML = editorsList
+          .filter(e => e.id !== currentTeacherId)
+          .map(e => `<option value="${e.id}">${esc(e.name)}</option>`)
+          .join("");
+      } catch {}
     }
 
     // Auto-unlock if a valid editor token already exists in localStorage.
@@ -922,6 +1122,15 @@
     let suggestions = {};  // { field_key: { suggested, changes } }
     let decisions = {};    // { field_key: 'accepted' | 'rejected' | 'edited' }
     let editedTexts = {};  // { field_key: string }
+    let editorsList = []; // [{id, name}] for the redirect modal
+    let currentTeacherId = null;
+
+    function loadCurrentTeacherId() {
+      try {
+        const t = JSON.parse(localStorage.getItem(TEACHER_KEY) || "null");
+        currentTeacherId = t?.id ? parseInt(t.id, 10) : null;
+      } catch { currentTeacherId = null; }
+    }
 
     const FIELD_LABELS = {
       title: "Titre",
@@ -939,10 +1148,25 @@
         allCerts = await res.json();
         renderCertList();
         maybeEnterSidecar();
+        maybeAutoSelectFromUrl();
       } catch (err) {
         document.getElementById("certList").innerHTML =
           '<div class="empty-state">Erreur de chargement.</div>';
       }
+    }
+
+    // Auto-select a cert when landing on /review?cert_id=X (e.g. from the
+    // editor's pending-reviews banner). Only runs once on initial load.
+    function maybeAutoSelectFromUrl() {
+      const qp = new URLSearchParams(location.search);
+      if (qp.get("mode") === "sidecar") return; // sidecar mode uses its own flow
+      const id = parseInt(qp.get("cert_id"), 10);
+      if (!id) return;
+      const target = allCerts.find(c => c.id === id);
+      if (!target) return;
+      selectCert(id);
+      // Strip the query param so the flow isn't restored on save-driven re-selects.
+      history.replaceState(null, "", location.pathname);
     }
 
     // Auto-select + auto-run review when landed in sidecar mode.
@@ -971,15 +1195,36 @@
         return;
       }
 
-      list.innerHTML = filtered.map(c => `
+      list.innerHTML = filtered.map(c => {
+        const chip = reviewChipForList(c);
+        return `
         <div class="cert-item ${selectedCert && selectedCert.id === c.id ? 'selected' : ''}"
              data-id="${c.id}" onclick="selectCert(${c.id})">
           <span class="cert-item-title">${esc(c.title)}</span>
           ${c.descriptor1 ? `<span class="cert-desc-tag ${esc(c.reliability || '')}">${esc(c.descriptor1)}</span>` : ""}
           ${c.descriptor2 ? `<span class="cert-desc-tag ${esc(c.reliability || '')}">${esc(c.descriptor2)}</span>` : ""}
+          ${chip}
           <span class="cert-item-meta">${esc(c.expert || '?')}</span>
         </div>
-      `).join("");
+      `;
+      }).join("");
+    }
+
+    // Short status chip for the left-side cert list. Only surfaces a chip when
+    // the current editor is involved (assigned pending, or done/returned).
+    function reviewChipForList(c) {
+      if (!c.review_status) return "";
+      const mine = c.review_editor_id && currentTeacherId && parseInt(c.review_editor_id, 10) === currentTeacherId;
+      if (c.review_status === "pending" && mine) {
+        return `<span class="review-chip pending">À réviser</span>`;
+      }
+      if (c.review_status === "done") {
+        return `<span class="review-chip done">Éditée</span>`;
+      }
+      if (c.review_status === "returned") {
+        return `<span class="review-chip returned">Retournée</span>`;
+      }
+      return "";
     }
 
     let searchTerms = [];
@@ -1070,6 +1315,31 @@
       const metaWrap = document.querySelector(".cert-meta-row-wrap");
       if (arrow && metaWrap && arrow.parentElement !== metaWrap) metaWrap.appendChild(arrow);
       renderCertList();
+      updateAssignPanel(selectedCert);
+    }
+
+    // Show the three lifecycle actions only when the current editor is the one
+    // assigned to the pending review on this cert. Otherwise hide the panel.
+    function updateAssignPanel(c) {
+      const panel = document.getElementById("assignPanel");
+      if (!c) { panel.classList.remove("is-active"); return; }
+      const mine = c.review_status === "pending"
+        && c.review_editor_id
+        && currentTeacherId
+        && parseInt(c.review_editor_id, 10) === currentTeacherId;
+      if (!mine) { panel.classList.remove("is-active"); return; }
+
+      const expertName = c.teacher_name || "l'expert";
+      const title = document.getElementById("assignPanelTitle");
+      title.textContent = `Cette CERT vous est assignée pour édition (demande de ${expertName})`;
+
+      const noteEl = document.getElementById("assignPanelNote");
+      if (c.review_expert_note) {
+        noteEl.innerHTML = `<strong>Message :</strong> ${esc(c.review_expert_note)}`;
+      } else {
+        noteEl.innerHTML = `<em>(Aucun message de l'expert.)</em>`;
+      }
+      panel.classList.add("is-active");
     }
 
     // ── Preview rendering ──
@@ -1627,6 +1897,110 @@
     }
 
     document.getElementById("downloadRtfBtn").addEventListener("click", downloadCurrentRtf);
+
+    /* ============================
+       Review-request lifecycle (editor side)
+    ============================ */
+    const redirectModal = document.getElementById("redirectModal");
+    const redirectEditorSelect = document.getElementById("redirectEditorSelect");
+    const returnModal = document.getElementById("returnModal");
+    const returnCommentInput = document.getElementById("returnCommentInput");
+
+    function openRedirectModal() {
+      if (!selectedCert) return;
+      // Refresh select to exclude current editor (in case it was populated empty).
+      redirectEditorSelect.innerHTML = editorsList
+        .filter(e => e.id !== currentTeacherId)
+        .map(e => `<option value="${e.id}">${esc(e.name)}</option>`)
+        .join("");
+      redirectModal.classList.add("is-open");
+    }
+    function closeRedirectModal() { redirectModal.classList.remove("is-open"); }
+    function openReturnModal() {
+      if (!selectedCert) return;
+      returnCommentInput.value = "";
+      returnModal.classList.add("is-open");
+      setTimeout(() => returnCommentInput.focus(), 50);
+    }
+    function closeReturnModal() { returnModal.classList.remove("is-open"); }
+
+    // Reload certs from the server and re-select the current one so the
+    // assign panel + list chip reflect the new state after a lifecycle action.
+    async function refreshCertAfterLifecycle(certId) {
+      try {
+        const res = await authFetch(`${API}/admin/certs.php`);
+        allCerts = await res.json();
+        renderCertList();
+        const fresh = allCerts.find(c => c.id === certId);
+        if (fresh) {
+          selectedCert = fresh;
+          updateAssignPanel(fresh);
+        }
+      } catch {}
+    }
+
+    async function callLifecycle(endpoint, payload, successMsg) {
+      try {
+        const res = await authFetch(`${API}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert("Erreur : " + data.error);
+          return false;
+        }
+        if (successMsg) {
+          const status = document.getElementById("saveStatus");
+          status.className = "save-status success";
+          status.textContent = successMsg;
+        }
+        return true;
+      } catch (err) {
+        alert("Erreur : " + err.message);
+        return false;
+      }
+    }
+
+    document.getElementById("completeReviewBtn").addEventListener("click", async () => {
+      if (!selectedCert) return;
+      if (!confirm("Valider l'édition de cette CERT ? L'expert sera notifié·e.")) return;
+      const ok = await callLifecycle("/certs/complete-review.php",
+        { cert_id: selectedCert.id }, "Édition validée.");
+      if (ok) refreshCertAfterLifecycle(selectedCert.id);
+    });
+
+    document.getElementById("redirectReviewBtn").addEventListener("click", openRedirectModal);
+    document.getElementById("redirectCancelBtn").addEventListener("click", closeRedirectModal);
+    document.getElementById("redirectSubmitBtn").addEventListener("click", async () => {
+      if (!selectedCert) return;
+      const editorId = parseInt(redirectEditorSelect.value, 10);
+      if (!editorId) return;
+      const ok = await callLifecycle("/certs/reassign-review.php",
+        { cert_id: selectedCert.id, editor_id: editorId }, "CERT redirigée.");
+      closeRedirectModal();
+      if (ok) refreshCertAfterLifecycle(selectedCert.id);
+    });
+
+    document.getElementById("returnReviewBtn").addEventListener("click", openReturnModal);
+    document.getElementById("returnCancelBtn").addEventListener("click", closeReturnModal);
+    document.getElementById("returnSubmitBtn").addEventListener("click", async () => {
+      if (!selectedCert) return;
+      const comment = returnCommentInput.value.trim();
+      if (!comment) {
+        returnCommentInput.focus();
+        return;
+      }
+      const ok = await callLifecycle("/certs/return-review.php",
+        { cert_id: selectedCert.id, editor_comment: comment }, "CERT renvoyée à l'expert.");
+      closeReturnModal();
+      if (ok) refreshCertAfterLifecycle(selectedCert.id);
+    });
+
+    // Click-outside-to-close for the two modals
+    redirectModal.addEventListener("click", (e) => { if (e.target === redirectModal) closeRedirectModal(); });
+    returnModal.addEventListener("click", (e) => { if (e.target === returnModal) closeReturnModal(); });
   </script>
 
 </body>

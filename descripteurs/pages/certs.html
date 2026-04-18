@@ -105,6 +105,61 @@
     .import-status.ok{ color: var(--good); font-weight: 600; }
     .import-status.err{ color: var(--bad); font-weight: 600; }
 
+    /* Post-save "Envoyer en édition" panel */
+    .post-save-panel{
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: rgba(111,92,247,.06);
+      border: 1px solid rgba(111,92,247,.25);
+      border-radius: 12px;
+    }
+    .post-save-panel.is-active{ display: block; }
+    .post-save-panel-title{
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: .92rem;
+    }
+    .post-save-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .post-save-row select{
+      flex: 1 1 180px;
+      min-width: 140px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: .88rem;
+      background: var(--panel);
+      color: var(--text);
+      outline: none;
+    }
+    .post-save-row textarea{
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: .88rem;
+      background: var(--panel);
+      color: var(--text);
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+    .post-save-status{
+      margin-top: 8px;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+    .post-save-status.ok{ color: #166534; font-weight: 600; }
+    .post-save-status.err{ color: #b91c1c; font-weight: 600; }
+
     /* Sidecar popup: strip top chrome and jump straight to the form. */
     body.is-sidecar header,
     body.is-sidecar .certs-intro,
@@ -202,6 +257,17 @@
       <div class="card">
         <div id="successMsg" class="success-msg"></div>
         <div id="errorMsg" class="error-msg"></div>
+
+        <div id="postSavePanel" class="post-save-panel">
+          <div class="post-save-panel-title">Envoyer cette CERT en édition ?</div>
+          <div class="post-save-row">
+            <select id="postSaveEditorSelect"></select>
+            <button type="button" class="btn" id="postSaveSendBtn">Envoyer en édition</button>
+            <button type="button" class="btn" id="postSaveDismissBtn" style="background:transparent;color:var(--muted);border:1px solid var(--border);">Plus tard</button>
+          </div>
+          <textarea id="postSaveNoteInput" placeholder="Message à l'éditeur·ice (facultatif)…"></textarea>
+          <div id="postSaveStatus" class="post-save-status"></div>
+        </div>
 
         <form id="linkForm">
           <!-- Informations de base -->
@@ -361,6 +427,93 @@
     });
 
     /* ============================
+       Review-request (post-save)
+    ============================ */
+    const postSavePanel = document.getElementById("postSavePanel");
+    const postSaveEditorSelect = document.getElementById("postSaveEditorSelect");
+    const postSaveSendBtn = document.getElementById("postSaveSendBtn");
+    const postSaveDismissBtn = document.getElementById("postSaveDismissBtn");
+    const postSaveNoteInput = document.getElementById("postSaveNoteInput");
+    const postSaveStatus = document.getElementById("postSaveStatus");
+    let lastSavedCertId = null;
+    let editorsLoaded = false;
+
+    async function loadEditorsOnce() {
+      if (editorsLoaded) return;
+      try {
+        const res = await fetch(`${API_BASE}/teachers/editors.php`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const editors = await res.json();
+        if (!Array.isArray(editors) || !editors.length) {
+          postSaveEditorSelect.innerHTML = '<option value="">(aucun·e éditeur·ice)</option>';
+        } else {
+          postSaveEditorSelect.innerHTML = editors
+            .map(e => `<option value="${e.id}">${e.name}</option>`)
+            .join("");
+        }
+        editorsLoaded = true;
+      } catch {
+        postSaveEditorSelect.innerHTML = '<option value="">(erreur de chargement)</option>';
+      }
+    }
+    loadEditorsOnce();
+
+    function showPostSavePanel(certId) {
+      lastSavedCertId = certId;
+      postSaveStatus.textContent = "";
+      postSaveStatus.className = "post-save-status";
+      postSaveNoteInput.value = "";
+      postSavePanel.classList.add("is-active");
+    }
+
+    postSaveDismissBtn.addEventListener("click", () => {
+      postSavePanel.classList.remove("is-active");
+      lastSavedCertId = null;
+    });
+
+    postSaveSendBtn.addEventListener("click", async () => {
+      if (!lastSavedCertId) return;
+      const editorId = parseInt(postSaveEditorSelect.value, 10);
+      if (!editorId) {
+        postSaveStatus.className = "post-save-status err";
+        postSaveStatus.textContent = "Aucun·e éditeur·ice sélectionné·e.";
+        return;
+      }
+      postSaveSendBtn.disabled = true;
+      postSaveStatus.className = "post-save-status";
+      postSaveStatus.textContent = "Envoi…";
+      try {
+        const res = await fetch(`${API_BASE}/certs/request-review.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            cert_id: lastSavedCertId,
+            editor_id: editorId,
+            note: postSaveNoteInput.value.trim() || null,
+          }),
+        });
+        const result = await res.json();
+        if (result.error) {
+          postSaveStatus.className = "post-save-status err";
+          postSaveStatus.textContent = result.error;
+        } else {
+          postSaveStatus.className = "post-save-status ok";
+          postSaveStatus.textContent = "Demande envoyée.";
+          setTimeout(() => {
+            postSavePanel.classList.remove("is-active");
+            lastSavedCertId = null;
+          }, 1500);
+        }
+      } catch (err) {
+        postSaveStatus.className = "post-save-status err";
+        postSaveStatus.textContent = err.message;
+      } finally {
+        postSaveSendBtn.disabled = false;
+      }
+    });
+
+    /* ============================
        Prefill from analyse tool
     ============================ */
     // When the user clicks "Générer une CERT" in /analyse, we stash the AI-composed
@@ -465,6 +618,9 @@
           showError(result.error);
         } else {
           showSuccess("CERT ajouté avec succès !");
+          if (!window.tcInSidecar && result.id) {
+            showPostSavePanel(result.id);
+          }
           if (window.tcInSidecar) {
             // In the sidecar popup, the user is expected to close the window
             // and go back to /expert or /editor — don't reset the form.

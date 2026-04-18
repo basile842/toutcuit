@@ -180,6 +180,46 @@
     .tool-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
     .tool-card .field { margin-bottom: 12px; }
 
+    /* ── Pending review alert ── */
+    .review-alert {
+      display: none;
+      padding: 14px 16px;
+      background: rgba(111,92,247,.08);
+      border: 1px solid rgba(111,92,247,.28);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+    }
+    .review-alert.is-active { display: block; }
+    .review-alert-title {
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-size: .95rem;
+    }
+    .review-alert-item {
+      padding: 9px 0;
+      border-top: 1px dashed rgba(111,92,247,.25);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .review-alert-item:first-of-type { border-top: none; padding-top: 0; }
+    .review-alert-item-body { flex: 1; min-width: 0; }
+    .review-alert-item-title { font-weight: 700; font-size: .9rem; color: var(--text); }
+    .review-alert-item-sub { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+    .review-alert-item a {
+      padding: 6px 12px;
+      border: 1px solid rgba(111,92,247,.3);
+      background: var(--panel);
+      color: var(--accent);
+      border-radius: 7px;
+      text-decoration: none;
+      font-size: .8rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .review-alert-item a:hover { background: rgba(111,92,247,.08); }
+
     /* ── Home links ── */
     .home-links {
       display: flex;
@@ -556,6 +596,10 @@
     <!-- ════ HOME VIEW ════ -->
     <div class="sa-view active" id="viewHome">
       <main class="console-main">
+        <div class="review-alert" id="reviewAlert">
+          <div class="review-alert-title" id="reviewAlertTitle"></div>
+          <div id="reviewAlertList"></div>
+        </div>
         <div class="console-group-title">Outils</div>
         <div class="home-links">
           <a class="home-link" href="/descripteurs/pages/certs.html?from=editor">
@@ -837,6 +881,41 @@
       loadTeachers();
       loadSessions();
       loadCerts();
+      loadPendingReviews();
+    }
+
+    // Fetch review requests assigned to this editor and render a home-screen banner.
+    async function loadPendingReviews() {
+      try {
+        const res = await authFetch(`${API}/admin/pending-reviews.php`);
+        const data = await res.json();
+        renderReviewAlert(Array.isArray(data) ? data : []);
+      } catch {}
+    }
+
+    function renderReviewAlert(items) {
+      const alert = document.getElementById("reviewAlert");
+      const list = document.getElementById("reviewAlertList");
+      const title = document.getElementById("reviewAlertTitle");
+      if (!items.length) {
+        alert.classList.remove("is-active");
+        list.innerHTML = "";
+        return;
+      }
+      title.textContent = `${items.length} CERT${items.length > 1 ? "s" : ""} à réviser`;
+      list.innerHTML = items.map(n => {
+        const sub = [`Demandé par ${esc(n.expert_name || "")}`];
+        if (n.note) sub.push(`« ${esc(n.note)} »`);
+        return `
+          <div class="review-alert-item">
+            <div class="review-alert-item-body">
+              <div class="review-alert-item-title">${esc(n.cert_title || "")}</div>
+              <div class="review-alert-item-sub">${sub.join(" · ")}</div>
+            </div>
+            <a href="/review?cert_id=${encodeURIComponent(n.cert_id)}">Réviser</a>
+          </div>`;
+      }).join("");
+      alert.classList.add("is-active");
     }
 
     // Auto-unlock if a valid token is already in localStorage and its owner is

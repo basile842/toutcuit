@@ -8,12 +8,24 @@ requireEditor();
 $db = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $db->query('
-        SELECT c.*, COALESCE(c.teacher_name, t.name) AS teacher_name
+    $stmt = $db->query("
+        SELECT c.*, COALESCE(c.teacher_name, t.name) AS teacher_name,
+               crr.id            AS review_request_id,
+               crr.status        AS review_status,
+               crr.editor_id     AS review_editor_id,
+               editor_t.name     AS review_editor_name,
+               crr.note          AS review_expert_note,
+               crr.editor_comment AS review_editor_comment,
+               crr.requested_at  AS review_requested_at,
+               crr.completed_at  AS review_completed_at
         FROM certs c
         LEFT JOIN teachers t ON t.id = c.teacher_id
+        LEFT JOIN cert_review_requests crr ON crr.id = (
+            SELECT MAX(id) FROM cert_review_requests WHERE cert_id = c.id
+        )
+        LEFT JOIN teachers editor_t ON editor_t.id = crr.editor_id
         ORDER BY c.created_at DESC
-    ');
+    ");
     jsonResponse($stmt->fetchAll());
 }
 
