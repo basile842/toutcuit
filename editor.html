@@ -1634,6 +1634,7 @@
             ${c.references_text ? `<ol style="margin:6px 0;padding-left:22px;">${esc(c.references_text).split(/[\n;]+/).filter(s => s.trim()).map(s => '<li>' + s.trim() + '</li>').join("")}</ol>` : ""}
             <div class="cert-actions">
               <button class="btn-edit" onclick="editCertFromRow(${c.id})">Modifier</button>
+              <button class="btn-edit" onclick="downloadCertRtf(${c.id})">Télécharger .rtf</button>
               <button class="btn-delete" onclick="deleteCertAdmin(${c.id}, '${esc(c.title).replace(/'/g, "\\'")}')">Supprimer</button>
             </div>
             <div class="cert-edit-form" id="cert-edit-${c.id}"></div>
@@ -1820,6 +1821,104 @@
     function esc(s) {
       return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
+
+    // ── RTF export (any cert — editor privilege; same format as /review, /certs, /depot) ──
+    function rtfEscape(str) {
+      let out = "";
+      for (const ch of String(str)) {
+        const code = ch.codePointAt(0);
+        if (ch === "\\" || ch === "{" || ch === "}") {
+          out += "\\" + ch;
+        } else if (code === 0x0A) {
+          out += "\\line ";
+        } else if (code < 128) {
+          out += ch;
+        } else if (code <= 0xFFFF) {
+          const signed = code > 32767 ? code - 65536 : code;
+          out += "\\u" + signed + "?";
+        } else {
+          const cp = code - 0x10000;
+          const hi = 0xD800 + (cp >> 10);
+          const lo = 0xDC00 + (cp & 0x3FF);
+          out += "\\u" + (hi > 32767 ? hi - 65536 : hi) + "?";
+          out += "\\u" + (lo > 32767 ? lo - 65536 : lo) + "?";
+        }
+      }
+      return out;
+    }
+
+    function buildCertRtf(data) {
+      const escR = rtfEscape;
+      const bold = (t) => "{\\b " + escR(t) + "}";
+      const line = (label, val) => bold(label) + " : " + escR(val || "") + "\\par\n";
+      const block = (label, val) => {
+        let s = bold(label) + " :\\par\n";
+        const text = String(val || "");
+        if (text) s += escR(text) + "\\par\n";
+        else s += "\\par\n";
+        return s + "\\par\n";
+      };
+      let body = "";
+      body += line("Titre", data.title);
+      body += line("URL", data.url);
+      body += line("Expert", data.expert);
+      body += line("Date", data.date);
+      body += line("Descripteur 1", data.descriptor1);
+      body += line("Descripteur 2", data.descriptor2);
+      body += line("Fiabilité", data.reliability);
+      body += "\\par\n";
+      body += block("3 phrases", data.threePhrases);
+      body += block("Contexte", data.context);
+      body += block("Contenu", data.content);
+      body += block("Fiabilité (explication)", data.reliabilityText);
+      body += block("Références", data.references);
+      return "{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0"
+        + "{\\fonttbl{\\f0 Helvetica;}}"
+        + "\\fs22\n" + body + "}";
+    }
+
+    function reliabilityToFr(v) {
+      if (v === "good") return "Fiable";
+      if (v === "mid") return "Indéterminé";
+      if (v === "bad") return "Pas fiable";
+      return "";
+    }
+    function isoToFrDate(val) {
+      if (!val) return "";
+      const m = String(val).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+      return val;
+    }
+    function sanitizeFilename(s) {
+      return String(s || "CERT").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 60) || "CERT";
+    }
+
+    function downloadCertRtf(id) {
+      const c = allCertsData.find(x => x.id === id);
+      if (!c) return;
+      const data = {
+        title: c.title || "",
+        url: c.url || "",
+        expert: c.expert || "",
+        date: isoToFrDate(c.cert_date),
+        descriptor1: c.descriptor1 || "",
+        descriptor2: c.descriptor2 || "",
+        reliability: reliabilityToFr(c.reliability),
+        threePhrases: c.three_phrases || "",
+        context: c.context || "",
+        content: c.content || "",
+        reliabilityText: c.reliability_text || "",
+        references: c.references_text || "",
+      };
+      const rtf = buildCertRtf(data);
+      const blob = new Blob([rtf], { type: "application/rtf;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "CERT_" + sanitizeFilename(data.title) + ".rtf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    window.downloadCertRtf = downloadCertRtf;
   </script>
 </body>
 </html>

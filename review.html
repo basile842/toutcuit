@@ -973,6 +973,7 @@
     <div class="save-bar" id="saveBar">
       <span class="save-counter" id="saveCounter"></span>
       <button class="btn-save" id="saveBtn" onclick="saveCert()">Sauvegarder</button>
+      <button class="btn-save" id="saveAndValidateBtn" style="display:none;" onclick="saveAndValidate()">Sauvegarder et valider l'édition</button>
       <span class="save-hint">L'ordre des références sera ajusté si besoin.</span>
       <span class="save-status" id="saveStatus"></span>
     </div>
@@ -1320,14 +1321,21 @@
 
     // Show the three lifecycle actions only when the current editor is the one
     // assigned to the pending review on this cert. Otherwise hide the panel.
+    // Also toggles the "Sauvegarder et valider" button in the save bar.
     function updateAssignPanel(c) {
       const panel = document.getElementById("assignPanel");
-      if (!c) { panel.classList.remove("is-active"); return; }
-      const mine = c.review_status === "pending"
+      const saveAndValidateBtn = document.getElementById("saveAndValidateBtn");
+      const mine = c
+        && c.review_status === "pending"
         && c.review_editor_id
         && currentTeacherId
         && parseInt(c.review_editor_id, 10) === currentTeacherId;
-      if (!mine) { panel.classList.remove("is-active"); return; }
+
+      if (!mine) {
+        panel.classList.remove("is-active");
+        if (saveAndValidateBtn) saveAndValidateBtn.style.display = "none";
+        return;
+      }
 
       const expertName = c.teacher_name || "l'expert";
       const title = document.getElementById("assignPanelTitle");
@@ -1340,6 +1348,10 @@
         noteEl.innerHTML = `<em>(Aucun message de l'expert.)</em>`;
       }
       panel.classList.add("is-active");
+      if (saveAndValidateBtn) {
+        saveAndValidateBtn.style.display = "";
+        saveAndValidateBtn.disabled = false;
+      }
     }
 
     // ── Preview rendering ──
@@ -1708,10 +1720,15 @@
       return true;
     }
 
+    // Returns true if the save succeeded OR there was nothing to save,
+    // false if the API call failed. Callers chaining further actions
+    // (e.g. saveAndValidate) rely on this.
     async function saveCert() {
       const btn = document.getElementById("saveBtn");
+      const btn2 = document.getElementById("saveAndValidateBtn");
       const status = document.getElementById("saveStatus");
       btn.disabled = true;
+      if (btn2) btn2.disabled = true;
       status.textContent = "";
 
       // Compute the value each text field will have after save (regardless of decision)
@@ -1732,12 +1749,13 @@
         }
       });
 
-      // Nothing changed → bail out
+      // Nothing changed → bail out (treated as success so chained actions still run)
       if (Object.keys(payload).length <= 2) {
         status.className = "save-status";
         status.textContent = "Aucune modification à enregistrer.";
         btn.disabled = false;
-        return;
+        if (btn2) btn2.disabled = false;
+        return true;
       }
 
       try {
@@ -1776,11 +1794,33 @@
         if (arrow && actionRow) actionRow.appendChild(arrow);
         const preview = document.getElementById("previewContent");
         if (preview && !preview.classList.contains("is-visible")) arrow.click();
+
+        // If the editor is assigned, bring the validation actions into view
+        // so they don't feel "lost" after save.
+        const panel = document.getElementById("assignPanel");
+        if (panel.classList.contains("is-active")) {
+          panel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        return true;
       } catch (err) {
         status.className = "save-status error";
         status.textContent = err.message;
         btn.disabled = false;
+        if (btn2) btn2.disabled = false;
+        return false;
       }
+    }
+
+    // Combined action for assigned editors: save the text edits, then
+    // immediately mark the review as done (expert is notified).
+    async function saveAndValidate() {
+      if (!selectedCert) return;
+      const ok = await saveCert();
+      if (!ok) return;
+      if (!confirm("Valider l'édition de cette CERT ? L'expert sera notifié·e.")) return;
+      const done = await callLifecycle("/certs/complete-review.php",
+        { cert_id: selectedCert.id }, "CERT sauvegardée et édition validée.");
+      if (done) refreshCertAfterLifecycle(selectedCert.id);
     }
 
     // ── Helpers ──
