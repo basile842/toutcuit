@@ -24,7 +24,7 @@ $stmt = $db->prepare("
     JOIN certs c ON c.id = crr.cert_id
     LEFT JOIN teachers editor ON editor.id = crr.editor_id
     WHERE c.teacher_id = ?
-      AND crr.status IN ('done','returned')
+      AND crr.status = 'returned'
       AND crr.expert_ack_at IS NULL
       AND crr.id = (
           SELECT MAX(id) FROM cert_review_requests WHERE cert_id = crr.cert_id
