@@ -935,6 +935,12 @@
         <div class="cert-preview-content" id="previewContent"></div>
       </div>
 
+      <!-- Loading -->
+      <div class="loading-bar" id="loadingBar">
+        <div class="spinner"></div>
+        <span class="loading-text">Analyse en cours par Claude...</span>
+      </div>
+
       <!-- Assignment panel: shown when the selected cert is assigned to the current editor -->
       <div class="assign-panel" id="assignPanel">
         <div class="assign-panel-title" id="assignPanelTitle">Cette CERT vous est assignée pour édition</div>
@@ -944,12 +950,6 @@
           <button type="button" class="btn-assign-redirect" id="redirectReviewBtn">Rediriger…</button>
           <button type="button" class="btn-assign-return" id="returnReviewBtn">Renvoyer à l'expert…</button>
         </div>
-      </div>
-
-      <!-- Loading -->
-      <div class="loading-bar" id="loadingBar">
-        <div class="spinner"></div>
-        <span class="loading-text">Analyse en cours par Claude...</span>
       </div>
 
       <!-- Error -->
@@ -1416,6 +1416,7 @@
       hide("saveBar");
       hide("errorBanner");
       show("loadingBar");
+      document.getElementById("loadingBar").scrollIntoView({ behavior: "smooth", block: "center" });
 
       try {
         const body = {
