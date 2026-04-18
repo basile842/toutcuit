@@ -250,7 +250,7 @@ if ($isGemini) {
         $body   = json_decode($response, true);
         $errMsg = $body['error']['message'] ?? $response;
         if (in_array($httpCode, $retryableHttp, true)) {
-            jsonError("L'API Gemini est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+            jsonError("L'API Gemini est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessayez dans quelques instants.", 503);
         }
         jsonError("Gemini API (HTTP $httpCode): $errMsg", 502);
     }
@@ -300,7 +300,7 @@ if ($isGemini) {
         $errType = $body['error']['type'] ?? 'unknown';
         $errMsg  = $body['error']['message'] ?? $response;
         if (in_array($httpCode, $retryableHttp, true)) {
-            jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+            jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode) après $maxAttempts tentatives. Réessayez dans quelques instants.", 503);
         }
         jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
     }
@@ -320,7 +320,7 @@ if (!is_array($parsed)) {
         $parsed = json_decode($m[0], true);
     }
     if (!is_array($parsed)) {
-        jsonError('Impossible de parser la réponse du modèle. Réessaie.', 502);
+        jsonError('Impossible de parser la réponse du modèle. Réessayez.', 502);
     }
 }
 

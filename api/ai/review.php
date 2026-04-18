@@ -144,7 +144,7 @@ if ($httpCode !== 200) {
     $errMsg  = $body['error']['message'] ?? $response;
     // Friendlier message for transient overload after exhausting retries
     if (in_array($httpCode, $retryableHttp, true)) {
-        jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode, $errType) après $maxAttempts tentatives. Réessaie dans quelques instants.", 503);
+        jsonError("L'API Claude est temporairement surchargée (HTTP $httpCode, $errType) après $maxAttempts tentatives. Réessayez dans quelques instants.", 503);
     }
     jsonError("Claude API (HTTP $httpCode, $errType): $errMsg", 502);
 }

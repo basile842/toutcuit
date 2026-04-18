@@ -301,6 +301,20 @@
 
         .error-box.on { display: block; }
 
+        /* -- WARNING (content not fetched) ----------------- */
+        .warn-box {
+            background: rgba(217,169,56,.10);
+            border: 1px solid rgba(217,169,56,.40);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            font-size: 0.88rem;
+            color: #92700c;
+            display: none;
+        }
+        .warn-box.on { display: block; }
+        .warn-box strong { color: #7a5d06; }
+
         /* -- RESULTS --------------------------------------- */
         .results { display: none; }
         .results.on { display: block; animation: fadeUp 0.4s ease; }
@@ -632,6 +646,12 @@
     <!-- -- ERROR ---------------------------------------- -->
     <div class="error-box" id="errBox"></div>
 
+    <!-- -- WARNING (content not fetched) ---------------- -->
+    <div class="warn-box" id="warnBox">
+        <strong>Le contenu de la page n'a pas pu être récupéré automatiquement.</strong>
+        L'analyse ci-dessous est basée uniquement sur l'URL. Pour un résultat plus complet, collez le texte de la page ou ajoutez un screenshot.
+    </div>
+
     <!-- -- RESULTS -------------------------------------- -->
     <div class="results" id="results">
         <div class="result-bar">
@@ -772,7 +792,7 @@ async function generate() {
         return;
     }
 
-    show('loader'); hide('inputCard'); hide('results'); hide('errBox');
+    show('loader'); hide('inputCard'); hide('results'); hide('errBox'); hide('warnBox');
     $('loadStep').textContent = 'Envoi de la requete...';
 
     try {
@@ -790,6 +810,7 @@ async function generate() {
         }
 
         const data = await res.json();
+        if (data.content_fetched === false) show('warnBox');
         render(data);
     } catch (e) {
         $('errBox').textContent = e.message;
