@@ -27,7 +27,13 @@ $limit     = max(1, min(2000, (int)($_GET['limit'] ?? 500)));
 $beforeId  = isset($_GET['before_id']) ? (int)$_GET['before_id'] : 0;
 
 // Build filtered feed query
-$where  = ['ta.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)'];
+// auth.login events are logged but excluded from the Activité view — live
+// presence ("En ligne maintenant") already tells editors who is connected,
+// so rendering every login would clutter the histogram and feed.
+$where  = [
+    'ta.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+    "ta.action <> 'auth.login'",
+];
 $params = [$days];
 if ($teacherId > 0) {
     $where[]  = 'ta.teacher_id = ?';
@@ -77,6 +83,7 @@ $histStmt = $db->query("
     SELECT DATE(created_at) AS day, COUNT(*) AS n
     FROM teacher_activity
     WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 41 DAY)
+      AND action <> 'auth.login'
     GROUP BY day
     ORDER BY day ASC
 ");
@@ -98,6 +105,7 @@ $actStmt = $db->prepare("
     SELECT DISTINCT action
     FROM teacher_activity
     WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      AND action <> 'auth.login'
     ORDER BY action ASC
 ");
 $actStmt->execute([$days]);
