@@ -19,3 +19,8 @@ RewriteRule ^(.+)$ $1.html [L]
 
 # Protection anti-indexation
 Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+
+# Block Markdown files (CLAUDE.md, README.md, etc.) from public access
+<FilesMatch "\.md$">
+    Require all denied
+</FilesMatch>

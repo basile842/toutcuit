@@ -69,8 +69,9 @@ Tous dans `api/`, requêtes JSON, réponses JSON. `api/middleware.php` fournit `
 Note : `api/generate-cert.php` est à la **racine de `api/`** (et non dans `api/ai/`) pour des raisons historiques. Les trois endpoints AI sont donc répartis entre `api/ai/` (review, compose-cert) et `api/` (generate-cert).
 
 ### Auth (`api/auth/`)
-- `login.php` [POST] — email + password → JWT token + teacher data
-- `register.php` [POST] — inscription (email unique, password 6+ chars, bcrypt)
+- `login.php` [POST] — email + password → JWT token + teacher data (incluant `role`)
+- `me.php` [GET] — renvoie le teacher courant (id, email, name, role) depuis le JWT
+- `register.php` [POST] — inscription (email unique, password 6+ chars, bcrypt). Par défaut `role = 'expert'`
 - `reset-request.php` [POST] — demande de reset par email
 - `reset.php` [POST] — reset avec token
 
@@ -87,12 +88,18 @@ Note : `api/generate-cert.php` est à la **racine de `api/`** (et non dans `api/
 
 ### Certs (`api/certs/`)
 - `list.php` [GET], `save.php` [POST], `delete.php` [DELETE], `share.php` [POST], `depot.php` [GET], `check-delete.php` [GET]
+- **Cycle de review** (voir « Cycle de révision CERT » plus bas) : `request-review.php` [POST] (expert → editor), `complete-review.php` [POST] (editor valide), `return-review.php` [POST] (editor renvoie à l'expert), `reassign-review.php` [POST] (editor redirige vers autre editor), `ack-review.php` [POST] (expert accuse réception de la notification), `my-review-notifications.php` [GET] (notifications non acquittées pour l'expert courant)
+
+### Teachers (`api/teachers/`)
+- `editors.php` [GET] — liste publique des enseignant·es `role = 'editor'` (utilisée par l'expert pour choisir à qui envoyer une demande de review)
 
 ### Admin (`api/admin/`)
 - `teachers.php`, `sessions.php`, `certs.php`, `global-feed.php` [GET] — vues éditeur
 - `session-detail.php` [GET] — détail agrégé d'une session (CERTs, compteurs élèves/réponses/liens)
 - `update-session.php` [POST], `delete-session.php` [DELETE], `delete-teacher.php` [DELETE], `reset-responses.php` [POST]
 - `duplicate-session.php` [POST] — clone côté éditeur (distinct de `sessions/duplicate.php` côté enseignant)
+- `set-role.php` [POST] — promouvoir/rétrograder un·e enseignant·e entre `expert` et `editor`
+- `pending-reviews.php` [GET] — liste des demandes de review pending/returned/done (vue éditeur globale)
 
 ### AI (3 endpoints — `api/ai/` + `api/generate-cert.php`)
 
@@ -102,9 +109,10 @@ Trois outils AI partagent des conventions communes (voir « Parité AI » plus b
 - **`api/generate-cert.php`** [POST] — Analyse d'une URL par Claude ou Gemini (multimodal : screenshot optionnel). Récupère le HTML server-side si l'utilisateur ne colle pas le contenu. Sort un JSON structuré `{context, content, visual, references}`. Sert `analyse.html`.
 - **`api/ai/compose-cert.php`** [POST] — Prend la sortie de `generate-cert.php` et la transforme en champs CERT prêts à coller (`title`, `three_phrases`, `context`, `content`, `reliability_text`, `references`). Sert le bouton « Générer une CERT » de `analyse.html`.
 
-Prompts système :
-- **`api/ai/review-prompt.md`** — template externe chargé par `review.php` via `file_get_contents()` + `strtr()` sur `{{METADATA}}`, `{{FIELDS}}`, `{{GENERATE_BLOCK}}`. **Point d'édition principal** pour `review.php`. Bloqué en HTTP par `api/.htaccess` (`<FilesMatch "\.md$">`).
-- Les prompts de `generate-cert.php` et `compose-cert.php` sont **inline** dans le PHP (heredoc `<<<'PROMPT'`). Incohérence à garder en tête — les éditer directement dans le fichier PHP.
+Prompts système — tous externes, chargés via `file_get_contents()` depuis le même dossier que le PHP qui les utilise. Bloqués en HTTP par `api/.htaccess` (`<FilesMatch "\.md$">`, récursif). **Point d'édition principal** des trois outils : éditer le `.md`, ne jamais réintroduire un heredoc inline.
+- **`api/ai/review-prompt.md`** — chargé par `review.php`, avec `strtr()` sur les placeholders `{{METADATA}}`, `{{FIELDS}}`, `{{GENERATE_BLOCK}}` (le seul des trois avec des blocs dynamiques injectés depuis le PHP).
+- **`api/generate-cert-prompt.md`** — chargé par `generate-cert.php`. Statique, sans placeholders (URL, contenu récupéré et screenshot transitent par le user message).
+- **`api/ai/compose-cert-prompt.md`** — chargé par `compose-cert.php`. Statique, sans placeholders (summary d'analyse et titre de page transitent par le user message).
 
 Clés API dans `config.php` : `ANTHROPIC_API_KEY` (Claude), `GOOGLE_API_KEY` (Gemini).
 
@@ -113,7 +121,7 @@ Clés API dans `config.php` : `ANTHROPIC_API_KEY` (Claude), `GOOGLE_API_KEY` (Ge
 Les trois endpoints AI doivent rester cohérents sur ces trois points :
 1. **Retry** : `$maxAttempts = 4`, `$retryableHttp = [429, 503, 529]`, backoff exponentiel ~1s/2s/4s avec jitter. Sur échec final, message `"L'API {Claude|Gemini} est temporairement surchargée (HTTP N) après 4 tentatives. Réessaie dans quelques instants."` (503).
 2. **Libellé du bouton de téléchargement RTF** : `Télécharger .rtf` (pas juste `RTF`) dans les trois UI : `review.html`, `analyse.html`, `descripteurs/pages/certs.html`.
-3. **Prompt de génération des 3 Phrases** : règles identiques dans `review-prompt.md` et dans le heredoc de `compose-cert.php` (format + sujet / fait central / verdict « Fiable / Pas fiable / Indéterminé, car… », pas de références, phrases courtes).
+3. **Prompt de génération des 3 Phrases** : règles identiques dans `review-prompt.md` et `compose-cert-prompt.md` (format + sujet / fait central / verdict « Fiable / Pas fiable / Indéterminé, car… », pas de références, phrases courtes).
 
 #### Flow analyse → CERT
 
@@ -129,10 +137,11 @@ L'outil `analyse.html` transmet ses résultats à `descripteurs/pages/certs.html
 3. `middleware.php` : `requireAuth()` valide signature + expiration, `getTeacherId()` extrait l'ID et vérifie l'existence en DB
 4. CORS whiteliste `toutcuit.ch` + tout localhost en dev
 
-## Base de données (9 tables)
+## Base de données (10 tables)
 
 ```
-teachers (id, email, password_hash, name, created_at)
+teachers (id, email, password_hash, name, role, created_at)
+  role ENUM('expert','editor') DEFAULT 'expert' — ajouté par migration 001
 schools (id, name, created_at)
 teacher_school (teacher_id, school_id)           — N:N (⚠ table abandonnée, ne plus maintenir ce lien)
 certs (id, teacher_id, teacher_name, title, url, expert, cert_date,
@@ -145,9 +154,39 @@ student_responses (id, session_id, user_id, cert_id, first_label,
                    last_label, reliability, comment, dedup_key, created_at)
 collected_links (id, session_id, user_id, url, comment, created_at)
 password_resets (id, teacher_id, token, expires_at, created_at)
+cert_review_requests (id, cert_id, editor_id, requested_by, status,
+                      note, editor_comment, requested_at, completed_at,
+                      expert_ack_at)                — migration 002
+  status ENUM('pending','done','returned')
 ```
 
-Points clés : `dedup_key` empêche les soumissions en double, `is_shared` sur certs permet le partage entre enseignants, pas de table élèves (soumissions anonymes via `user_id` string).
+Points clés :
+- `dedup_key` empêche les soumissions en double, `is_shared` sur certs permet le partage entre enseignants, pas de table élèves (soumissions anonymes via `user_id` string).
+- **`cert_review_requests` = table d'historique** : une ligne par cycle de review. La dernière ligne par `cert_id` (triée par `id` desc) représente l'état courant ; les plus anciennes forment l'historique. Ne jamais écraser une ligne existante — toujours insérer.
+- **Migrations SQL** dans `api/migrations/` — à appliquer **manuellement sur la DB de prod via phpMyAdmin Infomaniak** avant de pousser le code qui les consomme. Pas de runner automatique.
+
+## Rôles et cycle de révision CERT
+
+### Rôles `expert` / `editor`
+
+Depuis la migration 001, `teachers.role` vaut soit `expert` (défaut) soit `editor`. Les editors sont peu nombreux·ses (3 initialement, promu·es manuellement via `UPDATE` dans la migration ou via `api/admin/set-role.php` ensuite). Le rôle est transporté dans le JWT et les payloads d'auth ; le front affiche ou masque les zones « demande de review » en conséquence.
+
+### Cycle de révision CERT
+
+Flow métier introduit par la migration 002 (table `cert_review_requests`) et les 7 endpoints de `api/certs/` et `api/admin/pending-reviews.php` :
+
+1. Un·e **expert** ouvre une CERT et clique « Demander une review » → `request-review.php` choisit un·e editor (via `api/teachers/editors.php`) et crée une ligne `status='pending'` avec une `note` (briefing).
+2. L'**editor** voit la demande dans son espace. Trois actions possibles :
+   - **Valider** (`complete-review.php`) → `status='done'`, `completed_at=NOW()`, `editor_comment` optionnel. Peut être déclenchée via le raccourci « save-and-validate » depuis `review.html`.
+   - **Retourner** à l'expert (`return-review.php`) → `status='returned'`, `editor_comment` **obligatoire**.
+   - **Rediriger** vers un·e autre editor (`reassign-review.php`) → insère une **nouvelle ligne** `status='pending'` pointant vers le nouvel editor, sans toucher l'ancienne.
+3. L'expert reçoit une notification (via `my-review-notifications.php`, polling côté front). Quand il/elle clique pour la lire, le front appelle `ack-review.php` qui remplit `expert_ack_at`. Tant que `expert_ack_at IS NULL`, la notification reste non-lue.
+4. `api/admin/pending-reviews.php` agrège l'état global pour la console éditeur.
+
+Points de vigilance :
+- **Toujours insérer, jamais update destructif** sur `cert_review_requests`. L'état courant se lit via `SELECT … WHERE cert_id=? ORDER BY id DESC LIMIT 1`.
+- Le `editor_comment` est requis pour `returned`, optionnel pour `done`.
+- L'export `.rtf` est disponible depuis `review.html`, `depot.html` (du côté éditeur) et `editor.html` — garder le libellé et le contenu cohérents.
 
 ## Éditeur et Révision
 
