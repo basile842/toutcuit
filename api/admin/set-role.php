@@ -26,14 +26,22 @@ if ($targetId === $callerId && $role !== 'editor') {
 }
 
 $db = getDB();
-$stmt = $db->prepare('SELECT id, role FROM teachers WHERE id = ?');
+$stmt = $db->prepare('SELECT id, role, name FROM teachers WHERE id = ?');
 $stmt->execute([$targetId]);
 $target = $stmt->fetch();
 if (!$target) {
     jsonError('Enseignant·e introuvable.', 404);
 }
 
-$upd = $db->prepare('UPDATE teachers SET role = ? WHERE id = ?');
-$upd->execute([$role, $targetId]);
+$oldRole = $target['role'] ?? 'expert';
+if ($oldRole !== $role) {
+    $upd = $db->prepare('UPDATE teachers SET role = ? WHERE id = ?');
+    $upd->execute([$role, $targetId]);
+    logActivity($callerId, 'teacher.role_change', 'teacher', $targetId, [
+        'name'     => $target['name'],
+        'old_role' => $oldRole,
+        'new_role' => $role,
+    ]);
+}
 
 jsonResponse(['ok' => true, 'teacher_id' => $targetId, 'role' => $role]);

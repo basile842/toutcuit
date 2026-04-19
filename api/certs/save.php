@@ -57,6 +57,8 @@ if (!empty($data['id'])) {
     $stmt = $db->prepare('UPDATE certs SET ' . implode(', ', $sets) . ' WHERE id = ?');
     $stmt->execute($params);
 
+    logActivity($teacherId, 'cert.save', 'cert', $certId, ['title' => $fields['title'], 'op' => 'update']);
+
     jsonResponse(['id' => $certId, 'updated' => true]);
 }
 
@@ -76,4 +78,7 @@ $stmt = $db->prepare(
 );
 $stmt->execute(array_values($fields));
 
-jsonResponse(['id' => (int) $db->lastInsertId(), 'created' => true], 201);
+$newCertId = (int) $db->lastInsertId();
+logActivity($teacherId, 'cert.save', 'cert', $newCertId, ['title' => $fields['title'], 'op' => 'create']);
+
+jsonResponse(['id' => $newCertId, 'created' => true], 201);

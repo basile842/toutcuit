@@ -100,6 +100,8 @@ Note : `api/generate-cert.php` est à la **racine de `api/`** (et non dans `api/
 - `duplicate-session.php` [POST] — clone côté éditeur (distinct de `sessions/duplicate.php` côté enseignant)
 - `set-role.php` [POST] — promouvoir/rétrograder un·e enseignant·e entre `expert` et `editor`
 - `pending-reviews.php` [GET] — liste des demandes de review pending/returned/done (vue éditeur globale)
+- `activity.php` [GET] — feed filtré de `teacher_activity` + histogramme 42 jours + liste d'actions distinctes. Paramètres : `days` (défaut 7, max 90), `teacher_id`, `action`, `prefix`, `limit` (défaut 500), `before_id` (cursor pour "charger plus").
+- `online.php` [GET] — enseignant·es avec `last_seen_at` dans les `minutes` dernières minutes (défaut 5, max 60). Sert le panneau « En ligne maintenant ».
 
 ### AI (3 endpoints — `api/ai/` + `api/generate-cert.php`)
 
@@ -137,11 +139,12 @@ L'outil `analyse.html` transmet ses résultats à `descripteurs/pages/certs.html
 3. `middleware.php` : `requireAuth()` valide signature + expiration, `getTeacherId()` extrait l'ID et vérifie l'existence en DB
 4. CORS whiteliste `toutcuit.ch` + tout localhost en dev
 
-## Base de données (10 tables)
+## Base de données (11 tables)
 
 ```
-teachers (id, email, password_hash, name, role, created_at)
-  role ENUM('expert','editor') DEFAULT 'expert' — ajouté par migration 001
+teachers (id, email, password_hash, name, role, last_seen_at, created_at)
+  role ENUM('expert','editor') DEFAULT 'expert' — migration 001
+  last_seen_at DATETIME NULL                     — migration 003 (présence live)
 schools (id, name, created_at)
 teacher_school (teacher_id, school_id)           — N:N (⚠ table abandonnée, ne plus maintenir ce lien)
 certs (id, teacher_id, teacher_name, title, url, expert, cert_date,
@@ -158,6 +161,8 @@ cert_review_requests (id, cert_id, editor_id, requested_by, status,
                       note, editor_comment, requested_at, completed_at,
                       expert_ack_at)                — migration 002
   status ENUM('pending','done','returned')
+teacher_activity (id, teacher_id, action, target_type, target_id,
+                  meta JSON, created_at)            — migration 003
 ```
 
 Points clés :
@@ -192,11 +197,12 @@ Points de vigilance :
 
 ### Éditeur (`editor.html`)
 
-Console password-protected (pas de JWT, mot de passe hardcodé frontend dans `editor.html` — constante `PASSWORD`) avec vues :
-- **Home** : liens vers Enseignants, Séances, Stock de CERTs, et outils (Révision)
-- **Enseignants** : créer, lister, supprimer des comptes
+Console protégée par **vrai login JWT** (email + password d'un compte `role='editor'`, cf. `auth/login.php` + `requireEditor()` dans middleware). Tous les appels passent par `authFetch()` avec `Authorization: Bearer`. Vues :
+- **Home** : liens vers outils (CERTs, Analyse, Révision) et onglets gérer (Enseignants, Séances, Stock de CERTs, Activité)
+- **Enseignants** : créer, lister, promouvoir/rétrograder, supprimer des comptes
 - **Séances** : lister avec détail dépliable (CERTs, stats, feed, dupliquer, télécharger Excel)
 - **Stock de CERTs** : lister, modifier, supprimer
+- **Activité** : histogramme 6 semaines + panneau « En ligne maintenant » (seuil 5 min, refresh 30 s) + feed d'événements filtrable (teacher / action / plage 1-90 j). Voir `api/admin/activity.php` et `api/admin/online.php`. Alimenté par `logActivity()` dans `middleware.php`, appelé depuis les endpoints de mutation (auth/certs/sessions/review cycle/admin). Les endpoints AI ne sont **pas** instrumentés pour l'instant (ils n'ont pas d'auth teacher).
 
 Le téléchargement Excel utilise SheetJS côté client, sans endpoint dédié — il charge les données via `sessions/certs.php` + `student/feed.php` et génère le fichier localement.
 

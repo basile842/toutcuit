@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS teachers (
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
     role ENUM('expert','editor') NOT NULL DEFAULT 'expert',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_seen_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_last_seen (last_seen_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Schools
@@ -113,6 +115,21 @@ CREATE TABLE IF NOT EXISTS password_resets (
     token VARCHAR(64) NOT NULL,
     expires_at DATETIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Teacher activity log (feeds the "Activité" view in editor.html)
+CREATE TABLE IF NOT EXISTS teacher_activity (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT NOT NULL,
+    action VARCHAR(64) NOT NULL,
+    target_type VARCHAR(32) NULL,
+    target_id INT NULL,
+    meta JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_created (created_at),
+    INDEX idx_teacher_created (teacher_id, created_at),
+    INDEX idx_action (action),
     FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

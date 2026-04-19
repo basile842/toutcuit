@@ -60,4 +60,8 @@ if (!empty($sets)) {
     $stmt->execute($params);
 }
 
+$changed = array_values(array_intersect($allowed, array_keys($data)));
+if (array_key_exists('school_name', $data)) $changed[] = 'school_name';
+logActivity($teacherId, 'session.update', 'session', $sessionId, ['fields' => $changed]);
+
 jsonResponse(['ok' => true, 'session_id' => $sessionId]);

@@ -99,6 +99,12 @@ try {
 
     $db->commit();
 
+    logActivity($teacherId, 'session.duplicate', 'session', $newId, [
+        'from_session_id' => $sessionId,
+        'name'            => $newName,
+        'code'            => $code,
+    ]);
+
     jsonResponse([
         'id'   => $newId,
         'name' => $newName,

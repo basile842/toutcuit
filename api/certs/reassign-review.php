@@ -50,4 +50,9 @@ if ((int) $req['editor_id'] === $newEditorId) {
 $stmt = $db->prepare('UPDATE cert_review_requests SET editor_id = ? WHERE id = ?');
 $stmt->execute([$newEditorId, $req['id']]);
 
+logActivity($teacherId, 'review.reassign', 'cert', $certId, [
+    'from_editor_id' => (int) $req['editor_id'],
+    'to_editor_id'   => $newEditorId,
+]);
+
 jsonResponse(['id' => (int) $req['id'], 'editor_id' => $newEditorId]);

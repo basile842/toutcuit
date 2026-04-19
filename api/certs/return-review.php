@@ -40,4 +40,6 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$comment, $req['id']]);
 
+logActivity($editorId, 'review.return', 'cert', $certId);
+
 jsonResponse(['id' => (int) $req['id'], 'status' => 'returned']);

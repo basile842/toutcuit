@@ -15,7 +15,7 @@ $certId = (int) $data['id'];
 $db = getDB();
 
 // Verify ownership
-$stmt = $db->prepare('SELECT teacher_id FROM certs WHERE id = ?');
+$stmt = $db->prepare('SELECT teacher_id, title FROM certs WHERE id = ?');
 $stmt->execute([$certId]);
 $cert = $stmt->fetch();
 
@@ -26,5 +26,7 @@ if (!$cert || (int) $cert['teacher_id'] !== $teacherId) {
 // Delete (cascades to session_certs, student_responses)
 $stmt = $db->prepare('DELETE FROM certs WHERE id = ?');
 $stmt->execute([$certId]);
+
+logActivity($teacherId, 'cert.delete', 'cert', $certId, ['title' => $cert['title']]);
 
 jsonResponse(['deleted' => true, 'id' => $certId]);

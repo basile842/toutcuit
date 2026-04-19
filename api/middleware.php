@@ -28,7 +28,37 @@ function getTeacherId(): int {
         jsonError('Compte supprimé. Veuillez vous reconnecter.', 401);
     }
 
+    // Refresh presence timestamp for the "Activité" tool. Swallow failures so a
+    // missing column (migration not yet applied) never breaks the request.
+    try {
+        $db->prepare('UPDATE teachers SET last_seen_at = NOW() WHERE id = ?')->execute([$teacherId]);
+    } catch (Throwable $e) {
+        error_log('last_seen_at update failed: ' . $e->getMessage());
+    }
+
     return $teacherId;
+}
+
+// Append a row to teacher_activity. Logging must never break the caller's
+// primary action — any DB error is swallowed to error_log. Call this AFTER the
+// main operation has succeeded, with the teacher who performed it.
+function logActivity(int $teacherId, string $action, ?string $targetType = null, ?int $targetId = null, ?array $meta = null): void {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare('
+            INSERT INTO teacher_activity (teacher_id, action, target_type, target_id, meta)
+            VALUES (?, ?, ?, ?, ?)
+        ');
+        $stmt->execute([
+            $teacherId,
+            $action,
+            $targetType,
+            $targetId,
+            $meta === null ? null : json_encode($meta, JSON_UNESCAPED_UNICODE),
+        ]);
+    } catch (Throwable $e) {
+        error_log('logActivity failed: ' . $e->getMessage());
+    }
 }
 
 // Require caller to be an editor. Role is re-read from DB on every call so a

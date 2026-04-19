@@ -39,4 +39,6 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$comment, $req['id']]);
 
+logActivity($editorId, 'review.complete', 'cert', $certId, ['has_comment' => $comment !== null]);
+
 jsonResponse(['id' => (int) $req['id'], 'status' => 'done']);

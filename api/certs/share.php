@@ -26,4 +26,6 @@ if (!$cert || (int) $cert['teacher_id'] !== $teacherId) {
 $stmt = $db->prepare('UPDATE certs SET is_shared = 1 WHERE id = ?');
 $stmt->execute([$certId]);
 
+logActivity($teacherId, 'cert.share', 'cert', $certId);
+
 jsonResponse(['id' => $certId, 'is_shared' => true]);

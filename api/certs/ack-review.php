@@ -27,4 +27,9 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$certId, $teacherId]);
 
-jsonResponse(['acked' => $stmt->rowCount()]);
+$acked = $stmt->rowCount();
+if ($acked > 0) {
+    logActivity($teacherId, 'review.ack', 'cert', $certId, ['count' => $acked]);
+}
+
+jsonResponse(['acked' => $acked]);

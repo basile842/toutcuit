@@ -2,7 +2,7 @@
 // POST — Teacher registration (editor only — account creation is an admin action)
 require_once __DIR__ . '/../middleware.php';
 handleCors();
-requireEditor();
+$callerId = requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);
@@ -43,6 +43,8 @@ $token = jwtCreate([
     'teacher_id' => $teacherId,
     'email'      => $email,
 ]);
+
+logActivity($callerId, 'teacher.create', 'teacher', $teacherId, ['email' => $email, 'name' => $name]);
 
 jsonResponse([
     'token'   => $token,

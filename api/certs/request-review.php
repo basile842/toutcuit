@@ -49,4 +49,7 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$certId, $editorId, $teacherId, $note]);
 
-jsonResponse(['id' => (int) $db->lastInsertId(), 'status' => 'pending'], 201);
+$requestId = (int) $db->lastInsertId();
+logActivity($teacherId, 'review.request', 'cert', $certId, ['editor_id' => $editorId, 'has_note' => $note !== null]);
+
+jsonResponse(['id' => $requestId, 'status' => 'pending'], 201);

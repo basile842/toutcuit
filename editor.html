@@ -540,6 +540,108 @@
       gap: 12px;
       justify-content: center;
     }
+
+    /* ── Activité view ── */
+    .activity-header {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .activity-header-title {
+      font-size: .78rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em;
+      margin-bottom: 10px;
+    }
+    .activity-histogram {
+      display: flex; align-items: flex-end; gap: 2px;
+      height: 80px;
+    }
+    .activity-hist-bar {
+      flex: 1; min-width: 3px; min-height: 2px;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+      opacity: .55;
+      transition: opacity .15s;
+    }
+    .activity-hist-bar:hover { opacity: 1; }
+    .activity-histogram-axis {
+      display: flex; justify-content: space-between;
+      font-size: .7rem; color: var(--muted);
+      margin-top: 6px;
+    }
+    .activity-body {
+      display: grid;
+      grid-template-columns: minmax(240px, 320px) 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 780px) { .activity-body { grid-template-columns: 1fr; } }
+    .activity-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+    }
+    .activity-panel-title {
+      font-size: .78rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em;
+      margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .activity-online-card {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .activity-online-card:last-child { border-bottom: none; }
+    .activity-online-name { font-weight: 600; font-size: .9rem; }
+    .activity-online-meta {
+      display: flex; gap: 8px; align-items: center;
+      font-size: .74rem; color: var(--muted);
+      margin-top: 2px;
+    }
+    .activity-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .activity-filters select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      font: inherit; font-size: .82rem;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .activity-event {
+      display: grid;
+      grid-template-columns: 14px 52px minmax(130px, 180px) minmax(140px, 1.2fr) minmax(140px, 2fr);
+      gap: 8px; align-items: center;
+      padding: 7px 0;
+      font-size: .85rem;
+      border-bottom: 1px solid rgba(215, 219, 230, .4);
+    }
+    .activity-event:last-child { border-bottom: none; }
+    .activity-event-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+    .activity-event-time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .78rem; }
+    .activity-event-who { font-weight: 600; display: flex; gap: 6px; align-items: center; }
+    .activity-event-who .role-badge { font-size: .62rem; padding: 1px 5px; }
+    .activity-event-verb { color: var(--muted); }
+    .activity-event-target { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    @media (max-width: 780px) {
+      .activity-event { grid-template-columns: 10px 40px 1fr; grid-template-rows: auto auto; gap: 4px 8px; }
+      .activity-event-verb, .activity-event-target { grid-column: 2 / -1; }
+    }
+    .activity-day { margin-bottom: 14px; }
+    .activity-day-label {
+      font-size: .72rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .03em;
+      margin: 4px 0 2px;
+    }
+    .activity-empty, .activity-loading {
+      padding: 16px 0; text-align: center;
+      color: var(--muted); font-size: .88rem;
+    }
   </style>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -680,6 +782,18 @@
             </div>
             <span class="home-link-arrow">&rarr;</span>
           </a>
+          <a class="home-link" href="#" onclick="showView('activity');return false;">
+            <div class="home-link-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <div class="home-link-body">
+              <div class="home-link-name">Activité</div>
+              <div class="home-link-desc">Qui est connecté-e, qui a fait quoi ces derniers jours</div>
+            </div>
+            <span class="home-link-arrow">&rarr;</span>
+          </a>
         </div>
       </main>
     </div>
@@ -764,6 +878,61 @@
       </main>
     </div>
 
+    <!-- ════ ACTIVITÉ VIEW ════ -->
+    <div class="sa-view" id="viewActivity">
+      <main class="console-main">
+        <div class="view-toolbar">
+          <span class="view-title">Activité</span>
+        </div>
+
+        <div class="activity-header">
+          <div class="activity-header-title">Volume d'événements — 6 dernières semaines</div>
+          <div class="activity-histogram" id="activityHistogram"></div>
+          <div class="activity-histogram-axis">
+            <span id="activityHistStart">—</span>
+            <span>aujourd'hui</span>
+          </div>
+        </div>
+
+        <div class="activity-body">
+          <section class="activity-panel">
+            <div class="activity-panel-title">
+              <span>En ligne maintenant</span>
+              <span id="activityOnlineCount" style="font-weight:500;font-size:.72rem;"></span>
+            </div>
+            <div id="activityOnline"><div class="activity-loading">Chargement…</div></div>
+            <div style="font-size:.68rem;color:var(--muted);margin-top:10px;">
+              Actualisé toutes les 30 s · seuil 5 min.
+            </div>
+          </section>
+
+          <section class="activity-panel">
+            <div class="activity-panel-title">
+              <span>Événements récents</span>
+              <span id="activityFeedCount" style="font-weight:500;font-size:.72rem;"></span>
+            </div>
+            <div class="activity-filters">
+              <select id="activityDaysFilter" onchange="onActivityFilterChange()">
+                <option value="1">Aujourd'hui</option>
+                <option value="3">3 jours</option>
+                <option value="7" selected>7 jours</option>
+                <option value="14">14 jours</option>
+                <option value="30">30 jours</option>
+                <option value="90">90 jours</option>
+              </select>
+              <select id="activityTeacherFilter" onchange="onActivityFilterChange()">
+                <option value="">Tou·tes les enseignant·es</option>
+              </select>
+              <select id="activityActionFilter" onchange="onActivityFilterChange()">
+                <option value="">Toutes les actions</option>
+              </select>
+            </div>
+            <div id="activityFeed"><div class="activity-loading">Chargement…</div></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
   </div>
 
   <script>
@@ -774,6 +943,7 @@
     // ── View system ──
 
     function showView(name) {
+      const prevId = document.querySelector(".sa-view.active")?.id;
       document.querySelectorAll(".sa-view").forEach(v => v.classList.remove("active"));
       document.getElementById("view" + name.charAt(0).toUpperCase() + name.slice(1)).classList.add("active");
       const sep = document.getElementById("breadcrumbSep");
@@ -784,12 +954,16 @@
       } else {
         const label = name === "teachers" ? "Enseignant-es" :
                       name === "sessions" ? "Séances" :
-                      name === "certs" ? "Stock de CERTs" : "";
+                      name === "certs" ? "Stock de CERTs" :
+                      name === "activity" ? "Activité" : "";
         leaf.textContent = label;
         sep.style.display = "";
         leaf.style.display = "";
       }
       window.scrollTo(0, 0);
+      // View-specific hooks
+      if (prevId === "viewActivity" && name !== "activity" && typeof onLeaveActivity === "function") onLeaveActivity();
+      if (name === "activity" && typeof onEnterActivity === "function") onEnterActivity();
     }
 
     // ── Login & auth ──
@@ -1919,6 +2093,196 @@
       URL.revokeObjectURL(a.href);
     }
     window.downloadCertRtf = downloadCertRtf;
+
+    // ── Activité view ──
+
+    const ACTION_LABELS = {
+      "auth.login":          { color: "#6b7280", verb: "s'est connecté·e" },
+      "cert.save":           { color: "#6f5cf7", verb: "a enregistré une CERT" },
+      "cert.delete":         { color: "#ef4444", verb: "a supprimé une CERT" },
+      "cert.share":          { color: "#6f5cf7", verb: "a partagé une CERT" },
+      "review.request":      { color: "#f59e0b", verb: "a demandé une révision" },
+      "review.complete":     { color: "#10b981", verb: "a validé une révision" },
+      "review.return":       { color: "#f59e0b", verb: "a renvoyé une révision" },
+      "review.reassign":     { color: "#f59e0b", verb: "a réassigné une révision" },
+      "review.ack":          { color: "#94a3b8", verb: "a accusé réception d'une révision" },
+      "session.create":      { color: "#3b82f6", verb: "a créé une séance" },
+      "session.update":      { color: "#3b82f6", verb: "a modifié une séance" },
+      "session.delete":      { color: "#ef4444", verb: "a supprimé une séance" },
+      "session.duplicate":   { color: "#3b82f6", verb: "a dupliqué une séance" },
+      "teacher.create":      { color: "#10b981", verb: "a créé un compte" },
+      "teacher.delete":      { color: "#ef4444", verb: "a supprimé un compte" },
+      "teacher.role_change": { color: "#f59e0b", verb: "a changé un rôle" },
+    };
+
+    let activityOnlineTimer = null;
+    let currentActivityFilters = { days: 7, teacher_id: 0, action: "" };
+
+    function activityRel(ts) {
+      if (!ts) return "—";
+      const then = new Date(ts.replace(" ", "T"));
+      const diff = Math.round((Date.now() - then.getTime()) / 1000);
+      if (diff < 60) return "à l'instant";
+      const mn = Math.round(diff / 60);
+      if (mn < 60) return `il y a ${mn} min`;
+      const h = Math.round(mn / 60);
+      if (h < 24) return `il y a ${h} h`;
+      return `il y a ${Math.round(h / 24)} j`;
+    }
+    function activityDateLong(day) {
+      const d = new Date(day + "T00:00:00");
+      return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    }
+    function activityRoleBadge(role) {
+      if (!role) return "";
+      const label = role === "editor" ? "Éd." : "Exp.";
+      return `<span class="role-badge role-${role}">${label}</span>`;
+    }
+
+    function renderActivityHistogram(histogram) {
+      const el = document.getElementById("activityHistogram");
+      const max = Math.max(1, ...histogram.map(h => h.n));
+      el.innerHTML = histogram.map(h => {
+        const pct = Math.round((h.n / max) * 100);
+        const d = new Date(h.day + "T00:00:00");
+        const tip = `${d.toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "2-digit" })} — ${h.n} événement${h.n > 1 ? "s" : ""}`;
+        return `<div class="activity-hist-bar" title="${tip}" style="height:${Math.max(2, pct)}%"></div>`;
+      }).join("");
+      if (histogram.length) {
+        const first = new Date(histogram[0].day + "T00:00:00");
+        document.getElementById("activityHistStart").textContent = first.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+      }
+    }
+
+    function renderActivityOnline(list) {
+      const el = document.getElementById("activityOnline");
+      document.getElementById("activityOnlineCount").textContent = list.length ? `${list.length}` : "";
+      if (!list.length) { el.innerHTML = '<div class="activity-empty">Personne dans les 5 dernières minutes.</div>'; return; }
+      el.innerHTML = list.map(t => `
+        <div class="activity-online-card">
+          <div>
+            <div class="activity-online-name">${esc(t.name || t.email || "—")}</div>
+            <div class="activity-online-meta">${activityRoleBadge(t.role)}<span>${activityRel(t.last_seen_at)}</span></div>
+          </div>
+        </div>`).join("");
+    }
+
+    function renderActivityTarget(ev) {
+      const m = ev.meta || {};
+      if (ev.target_type === "cert") {
+        const title = m.title;
+        return title ? `« ${esc(title)} »` : (ev.target_id ? `CERT #${ev.target_id}` : "");
+      }
+      if (ev.target_type === "session") {
+        const name = m.name;
+        if (ev.action === "session.duplicate" && m.from_session_id) return `« ${esc(name || "")} » (depuis #${m.from_session_id})`;
+        return name ? `« ${esc(name)} »` : `séance #${ev.target_id || ""}`;
+      }
+      if (ev.target_type === "teacher") {
+        const who = m.name || m.email || `#${ev.target_id || ""}`;
+        if (ev.action === "teacher.role_change") return `${esc(who)} (${esc(m.old_role || "")} → ${esc(m.new_role || "")})`;
+        return esc(who);
+      }
+      return "";
+    }
+
+    function renderActivityFeed(events, hasMore) {
+      const el = document.getElementById("activityFeed");
+      document.getElementById("activityFeedCount").textContent = events.length ? `${events.length}${hasMore ? "+" : ""}` : "";
+      if (!events.length) { el.innerHTML = '<div class="activity-empty">Aucun événement sur la période.</div>'; return; }
+
+      const groups = new Map();
+      for (const ev of events) {
+        const d = (ev.created_at || "").slice(0, 10);
+        if (!groups.has(d)) groups.set(d, []);
+        groups.get(d).push(ev);
+      }
+
+      el.innerHTML = [...groups.entries()].map(([day, rows]) => `
+        <div class="activity-day">
+          <div class="activity-day-label">${esc(activityDateLong(day))}</div>
+          ${rows.map(ev => {
+            const lab = ACTION_LABELS[ev.action] || { color: "#94a3b8", verb: esc(ev.action) };
+            const time = (ev.created_at || "").slice(11, 16);
+            return `<div class="activity-event">
+              <span class="activity-event-dot" style="background:${lab.color}"></span>
+              <span class="activity-event-time">${time}</span>
+              <span class="activity-event-who">${esc(ev.teacher_name || "—")}${activityRoleBadge(ev.teacher_role)}</span>
+              <span class="activity-event-verb">${lab.verb}</span>
+              <span class="activity-event-target">${renderActivityTarget(ev)}</span>
+            </div>`;
+          }).join("")}
+        </div>`).join("");
+    }
+
+    async function refreshActivityOnline() {
+      try {
+        const res = await authFetch(`${API}/admin/online.php?minutes=5`);
+        const data = await res.json();
+        renderActivityOnline(data.online || []);
+      } catch (e) {
+        document.getElementById("activityOnline").innerHTML = `<div class="error-msg" style="display:block;">Erreur : ${esc(e.message)}</div>`;
+      }
+    }
+
+    async function loadActivity() {
+      const qs = new URLSearchParams();
+      qs.set("days", String(currentActivityFilters.days));
+      if (currentActivityFilters.teacher_id) qs.set("teacher_id", String(currentActivityFilters.teacher_id));
+      if (currentActivityFilters.action)     qs.set("action", currentActivityFilters.action);
+      qs.set("limit", "500");
+      document.getElementById("activityFeed").innerHTML = '<div class="activity-loading">Chargement…</div>';
+      try {
+        const res = await authFetch(`${API}/admin/activity.php?${qs}`);
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById("activityFeed").innerHTML = `<div class="error-msg" style="display:block;">${esc(data.error)}</div>`;
+          return;
+        }
+        renderActivityHistogram(data.histogram || []);
+        renderActivityFeed(data.events || [], !!data.has_more);
+        // Refresh the action dropdown with distinct actions observed in the current window
+        const sel = document.getElementById("activityActionFilter");
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">Toutes les actions</option>' +
+          (data.actions || []).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
+        sel.value = cur;
+      } catch (e) {
+        document.getElementById("activityFeed").innerHTML = `<div class="error-msg" style="display:block;">Erreur : ${esc(e.message)}</div>`;
+      }
+    }
+
+    async function populateActivityTeacherFilter() {
+      try {
+        if (!allTeachersData.length) {
+          const res = await authFetch(`${API}/admin/teachers.php`);
+          allTeachersData = await res.json();
+        }
+        const sel = document.getElementById("activityTeacherFilter");
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">Tou·tes les enseignant·es</option>' +
+          allTeachersData.map(t => `<option value="${t.id}">${esc(t.name || t.email)}</option>`).join("");
+        sel.value = cur;
+      } catch (e) { /* ignore */ }
+    }
+
+    function onActivityFilterChange() {
+      currentActivityFilters.days       = parseInt(document.getElementById("activityDaysFilter").value) || 7;
+      currentActivityFilters.teacher_id = parseInt(document.getElementById("activityTeacherFilter").value) || 0;
+      currentActivityFilters.action     = document.getElementById("activityActionFilter").value || "";
+      loadActivity();
+    }
+    window.onActivityFilterChange = onActivityFilterChange;
+
+    async function onEnterActivity() {
+      await populateActivityTeacherFilter();
+      await Promise.all([refreshActivityOnline(), loadActivity()]);
+      if (activityOnlineTimer) clearInterval(activityOnlineTimer);
+      activityOnlineTimer = setInterval(refreshActivityOnline, 30000);
+    }
+    function onLeaveActivity() {
+      if (activityOnlineTimer) { clearInterval(activityOnlineTimer); activityOnlineTimer = null; }
+    }
   </script>
 </body>
 </html>

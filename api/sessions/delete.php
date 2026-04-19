@@ -16,9 +16,10 @@ requireFields($data, ['session_id']);
 $sessionId = (int) $data['session_id'];
 
 // Verify ownership
-$stmt = $db->prepare('SELECT id FROM sessions WHERE id = ? AND teacher_id = ?');
+$stmt = $db->prepare('SELECT id, name, code FROM sessions WHERE id = ? AND teacher_id = ?');
 $stmt->execute([$sessionId, $teacherId]);
-if (!$stmt->fetch()) {
+$session = $stmt->fetch();
+if (!$session) {
     jsonError('Session not found or not yours', 403);
 }
 
@@ -27,5 +28,7 @@ $stmt = $db->prepare('DELETE FROM sessions WHERE id = ?');
 $stmt->execute([$sessionId]);
 
 cleanOrphanedSchools($db);
+
+logActivity($teacherId, 'session.delete', 'session', $sessionId, ['name' => $session['name'], 'code' => $session['code']]);
 
 jsonResponse(['deleted' => true, 'session_id' => $sessionId]);

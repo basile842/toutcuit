@@ -4,7 +4,7 @@
 // Preserves: certs (depot), student_responses, collected_links
 require_once __DIR__ . '/../middleware.php';
 handleCors();
-requireEditor();
+$callerId = requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);
@@ -64,6 +64,12 @@ try {
     $db->rollBack();
     jsonError('Erreur lors de la suppression : ' . $e->getMessage(), 500);
 }
+
+logActivity($callerId, 'teacher.delete', 'teacher', $teacherId, [
+    'email'            => $teacher['email'],
+    'name'             => $teacher['name'],
+    'sessions_deleted' => count($sessionIds),
+]);
 
 jsonResponse([
     'deleted' => true,
