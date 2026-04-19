@@ -202,7 +202,9 @@ Console protégée par **vrai login JWT** (email + password d'un compte `role='e
 - **Enseignants** : créer, lister, promouvoir/rétrograder, supprimer des comptes
 - **Séances** : lister avec détail dépliable (CERTs, stats, feed, dupliquer, télécharger Excel)
 - **Stock de CERTs** : lister, modifier, supprimer
-- **Activité** : histogramme 6 semaines + panneau « En ligne maintenant » (seuil 5 min, refresh 30 s) + feed d'événements filtrable (teacher / action / plage 1-90 j). Voir `api/admin/activity.php` et `api/admin/online.php`. Alimenté par `logActivity()` dans `middleware.php`, appelé depuis les endpoints de mutation (auth/certs/sessions/review cycle/admin). Les endpoints AI ne sont **pas** instrumentés pour l'instant (ils n'ont pas d'auth teacher).
+- **Activité** : histogramme 6 semaines + panneau « En ligne maintenant » (seuil 5 min, refresh 30 s) + feed d'événements filtrable (teacher / action / plage 1-90 j). Voir `api/admin/activity.php` et `api/admin/online.php`. Alimenté par `logActivity()` dans `middleware.php`, appelé depuis les endpoints de mutation (auth / certs / sessions / review cycle / admin). Les endpoints AI (`ai/review`, `generate-cert`, `ai/compose-cert`) utilisent `optionalTeacherId()` : ils loggent `ai.review` / `ai.generate` / `ai.compose` avec `{model, input_tokens, output_tokens, cost_usd}` uniquement si le frontend a envoyé un Bearer token. Les usages anonymes d'`/analyse` restent autorisés mais ne sont pas tracés.
+
+**Invariant du log** : `teacher_activity.meta` **ne contient jamais de contenu** (titres de CERTs, noms de séances, emails, codes). Seulement des éléments structurels : diffs de rôle, listes de champs modifiés, compteurs, tokens, modèle AI. Les CERTs sont loggées avec trois verbes distincts (`cert.create`, `cert.update`, `cert.delete`) pour filtrer proprement par type d'action — pas de `cert.save` ambigu.
 
 Le téléchargement Excel utilise SheetJS côté client, sans endpoint dédié — il charge les données via `sessions/certs.php` + `student/feed.php` et génère le fichier localement.
 

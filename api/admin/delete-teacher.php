@@ -66,8 +66,6 @@ try {
 }
 
 logActivity($callerId, 'teacher.delete', 'teacher', $teacherId, [
-    'email'            => $teacher['email'],
-    'name'             => $teacher['name'],
     'sessions_deleted' => count($sessionIds),
 ]);
 

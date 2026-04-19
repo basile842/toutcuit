@@ -46,7 +46,7 @@ $stmt = $db->prepare('
 $stmt->execute([$teacherId, $schoolId, $name, $code, $maxCollect]);
 
 $newSessionId = (int) $db->lastInsertId();
-logActivity($teacherId, 'session.create', 'session', $newSessionId, ['name' => $name, 'code' => $code]);
+logActivity($teacherId, 'session.create', 'session', $newSessionId);
 
 jsonResponse([
     'id'   => $newSessionId,

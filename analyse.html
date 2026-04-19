@@ -698,6 +698,17 @@ const $ = id => document.getElementById(id);
 const urlEl = $('urlInput');
 const goBtn = $('goBtn');
 
+// Attach the editor/expert JWT to AI calls when available, so the activity log
+// on /editor can attribute the call. Anonymous use (no token) still works.
+function aiHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    try {
+        const t = localStorage.getItem('tc_token');
+        if (t) h['Authorization'] = 'Bearer ' + t;
+    } catch (_) {}
+    return h;
+}
+
 urlEl.addEventListener('input', () => { goBtn.disabled = !urlEl.value.trim(); });
 urlEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !goBtn.disabled) generate(); });
 
@@ -798,7 +809,7 @@ async function generate() {
     try {
         const res = await fetch(API, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: aiHeaders(),
             body: JSON.stringify({ url, content, context, model, screenshot: screenshotData || '' })
         });
 
@@ -1258,7 +1269,7 @@ async function genCert() {
         if (model !== 'claude-sonnet-4-6' && model !== 'gemini-2.5-flash') model = 'gemini-2.5-flash';
         const res = await fetch('/api/ai/compose-cert.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: aiHeaders(),
             body: JSON.stringify({ url: urlEl.value.trim(), analysis: lastData, model })
         });
         if (!res.ok) {

@@ -35,7 +35,7 @@ $token = jwtCreate([
 try {
     $db->prepare('UPDATE teachers SET last_seen_at = NOW() WHERE id = ?')->execute([(int) $teacher['id']]);
 } catch (Throwable $e) { error_log('last_seen_at on login failed: ' . $e->getMessage()); }
-logActivity((int) $teacher['id'], 'auth.login', null, null, ['role' => $role]);
+logActivity((int) $teacher['id'], 'auth.login');
 
 jsonResponse([
     'token'   => $token,

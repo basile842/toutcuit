@@ -44,7 +44,7 @@ $token = jwtCreate([
     'email'      => $email,
 ]);
 
-logActivity($callerId, 'teacher.create', 'teacher', $teacherId, ['email' => $email, 'name' => $name]);
+logActivity($callerId, 'teacher.create', 'teacher', $teacherId);
 
 jsonResponse([
     'token'   => $token,

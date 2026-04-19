@@ -1445,7 +1445,7 @@
           references_text: selectedCert.references_text || "",
         };
 
-        const res = await fetch(`${API}/ai/review.php`, {
+        const res = await authFetch(`${API}/ai/review.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),

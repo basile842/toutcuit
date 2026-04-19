@@ -26,7 +26,7 @@ if ($targetId === $callerId && $role !== 'editor') {
 }
 
 $db = getDB();
-$stmt = $db->prepare('SELECT id, role, name FROM teachers WHERE id = ?');
+$stmt = $db->prepare('SELECT id, role FROM teachers WHERE id = ?');
 $stmt->execute([$targetId]);
 $target = $stmt->fetch();
 if (!$target) {
@@ -38,7 +38,6 @@ if ($oldRole !== $role) {
     $upd = $db->prepare('UPDATE teachers SET role = ? WHERE id = ?');
     $upd->execute([$role, $targetId]);
     logActivity($callerId, 'teacher.role_change', 'teacher', $targetId, [
-        'name'     => $target['name'],
         'old_role' => $oldRole,
         'new_role' => $role,
     ]);

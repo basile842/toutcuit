@@ -180,4 +180,14 @@ $parsed['usage'] = [
     'cost_usd'      => round($totalCost, 4),
 ];
 
+$callerId = optionalTeacherId();
+if ($callerId) {
+    logActivity($callerId, 'ai.review', null, null, [
+        'model'         => 'claude-sonnet-4-6',
+        'input_tokens'  => $inputTokens,
+        'output_tokens' => $outputTokens,
+        'cost_usd'      => round($totalCost, 4),
+    ]);
+}
+
 jsonResponse($parsed);

@@ -99,11 +99,7 @@ try {
 
     $db->commit();
 
-    logActivity($teacherId, 'session.duplicate', 'session', $newId, [
-        'from_session_id' => $sessionId,
-        'name'            => $newName,
-        'code'            => $code,
-    ]);
+    logActivity($teacherId, 'session.duplicate', 'session', $newId, ['from_session_id' => $sessionId]);
 
     jsonResponse([
         'id'   => $newId,

@@ -39,6 +39,29 @@ function getTeacherId(): int {
     return $teacherId;
 }
 
+// Extract the teacher id from the Authorization header if present and valid,
+// without erroring if it's missing. Used by endpoints that are PUBLIC but still
+// want to attribute the call when the caller happens to be signed in (e.g. the
+// AI tools — analyse.html is accessible without login).
+function optionalTeacherId(): ?int {
+    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!preg_match('/^Bearer\s+(.+)$/i', $header, $m)) return null;
+    $payload = jwtValidate($m[1]);
+    if (!$payload || empty($payload['teacher_id'])) return null;
+    $teacherId = (int) $payload['teacher_id'];
+    try {
+        $db = getDB();
+        $stmt = $db->prepare('SELECT id FROM teachers WHERE id = ?');
+        $stmt->execute([$teacherId]);
+        if (!$stmt->fetch()) return null;
+        $db->prepare('UPDATE teachers SET last_seen_at = NOW() WHERE id = ?')->execute([$teacherId]);
+    } catch (Throwable $e) {
+        error_log('optionalTeacherId failed: ' . $e->getMessage());
+        return null;
+    }
+    return $teacherId;
+}
+
 // Append a row to teacher_activity. Logging must never break the caller's
 // primary action — any DB error is swallowed to error_log. Call this AFTER the
 // main operation has succeeded, with the teacher who performed it.

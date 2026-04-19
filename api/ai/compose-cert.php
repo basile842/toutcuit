@@ -231,6 +231,16 @@ $pricing = [
 $rates     = $pricing[$model] ?? ['input' => 0, 'output' => 0];
 $totalCost = ($inputTokens * $rates['input'] + $outputTokens * $rates['output']) / 1_000_000;
 
+$callerId = optionalTeacherId();
+if ($callerId) {
+    logActivity($callerId, 'ai.compose', null, null, [
+        'model'         => $model,
+        'input_tokens'  => $inputTokens,
+        'output_tokens' => $outputTokens,
+        'cost_usd'      => round($totalCost, 4),
+    ]);
+}
+
 jsonResponse([
     'title'            => (string)($parsed['title'] ?? ''),
     'three_phrases'    => (string)($parsed['three_phrases'] ?? ''),

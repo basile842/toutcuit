@@ -2098,7 +2098,8 @@
 
     const ACTION_LABELS = {
       "auth.login":          { color: "#6b7280", verb: "s'est connecté·e" },
-      "cert.save":           { color: "#6f5cf7", verb: "a enregistré une CERT" },
+      "cert.create":         { color: "#10b981", verb: "a créé une CERT" },
+      "cert.update":         { color: "#6f5cf7", verb: "a modifié une CERT" },
       "cert.delete":         { color: "#ef4444", verb: "a supprimé une CERT" },
       "cert.share":          { color: "#6f5cf7", verb: "a partagé une CERT" },
       "review.request":      { color: "#f59e0b", verb: "a demandé une révision" },
@@ -2113,6 +2114,9 @@
       "teacher.create":      { color: "#10b981", verb: "a créé un compte" },
       "teacher.delete":      { color: "#ef4444", verb: "a supprimé un compte" },
       "teacher.role_change": { color: "#f59e0b", verb: "a changé un rôle" },
+      "ai.review":           { color: "#8b5cf6", verb: "a révisé une CERT avec l'IA" },
+      "ai.generate":         { color: "#8b5cf6", verb: "a analysé une URL avec l'IA" },
+      "ai.compose":          { color: "#8b5cf6", verb: "a généré une CERT avec l'IA" },
     };
 
     let activityOnlineTimer = null;
@@ -2167,21 +2171,19 @@
         </div>`).join("");
     }
 
+    // Deliberately shows no content (no titles, no names, no emails). Only the
+    // structural shape of the action: model for AI calls, role diff for role
+    // changes, changed-field list for session updates.
     function renderActivityTarget(ev) {
       const m = ev.meta || {};
-      if (ev.target_type === "cert") {
-        const title = m.title;
-        return title ? `« ${esc(title)} »` : (ev.target_id ? `CERT #${ev.target_id}` : "");
+      if (typeof ev.action === "string" && ev.action.startsWith("ai.") && m.model) {
+        return `<span style="font-family:ui-monospace,monospace;font-size:.78rem;">${esc(m.model)}</span>`;
       }
-      if (ev.target_type === "session") {
-        const name = m.name;
-        if (ev.action === "session.duplicate" && m.from_session_id) return `« ${esc(name || "")} » (depuis #${m.from_session_id})`;
-        return name ? `« ${esc(name)} »` : `séance #${ev.target_id || ""}`;
+      if (ev.action === "teacher.role_change" && m.old_role && m.new_role) {
+        return `${esc(m.old_role)} → ${esc(m.new_role)}`;
       }
-      if (ev.target_type === "teacher") {
-        const who = m.name || m.email || `#${ev.target_id || ""}`;
-        if (ev.action === "teacher.role_change") return `${esc(who)} (${esc(m.old_role || "")} → ${esc(m.new_role || "")})`;
-        return esc(who);
+      if (ev.action === "session.update" && Array.isArray(m.fields) && m.fields.length) {
+        return `<span style="font-size:.78rem;color:var(--muted);">${esc(m.fields.join(", "))}</span>`;
       }
       return "";
     }

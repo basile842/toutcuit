@@ -62,6 +62,7 @@ if (!empty($sets)) {
 
 $changed = array_values(array_intersect($allowed, array_keys($data)));
 if (array_key_exists('school_name', $data)) $changed[] = 'school_name';
+// Only the shape of the change is logged (which fields changed), not the values.
 logActivity($teacherId, 'session.update', 'session', $sessionId, ['fields' => $changed]);
 
 jsonResponse(['ok' => true, 'session_id' => $sessionId]);

@@ -297,4 +297,14 @@ $parsed['usage'] = [
 
 $parsed['content_fetched'] = !(!$imageData && $pageContent === '');
 
+$callerId = optionalTeacherId();
+if ($callerId) {
+    logActivity($callerId, 'ai.generate', null, null, [
+        'model'         => $model,
+        'input_tokens'  => $inputTokens,
+        'output_tokens' => $outputTokens,
+        'cost_usd'      => round($totalCost, 4),
+    ]);
+}
+
 jsonResponse($parsed);
