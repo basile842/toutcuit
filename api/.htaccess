@@ -15,7 +15,8 @@ RewriteRule ^(.*)$ $1 [R=204,L]
     Require all denied
 </Files>
 
-# Deny access to markdown files (e.g. ai/review-prompt.md)
-<FilesMatch "\.md$">
+# Deny access to markdown and SQL files
+# (ai/*-prompt.md, migrations/*.sql, schema.sql — all internal assets, not HTTP-served)
+<FilesMatch "\.(md|sql)$">
     Require all denied
 </FilesMatch>
