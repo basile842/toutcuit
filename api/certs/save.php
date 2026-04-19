@@ -79,6 +79,10 @@ $stmt = $db->prepare(
 $stmt->execute(array_values($fields));
 
 $newCertId = (int) $db->lastInsertId();
-logActivity($teacherId, 'cert.create', 'cert', $newCertId);
+// Creation path splits two ways for the activity feed: cert.import when the
+// draft started from a .docx/.rtf upload, cert.create otherwise (manual entry
+// or AI prefill from /analyse — both counted as "created").
+$isImport = (($data['source'] ?? null) === 'import');
+logActivity($teacherId, $isImport ? 'cert.import' : 'cert.create', 'cert', $newCertId);
 
 jsonResponse(['id' => $newCertId, 'created' => true], 201);

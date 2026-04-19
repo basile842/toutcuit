@@ -602,6 +602,7 @@
           reliability_text: data.reliabilityText || null,
           references_text: data.references || null
         };
+        if (currentDraftSource) payload.source = currentDraftSource;
 
         const response = await fetch(`${API_BASE}/certs/save.php`, {
           method: "POST",
@@ -628,6 +629,7 @@
           } else {
             linkForm.reset();
           }
+          currentDraftSource = null;
         }
       } catch (error) {
         showError("Erreur lors de l'ajout : " + error.message);
@@ -657,6 +659,7 @@
 
     resetBtn.addEventListener("click", () => {
       linkForm.reset();
+      currentDraftSource = null;
       successMsg.style.display = "none";
       errorMsg.style.display = "none";
     });
@@ -667,6 +670,11 @@
     const importZone = document.getElementById("importZone");
     const importFile = document.getElementById("importFile");
     const importStatus = document.getElementById("importStatus");
+
+    // Tracks whether the current draft in the form started as a file import
+    // (.docx/.rtf). AI prefill from /analyse and manual typing both leave this
+    // null — the backend logs those as cert.create, imports as cert.import.
+    let currentDraftSource = null;
 
     importZone.addEventListener("click", () => importFile.click());
     importZone.addEventListener("dragover", (e) => { e.preventDefault(); importZone.classList.add("dragover"); });
@@ -699,6 +707,7 @@
         const xmlText = await zip.file("word/document.xml").async("text");
         const parsed = parseDocxXml(xmlText);
         fillForm(parsed);
+        currentDraftSource = "import";
 
         importStatus.textContent = `Import réussi : "${parsed.title || '(sans titre)'}"`;
         importStatus.className = "import-status ok";
@@ -718,6 +727,7 @@
         const plain = rtfToText(text);
         const parsed = parseCertRtf(plain);
         fillForm(parsed);
+        currentDraftSource = "import";
 
         importStatus.textContent = `Import réussi : "${parsed.title || '(sans titre)'}"`;
         importStatus.className = "import-status ok";
