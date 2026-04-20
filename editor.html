@@ -704,7 +704,7 @@
         </div>
         <div class="console-group-title">Outils</div>
         <div class="home-links">
-          <a class="home-link" href="/descripteurs/pages/certs.html?from=editor">
+          <a class="home-link" href="/descripteurs/pages/certs.html">
             <div class="home-link-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -921,7 +921,7 @@
                 <option value="90">90 jours</option>
               </select>
               <select id="activityTeacherFilter" onchange="onActivityFilterChange()">
-                <option value="">Tou·tes les enseignant·es</option>
+                <option value="">Toutes les personnes</option>
               </select>
               <select id="activityActionFilter" onchange="onActivityFilterChange()">
                 <option value="">Toutes les actions</option>
@@ -2278,7 +2278,7 @@
         }
         const sel = document.getElementById("activityTeacherFilter");
         const cur = sel.value;
-        sel.innerHTML = '<option value="">Tou·tes les enseignant·es</option>' +
+        sel.innerHTML = '<option value="">Toutes les personnes</option>' +
           allTeachersData.map(t => `<option value="${t.id}">${esc(t.name || t.email)}</option>`).join("");
         sel.value = cur;
       } catch (e) { /* ignore */ }

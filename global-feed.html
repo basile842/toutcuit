@@ -1009,7 +1009,11 @@
       }
 
       try {
-        const res = await fetch(`${API_BASE}/admin/global-feed.php?sessions=${encodeURIComponent(SESSION_CODES)}`, { cache: "no-store" });
+        const token = localStorage.getItem("tc_token");
+        const res = await fetch(`${API_BASE}/admin/global-feed.php?sessions=${encodeURIComponent(SESSION_CODES)}`, {
+          cache: "no-store",
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 

@@ -174,24 +174,14 @@
     <nav style="display:flex;align-items:center;gap:6px;">
       <span style="font-weight:900;letter-spacing:-0.02em;color:var(--accent);">toutcuit</span>
       <span style="color:var(--border);">/</span>
-      <a id="breadcrumbBack" href="/expert.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Expert</a>
+      <a href="/expert.html" style="color:var(--muted);text-decoration:none;font-weight:600;">Expert</a>
+      <span style="color:var(--border);">/</span>
+      <span style="color:var(--muted);font-weight:600;">CERTs</span>
       <span style="flex:1;"></span>
       <span id="userName" style="font-size:.82rem;color:var(--muted);"></span>
       <button id="logoutBtn" style="font-size:.82rem;color:var(--accent);cursor:pointer;border:none;background:none;font-weight:600;">Déconnexion</button>
     </nav>
   </header>
-  <script>
-    // When arriving from /editor, point the breadcrumb back to /editor so the
-    // user stays in the editor context.
-    (() => {
-      const from = new URLSearchParams(location.search).get("from");
-      if (from === "editor") {
-        const link = document.getElementById("breadcrumbBack");
-        if (link) { link.href = "/editor"; link.textContent = "Éditeur"; }
-      }
-    })();
-  </script>
-
   <main>
     <!-- Section principale (cachée par défaut, requiert auth admin) -->
     <section id="certsContent">
