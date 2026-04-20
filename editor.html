@@ -1974,11 +1974,27 @@
         });
         const checkData = await checkRes.json();
         const count = checkData.student_responses || 0;
+        const sessions = Array.isArray(checkData.sessions) ? checkData.sessions : [];
 
-        let msg = `Supprimer la CERT « ${title} » ?\n\nCette action est irréversible.`;
-        if (count > 0) {
-          msg = `Supprimer la CERT « ${title} » ?\n\nAttention : il y a ${count} résultat${count > 1 ? "s" : ""} d'élèves associé${count > 1 ? "s" : ""} à cette CERT, ils seront effacés.\n\nCette action est irréversible.`;
+        const warnings = [];
+        if (sessions.length > 0) {
+          const lines = sessions
+            .map(s => `• ${s.name}${s.teacher_name ? " — " + s.teacher_name : ""}${s.code ? " (" + s.code + ")" : ""}`)
+            .join("\n");
+          warnings.push(
+            `Cette CERT est actuellement dans ${sessions.length} séance${sessions.length > 1 ? "s" : ""} :\n${lines}\nElle en sera retirée.`
+          );
         }
+        if (count > 0) {
+          warnings.push(
+            `Il y a ${count} résultat${count > 1 ? "s" : ""} d'élèves associé${count > 1 ? "s" : ""} à cette CERT, ils seront effacés.`
+          );
+        }
+
+        let msg = `Supprimer la CERT « ${title} » ?\n\n`;
+        if (warnings.length) msg += "Attention :\n\n" + warnings.join("\n\n") + "\n\n";
+        msg += "Cette action est irréversible.";
+
         if (!confirm(msg)) return;
 
         const res = await authFetch(`${API}/admin/certs.php`, {

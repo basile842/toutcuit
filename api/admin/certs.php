@@ -46,7 +46,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $db->prepare('SELECT COUNT(*) FROM student_responses WHERE cert_id = ?');
         $stmt->execute([$certId]);
         $count = (int) $stmt->fetchColumn();
-        jsonResponse(['id' => $certId, 'student_responses' => $count]);
+
+        // Sessions currently referencing this CERT (will be silently detached on delete)
+        $sessStmt = $db->prepare('
+            SELECT s.id, s.name, s.code, t.name AS teacher_name
+            FROM session_certs sc
+            JOIN sessions s ON s.id = sc.session_id
+            LEFT JOIN teachers t ON t.id = s.teacher_id
+            WHERE sc.cert_id = ?
+            ORDER BY s.created_at DESC
+        ');
+        $sessStmt->execute([$certId]);
+        $sessions = $sessStmt->fetchAll();
+
+        jsonResponse([
+            'id' => $certId,
+            'student_responses' => $count,
+            'sessions' => $sessions,
+        ]);
     }
 
     if ($data['action'] === 'delete') {
