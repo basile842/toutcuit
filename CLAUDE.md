@@ -46,6 +46,18 @@ Le `.htaccess` racine fait deux choses qu'il faut connaître avant de toucher au
 - **Extension `.html` masquée** : `/expert` sert `expert.html`. Toujours référencer les pages sans extension dans les liens.
 - **Redirects 301 d'anciens noms** : `/admin → /expert`, `/superadmin → /editor`. Les fichiers `admin.html`, `superadmin.html` et `liens/index.html` existent encore mais ne sont **que des pages de redirection** (titre "Redirection…") — ne pas les confondre avec les vraies pages.
 
+## Contexte Expert ↔ Éditeur (breadcrumb)
+
+Certains outils sont partagés entre les deux modes (CERTs, Aide à l'analyse). Quand un·e éditeur·ice y accède depuis `/editor`, son contexte de navigation doit être préservé.
+
+Mécanisme : les liens depuis `editor.html` vers ces outils portent `?from=editor`. Les pages cibles (`descripteurs/pages/certs.html`, `analyse.html`) détectent le query param et remplacent la racine du breadcrumb :
+- « Expert » → « Éditeur »
+- Lien `/expert` → `/editor`
+
+L'utilisateur·ice reste donc dans son mode tant qu'il/elle ne clique pas explicitement « Mode Éditeur·ice » (ou inversement). Pour ajouter un nouvel outil partagé : ajouter `?from=editor` au lien côté `editor.html` **et** dupliquer le script de swap dans la page cible.
+
+`review.html` est éditeur-only (breadcrumb fixe « Éditeur »). `session.html`, `depot.html`, `descripteurs/index.html` sont Expert-only.
+
 ## Pages HTML
 
 | Fichier | URL | Rôle |
@@ -61,6 +73,8 @@ Le `.htaccess` racine fait deux choses qu'il faut connaître avant de toucher au
 | `editor.html` | `/editor` | Console éditeur (password-protected, gestion enseignants/sessions/CERTs + outils) — anciennement `superadmin.html` |
 | `review.html` | `/review` | Outil de révision éditoriale des CERTs via Claude API |
 | `analyse.html` | `/analyse` | Outil d'aide à l'analyse d'une URL pour les expert·es (Claude + Gemini, screenshot optionnel) |
+
+`global-feed.html` appelle `api/admin/global-feed.php` qui exige `requireEditor()`. Il lit `localStorage["tc_token"]` et envoie `Authorization: Bearer`. N'est ouvert que depuis `editor.html` (popup sidecar ou nouvel onglet).
 
 ## API (~40 endpoints)
 
@@ -209,6 +223,8 @@ Console protégée par **vrai login JWT** (email + password d'un compte `role='e
 **Exclusion `auth.login`** : les connexions sont loggées en DB (audit) mais **filtrées côté `api/admin/activity.php`** (feed + histogramme 42 j + dropdown « Action »). La présence live « En ligne maintenant » suffit à savoir qui est connecté — ne pas ré-afficher `auth.login` dans la vue Activité.
 
 Le téléchargement Excel utilise SheetJS côté client, sans endpoint dédié — il charge les données via `sessions/certs.php` + `student/feed.php` et génère le fichier localement.
+
+**Parité visuelle home → Expert** : les cartes d'outils utilisent `.home-link-*` côté Éditeur et `.console-link-*` côté Expert, avec des valeurs alignées (name 700, gap 8px, hover lift + ombre douce). Seule différence volontaire : les icônes Éditeur sont teintées `var(--accent)` (violet) alors que Expert garde des icônes noires — signal visuel léger entre les deux modes. Quand on modifie le reste, répercuter sur l'autre.
 
 ### Révision (`review.html`)
 
