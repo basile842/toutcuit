@@ -567,14 +567,25 @@
 <body>
 
 <header>
-    <a href="/expert" class="header-logo" style="text-decoration:none;">toutcuit</a>
+    <a id="breadcrumbLogo" href="/expert" class="header-logo" style="text-decoration:none;">toutcuit</a>
     <span class="header-sep">/</span>
-    <a href="/expert" style="text-decoration:none;color:var(--muted);font-size:0.95rem;font-weight:700;">Expert</a>
+    <a id="breadcrumbBack" href="/expert" style="text-decoration:none;color:var(--muted);font-size:0.95rem;font-weight:700;">Expert</a>
     <span class="header-sep">/</span>
     <span class="header-title">Aide à l'analyse</span>
     <span class="header-spacer"></span>
     <span class="model-tag" id="modelTag">gemini 2.5 flash</span>
 </header>
+<script>
+  // When arriving from /editor, swap the breadcrumb root so the user stays in
+  // the editor context (shared tool, distinct nav).
+  (() => {
+    if (new URLSearchParams(location.search).get("from") !== "editor") return;
+    const logo = document.getElementById("breadcrumbLogo");
+    const link = document.getElementById("breadcrumbBack");
+    if (logo) logo.href = "/editor";
+    if (link) { link.href = "/editor"; link.textContent = "Éditeur"; }
+  })();
+</script>
 <script type="module">
   import { renderSidecarToggle, openCertSidecar, isSidecarOn } from "/descripteurs/assets/js/sidecar.js";
   window.tcOpenCertSidecar = openCertSidecar;
