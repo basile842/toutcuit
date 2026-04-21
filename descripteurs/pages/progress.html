@@ -723,12 +723,19 @@
       async function deleteResponses(userId) {
         const body = { session_code: SESSION_CODE };
         if (userId) body.user_id = userId;
+        const token = localStorage.getItem("tc_token");
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
         const res = await fetch(`${API_BASE}/admin/reset-responses.php`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(body)
         });
-        if (!res.ok) throw new Error("Delete failed");
+        if (!res.ok) {
+          let msg = "Delete failed";
+          try { const j = await res.json(); if (j?.error) msg = j.error; } catch {}
+          throw new Error(msg);
+        }
         return res.json();
       }
 

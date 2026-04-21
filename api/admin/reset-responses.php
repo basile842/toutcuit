@@ -1,25 +1,34 @@
 <?php
 // POST — Delete student responses for a session (optionally filtered by user_id)
-// No auth (teacher-only page is sufficient gate)
+// Allowed for the session owner or any editor.
 require_once __DIR__ . '/../middleware.php';
 handleCors();
-requireEditor();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);
 }
 
+$teacherId = getTeacherId();
 $data = getJsonBody();
 requireFields($data, ['session_code']);
 
 $db = getDB();
 
-$stmt = $db->prepare('SELECT id FROM sessions WHERE code = ?');
+$stmt = $db->prepare('SELECT id, teacher_id FROM sessions WHERE code = ?');
 $stmt->execute([$data['session_code']]);
 $session = $stmt->fetch();
 
 if (!$session) {
     jsonError('Session not found', 404);
+}
+
+if ((int) $session['teacher_id'] !== $teacherId) {
+    $roleStmt = $db->prepare('SELECT role FROM teachers WHERE id = ?');
+    $roleStmt->execute([$teacherId]);
+    $role = $roleStmt->fetchColumn();
+    if ($role !== 'editor') {
+        jsonError('Accès refusé', 403);
+    }
 }
 
 $sessionId = (int) $session['id'];
