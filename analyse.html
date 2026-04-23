@@ -833,7 +833,7 @@ async function generate() {
 
         const data = await res.json();
         if (data.content_fetched === false) show('warnBox');
-        render(data);
+        render(data, { scroll: true });
     } catch (e) {
         $('errBox').textContent = e.message;
         show('errBox');
@@ -847,7 +847,7 @@ async function generate() {
 let lastData = null;
 let editMode = false;
 
-function render(d) {
+function render(d, { scroll = false } = {}) {
     lastData = d;
     const refs = d.references || [];
 
@@ -902,7 +902,7 @@ function render(d) {
     }
 
     show('results');
-    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (scroll) $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function sectionCard(letter, cls, title, bodyHtml) {

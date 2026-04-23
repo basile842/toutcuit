@@ -840,6 +840,10 @@
     const ARTICLE_WIN_NAME = "certify_article";
     const SIDECAR_WIN_NAME = "certify_sidecar";
 
+    // Track the popups so we can close them when a result is published
+    let _articleWin = null;
+    let _sidecarWin = null;
+
     function isMobile(){
       return window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
     }
@@ -947,6 +951,8 @@
         return;
       }
 
+      _articleWin = art;
+      _sidecarWin = side;
       window._pendingContext = null;
 
       // Détecter navigateur administré / kiosk (resize ignoré par le système)
@@ -984,6 +990,9 @@
       if (!art) return;
       try{ art.focus(); }catch{}
       try{ art.location.href = context.url; }catch{}
+
+      _articleWin = art;
+      if (sideWin) _sidecarWin = sideWin;
 
       // Repositionner le sidecar (same-origin → resizeTo/moveTo autorisés)
       if (sideWin && !sideWin.closed){
@@ -1171,8 +1180,7 @@
         return;
       }
 
-      const allParam = isAdmin ? "&all=1" : "";
-      const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}${allParam}`, { cache: "no-store" });
+      const res = await fetch(`${API_BASE}/sessions/certs.php?session=${encodeURIComponent(SESSION_CODE)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Impossible de charger les CERTs de la séance");
 
       const certs = await res.json();
@@ -1275,6 +1283,15 @@
       flushArchiveQueue();
     }
 
+    function closePopupsAfterPublish(){
+      // Close sidecar + article popups so the student returns to this page
+      try{ if (_sidecarWin && !_sidecarWin.closed) _sidecarWin.close(); }catch{}
+      try{ if (_articleWin && !_articleWin.closed) _articleWin.close(); }catch{}
+      _sidecarWin = null;
+      _articleWin = null;
+      try{ window.focus(); }catch{}
+    }
+
     function handleIncomingResult(data){
       if (!isFinalPublish(data)) return;
 
@@ -1287,6 +1304,7 @@
       if (slot) slot.innerHTML = renderResultBox(id, data);
 
       archivePublishedResult(data);
+      closePopupsAfterPublish();
     }
 
     window.addEventListener("message", (evt) => {
