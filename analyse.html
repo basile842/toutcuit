@@ -749,11 +749,44 @@ function clearScreenshot() {
     $('dropPreview').style.display = 'none';
 }
 
+// Claude rejects base64 images > 5 MB. Screenshots from retina monitors often
+// exceed that. We resize to 1568px on the long edge (Anthropic's recommended
+// max) and re-encode as JPEG at 85% quality — keeps the visuals readable and
+// brings the payload well under 1 MB in practice.
+const IMAGE_MAX_EDGE = 1568;
+const IMAGE_JPEG_QUALITY = 0.85;
+
+async function resizeImageToDataURL(file) {
+    const bitmap = await createImageBitmap(file);
+    try {
+        const { width, height } = bitmap;
+        const long = Math.max(width, height);
+        const scale = long > IMAGE_MAX_EDGE ? IMAGE_MAX_EDGE / long : 1;
+        const w = Math.round(width * scale);
+        const h = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        // White background so transparent PNGs don't turn black when exported as JPEG
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(bitmap, 0, 0, w, h);
+        return canvas.toDataURL('image/jpeg', IMAGE_JPEG_QUALITY);
+    } finally {
+        if (bitmap.close) bitmap.close();
+    }
+}
+
 function handleImageFile(file) {
     if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = e => setScreenshot(e.target.result);
-    reader.readAsDataURL(file);
+    resizeImageToDataURL(file)
+        .then(setScreenshot)
+        .catch(() => {
+            // Fallback: send the original file as-is if resize fails
+            const reader = new FileReader();
+            reader.onload = e => setScreenshot(e.target.result);
+            reader.readAsDataURL(file);
+        });
 }
 
 document.addEventListener('paste', e => {
@@ -800,16 +833,18 @@ async function generate() {
 
     // If Sidecar is ticked and we are NOT already in a sidecar popup, open
     // two windows (URL left, a new analyse.html in sidecar mode right) that
-    // pick up this form state via localStorage and auto-run the analysis.
+    // pick up this form state and auto-run the analysis. Stash goes via
+    // window.__tcAnalyseStash (primary, sync, no quota limit) with
+    // localStorage as a fallback if the opener is lost.
     const inSidecar = new URLSearchParams(location.search).get('mode') === 'sidecar';
     if (!inSidecar && window.tcIsSidecarOn && window.tcIsSidecarOn()) {
-        try {
-            localStorage.setItem(ANALYSE_STASH_KEY, JSON.stringify({
-                url, content, context, model,
-                screenshot: screenshotData || '',
-                createdAt: Date.now(),
-            }));
-        } catch {}
+        const payload = {
+            url, content, context, model,
+            screenshot: screenshotData || '',
+            createdAt: Date.now(),
+        };
+        window.__tcAnalyseStash = payload;
+        try { localStorage.setItem(ANALYSE_STASH_KEY, JSON.stringify(payload)); } catch {}
         window.tcOpenCertSidecar(url, '/analyse?mode=sidecar');
         return;
     }
@@ -1359,11 +1394,23 @@ function hide(id) {
 (function bootSidecar(){
     if (new URLSearchParams(location.search).get('mode') !== 'sidecar') return;
     let s = null;
+    // Primary: read the stash directly off the opener (same-origin, sync,
+    // no storage-quota issue even with a big screenshot data URI).
     try {
-        const raw = localStorage.getItem(ANALYSE_STASH_KEY);
-        if (raw) s = JSON.parse(raw);
-        localStorage.removeItem(ANALYSE_STASH_KEY);
+        const op = window.opener;
+        if (op && op.__tcAnalyseStash && typeof op.__tcAnalyseStash === 'object') {
+            s = op.__tcAnalyseStash;
+            op.__tcAnalyseStash = null;
+        }
     } catch {}
+    // Fallback: localStorage (covers cases where opener is gone).
+    if (!s) {
+        try {
+            const raw = localStorage.getItem(ANALYSE_STASH_KEY);
+            if (raw) s = JSON.parse(raw);
+            localStorage.removeItem(ANALYSE_STASH_KEY);
+        } catch {}
+    }
     if (!s || !s.url) return;
     if (Date.now() - (s.createdAt || 0) > 10 * 60 * 1000) return;
 

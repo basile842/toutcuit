@@ -270,7 +270,14 @@ if (!is_array($parsed) || !isset($parsed['context'])) {
         $parsed = json_decode($m[0], true);
     }
     if (!is_array($parsed) || !isset($parsed['context'])) {
-        jsonError('Impossible de parser la réponse. Réessayez.', 502);
+        $providerLabel = $isGemini ? 'Gemini' : 'Claude';
+        $snippet = trim(mb_substr($text ?? '', 0, 240));
+        if ($snippet === '') {
+            $detail = 'réponse vide';
+        } else {
+            $detail = 'début de la réponse : « ' . $snippet . (mb_strlen($text) > 240 ? '…' : '') . ' »';
+        }
+        jsonError("{$providerLabel} n'a pas renvoyé un JSON exploitable (modèle : {$model}). Réessayez, ou changez de modèle. — {$detail}", 502);
     }
 }
 

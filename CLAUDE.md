@@ -76,7 +76,7 @@ L'utilisateur·ice reste donc dans son mode tant qu'il/elle ne clique pas explic
 
 `global-feed.html` appelle `api/admin/global-feed.php` qui exige `requireEditor()`. Il lit `localStorage["tc_token"]` et envoie `Authorization: Bearer`. N'est ouvert que depuis `editor.html` (popup sidecar ou nouvel onglet).
 
-## API (~40 endpoints)
+## API (~55 endpoints)
 
 Tous dans `api/`, requêtes JSON, réponses JSON. `api/middleware.php` fournit `handleCors()`, `requireAuth()`, `getTeacherId()`, `jsonResponse()`, `jsonError()`, `getJsonBody()`. `api/db.php` expose `db()` (PDO singleton). `api/.htaccess` bloque `config.php` et tous les `.md`.
 
@@ -246,6 +246,16 @@ Outil d'aide à l'analyse d'une URL pour les expert·es (accès libre, pas d'aut
 4. Mode édition inline pour ajuster les bullets, export `.rtf`
 5. Bouton « Générer une CERT » → appel `api/ai/compose-cert.php` → ouverture de `descripteurs/pages/certs.html` avec les champs pré-remplis
 
+Invariant scroll : `render()` scrolle vers `#results` **uniquement** sur fresh analysis (appel avec `{ scroll: true }`). Les re-renders déclenchés par `toggleEdit()`, `addItem()`, `removeItem()` doivent garder la position du viewport — ne pas réintroduire de `scrollIntoView` inconditionnel.
+
 ## Descripteurs
 
 Même structure `descripteurs/` que flanel.ch et kizako.ch. Pages supplémentaires : depot, progress, liens. Intégrés au flow session (les élèves accèdent via code de session, pas en accès libre).
+
+### Liens (vue élève + preview Expert — `descripteurs/pages/liens.html`)
+
+Page affichée aux élèves via `/descripteurs/pages/liens.html?session=CODE` ; l'outil Expert « Liens » de `session.html` la pointe avec `&admin=1` (admin UI additionnel : bandeau session + bouton reset + inspector localStorage).
+
+- **Visibilité** : la liste respecte `sessions.visible_links` dans les deux modes. Ne **pas** réintroduire `&all=1` en admin — la vue Expert doit refléter ce que voient les élèves (⚠ différent de `feed.html` et de `session.html` qui utilisent `&all=1` pour afficher les CERTs masquées côté enseignant·e).
+- **Popups jumelées** : cliquer un lien ouvre deux fenêtres nommées `certify_article` (URL cible) et `certify_sidecar` (machine à descripteurs). Leurs refs sont stockées au module (`_articleWin`, `_sidecarWin`). Quand l'élève clique « Valider » dans le sidecar, `tree-idmap.js` émet `CERTIFY_RESULT` avec `published:true` ; `handleIncomingResult()` ferme alors les deux popups pour ramener l'élève à la liste.
+- **Polling** : `sessions/poll.php` (15 s ± jitter) détecte les changements de `visible_links` faits par l'enseignant·e et recharge la liste en direct.
