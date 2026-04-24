@@ -110,6 +110,7 @@ Note : `api/generate-cert.php` est à la **racine de `api/`** (et non dans `api/
 ### Admin (`api/admin/`)
 - `teachers.php`, `sessions.php`, `certs.php`, `global-feed.php` [GET] — vues éditeur
 - `session-detail.php` [GET] — détail agrégé d'une session (CERTs, compteurs élèves/réponses/liens)
+- `session-collected.php` [GET] — liste des liens collectés d'une session (alimente « Télécharger les liens » côté Éditeur)
 - `update-session.php` [POST], `delete-session.php` [DELETE], `delete-teacher.php` [DELETE], `reset-responses.php` [POST]
 - `duplicate-session.php` [POST] — clone côté éditeur (distinct de `sessions/duplicate.php` côté enseignant)
 - `set-role.php` [POST] — promouvoir/rétrograder un·e enseignant·e entre `expert` et `editor`
@@ -134,10 +135,11 @@ Clés API dans `config.php` : `ANTHROPIC_API_KEY` (Claude), `GOOGLE_API_KEY` (Ge
 
 #### Parité AI
 
-Les trois endpoints AI doivent rester cohérents sur ces trois points :
+Les trois endpoints AI doivent rester cohérents sur ces quatre points :
 1. **Retry** : `$maxAttempts = 4`, `$retryableHttp = [429, 503, 529]`, backoff exponentiel ~1s/2s/4s avec jitter. Sur échec final, message `"L'API {Claude|Gemini} est temporairement surchargée (HTTP N) après 4 tentatives. Réessaie dans quelques instants."` (503).
 2. **Libellé du bouton de téléchargement RTF** : `Télécharger .rtf` (pas juste `RTF`) dans les trois UI : `review.html`, `analyse.html`, `descripteurs/pages/certs.html`.
 3. **Prompt de génération des 3 Phrases** : règles identiques dans `review-prompt.md` et `compose-cert-prompt.md` (format + sujet / fait central / verdict « Fiable / Pas fiable / Indéterminé, car… », pas de références, phrases courtes).
+4. **Message de parse-fallback** quand le modèle ne renvoie pas un JSON exploitable : `"{Provider} n'a pas renvoyé un JSON exploitable (modèle : X). Réessayez, ou changez de modèle. — début de la réponse : « … »"` — nomme le provider, le modèle, et montre les 240 premiers caractères du texte renvoyé. Utile pour diagnostiquer une réponse markdown-wrappée, un refus, ou une sortie tronquée.
 
 #### Flow analyse → CERT
 
@@ -237,6 +239,8 @@ Outil de révision éditoriale des CERTs via Claude API. Flow :
 
 Palette UI : violet (accent) pour "Claude", gris pour "Original", ambre pour "Éditer". Le rouge et le vert sont réservés aux indicateurs de fiabilité.
 
+**Invariant** : `review.html` et `api/ai/review.php` sont **Claude Sonnet hardcodé, pas de sélecteur de modèle**. La question d'ajouter Gemini a été soulevée et écartée — le prompt de review (long, structuré, règles fines) est fragile en sortie JSON avec Gemini, et Claude Sonnet reste plus fiable pour la révision éditoriale. Ne pas réintroduire un dropdown sans raison nouvelle.
+
 ### Analyse (`analyse.html`)
 
 Outil d'aide à l'analyse d'une URL pour les expert·es (accès libre, pas d'auth). Flow :
@@ -247,6 +251,10 @@ Outil d'aide à l'analyse d'une URL pour les expert·es (accès libre, pas d'aut
 5. Bouton « Générer une CERT » → appel `api/ai/compose-cert.php` → ouverture de `descripteurs/pages/certs.html` avec les champs pré-remplis
 
 Invariant scroll : `render()` scrolle vers `#results` **uniquement** sur fresh analysis (appel avec `{ scroll: true }`). Les re-renders déclenchés par `toggleEdit()`, `addItem()`, `removeItem()` doivent garder la position du viewport — ne pas réintroduire de `scrollIntoView` inconditionnel.
+
+Invariant screenshots : `handleImageFile()` redimensionne côté client à 1568 px sur le grand côté (recommandation Anthropic) et ré-encode en JPEG 85% via canvas avant base64. Raison : l'API Claude rejette les images > 5 MB et une capture retina brute les dépasse facilement. Ne pas simplifier en `FileReader.readAsDataURL(file)` direct.
+
+Invariant sidecar handoff : depuis le main vers le popup droit (`/analyse?mode=sidecar`), le stash passe en priorité via `window.opener.__tcAnalyseStash` (sync, pas de quota storage), `localStorage['tc_analyse_stash']` en fallback. Ne pas revenir à localStorage-only — les gros screenshots faisaient parfois dépasser le quota silencieusement et le popup droit apparaissait vide.
 
 ## Descripteurs
 

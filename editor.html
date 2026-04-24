@@ -1567,7 +1567,8 @@
           <div class="session-detail-actions">
             <button class="btn-action" onclick="window.open('/global-feed.html?sessions=${encodeURIComponent(s.code)}','_blank')">Ouvrir le feed</button>
             <button class="btn-action" onclick="showDuplicateModal(${s.id}, '${esc(s.name).replace(/'/g, "\\'")}', '${esc(s.school_name || "").replace(/'/g, "\\'")}')">Dupliquer</button>
-            <button class="btn-action" onclick="downloadSessionExcel('${esc(s.code).replace(/'/g, "\\'")}', '${esc(s.name).replace(/'/g, "\\'")}')">Télécharger Excel</button>
+            <button class="btn-action" onclick="downloadSessionExcel('${esc(s.code).replace(/'/g, "\\'")}', '${esc(s.name).replace(/'/g, "\\'")}')">Télécharger les résultats</button>
+            <button class="btn-action" onclick="downloadSessionLinksExcel(${s.id}, '${esc(s.code).replace(/'/g, "\\'")}', '${esc(s.name).replace(/'/g, "\\'")}')">Télécharger les liens</button>
           </div>
         `;
       } catch (err) {
@@ -1679,6 +1680,38 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Résultats");
       const safeName = name ? name.replace(/[\/\\?%*:|"<>]/g, "_") : "resultats";
+      XLSX.writeFile(wb, `${safeName}_${code}.xlsx`);
+    }
+
+    async function downloadSessionLinksExcel(sessionId, code, name) {
+      let links;
+      try {
+        const res = await authFetch(`${API}/admin/session-collected.php?session_id=${sessionId}`, { cache: "no-store" });
+        links = await res.json();
+        if (links && links.error) throw new Error(links.error);
+      } catch (err) {
+        alert("Erreur : " + err.message);
+        return;
+      }
+
+      if (!Array.isArray(links) || !links.length) {
+        alert("Aucun lien collecté pour cette séance.");
+        return;
+      }
+
+      const data = [["Pseudo", "URL", "Commentaire", "Date"]];
+      for (const l of links) {
+        data.push([
+          l.user_id || "",
+          l.url || "",
+          l.comment || "",
+          (l.created_at || "").substring(0, 19).replace("T", " "),
+        ]);
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Liens collectés");
+      const safeName = name ? name.replace(/[\/\\?%*:|"<>]/g, "_") : "liens_collectes";
       XLSX.writeFile(wb, `${safeName}_${code}.xlsx`);
     }
 
